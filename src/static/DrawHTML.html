@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Canvas</title>
+    <link rel="stylesheet" href="button.css">
+    <meta charset=utf-8 />
+  </head>
+  <body>
+    <div id="canvasDiv"></div>
+    <h1>Canvas Start</h1>
+    <canvas id="myCanvas"></canvas>
+
+    <div class="center">
+      <button type="button">
+        <img src="img/back.png" width="50" height="50">
+      </button>
+      <button type="button">
+        <img src="img/pause.png" width="50" height="50">
+      </button>
+      <button type="button">
+        <img src="img/forward.png" width="50" height="50">
+      </button>
+      <button type="button">
+        <img src="img/UL.png" width="50" height="50">
+      </button>
+
+      <div class="image-upload">
+          <label for="file-input">
+              <img src="img/UL.png"/>
+          </label>
+          <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="handleImage.js"></script>
+  </body>
+</html>
