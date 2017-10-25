@@ -1,0 +1,26 @@
+{
+  "name": "redraw",
+  "version": "0.0.1",
+  "description": "### Installing Npm modules Within the root directory: \"npm install\"",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kaynato/redraw.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kaynato/redraw/issues"
+  },
+  "homepage": "https://github.com/Kaynato/redraw#readme",
+  "devDependencies": {
+    "chai": "^4.1.2"
+  }
+}
