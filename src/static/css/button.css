@@ -4,12 +4,11 @@ button {
   background: none;
 }
 
-.image-upload > input
-{
+.image-upload > input {
     display: none;
 }
 
-.center {
+.center { 
   margin: auto;
   width: 50%;
   padding: 10px;

@@ -12,33 +12,37 @@
 </head>
 
 <body>
-  <div id="canvasDiv"></div>
   <canvas id="myCanvas"></canvas>
 
-  <div class="center inline">
-    <button type="button">
-      <img src="static/img/back.png" width="50" height="50">
-    </button>
-    <button type="button">
-      <img src="static/img/pause.png" width="50" height="50">
-    </button>
-    <button type="button">
-      <img src="static/img/forward.png" width="50" height="50">
-    </button>
+  <div class="center">
+    <div class="inline">
+      <button type="button">
+        <img src="static/img/back.png" width="50" height="50">
+      </button>
+      <button type="button">
+        <img src="static/img/pause.png" width="50" height="50">
+      </button>
+      <button type="button">
+        <img src="static/img/forward.png" width="50" height="50">
+      </button>
 
-    <!-- Upload button -->
-    <div class="image-upload">
-      <label for="file-input">
-        <img src="static/img/upload.png" width="50" height="50">
-      </label>
-      <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
+      <button type="button">
+        <img src="static/img/download.png" width="50" height="50">
+      </button>
+
+      <!-- Upload button -->
+      <div class="image-upload">
+        <label for="file-input">
+          <img src="static/img/upload.png" width="50" height="50">
+        </label>
+        <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
+      </div>
+
+      <!-- Download button -->
+      <!-- <button type="button">
+        <img src="static/img/download.png" width="50" height="50">
+      </button> -->
     </div>
-
-    <!-- Download button -->
-    <button type="button">
-      <img src="static/img/download.png" width="50" height="50">
-    </button>
-
   </div>
 
   <script type="text/javascript" src="static/js/handleImage.js"></script>
