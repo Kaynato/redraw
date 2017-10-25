@@ -1,0 +1,1 @@
+var imagestate = 0;
