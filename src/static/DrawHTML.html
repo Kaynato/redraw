@@ -10,6 +10,7 @@
     <h1>Canvas Start</h1>
     <canvas id="myCanvas"></canvas>
 
+    <!-- center buttons -->
     <div class="center">
       <button type="button">
         <img src="img/back.png" width="50" height="50">
@@ -23,13 +24,14 @@
       <button type="button">
         <img src="img/UL.png" width="50" height="50">
       </button>
-
+      <!-- upload buttons -->
       <div class="image-upload">
           <label for="file-input">
               <img src="img/UL.png"/>
           </label>
           <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
       </div>
+      <!-- need to add download button -->
     </div>
 
     <script type="text/javascript" src="handleImage.js"></script>
