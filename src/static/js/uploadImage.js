@@ -9,11 +9,9 @@ canvas.height = windowHeight;
 
 // Load input files
 const imageLoader = document.getElementById('file-input');
-imageLoader.addEventListener('change', uploadImage, false);
-
 const ctx = canvas.getContext('2d');
 
-// Upload image from local drive
+imageLoader.addEventListener('change', uploadImage, false);
 
 /**
  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
@@ -26,7 +24,7 @@ async function uploadImage(e){
         img.onload = function() {
             canvas.width = windowHeight;
             canvas.height = windowHeight;
-            ctx.drawImage(img, parseInt(windowWidth) / 5, 0);
+            ctx.drawImage(img, 0, 0);
         }
         img.src = event.target.result;
     }
