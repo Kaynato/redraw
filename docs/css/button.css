@@ -1,0 +1,19 @@
+button {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.image-upload > input {
+    display: none;
+}
+
+.center { 
+  margin: 0 auto;
+  width: 80%;
+  padding: 10px;
+}
+
+.inline {
+  display: inline-block;
+}
