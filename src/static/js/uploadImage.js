@@ -9,12 +9,17 @@ canvas.height = windowHeight;
 
 // Load input files
 const imageLoader = document.getElementById('file-input');
-imageLoader.addEventListener('change', handleImage, false);
+imageLoader.addEventListener('change', uploadImage, false);
 
 const ctx = canvas.getContext('2d');
 
 // Upload image from local drive
-async function handleImage(e){
+
+/**
+ * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
+ * @param {*} e 
+ */
+async function uploadImage(e){
     const reader = new FileReader();
     reader.onload = function(event){
         const img = new Image();
@@ -28,3 +33,6 @@ async function handleImage(e){
     reader.readAsDataURL(e.target.files[0]);
 }
 
+module.exports = {
+    uploadImage,
+};
