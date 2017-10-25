@@ -6,4 +6,4 @@
  - `npm install` => this will install all necessary modules within the project directory called `node_modules`
 
 ### Github Pages
-View the site [here](https://ayushkarnawat.github.io/ekho/)
+View the site [here](https://kaynato.github.io/redraw/)
