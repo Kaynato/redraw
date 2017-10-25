@@ -15,3 +15,7 @@ function decrement() {
     console.log(imagestate);
     return imagestate;
 }
+
+function currentState() {
+    return imagestate;
+}
