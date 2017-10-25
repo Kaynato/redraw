@@ -22,8 +22,7 @@ const DataIndices = {
   colorB: 7
 }
 
-/* DEFINE STATE */
-var MPState = {
+let MPState = {
   // This is something like an arraylist.
   // Each row should store a line segment and auxillary data.
   // Since we are using this form of data storage,
@@ -130,10 +129,10 @@ var MPState = {
 */
 function sketch_process(p) {
 
-  var canvas = null;
-  var color = null;
-  var sizeSlider = null;
-  var lineSize = 1;
+  let canvas = null;
+  let color = null;
+  let sizeSlider = null;
+  let lineSize = 1;
 
   p.setup = function() {
     canvas = p.createCanvas(640, 480);
@@ -191,17 +190,33 @@ function sketch_process(p) {
 }
 
 // Instantiate the p5js instance.
-var p5_inst = new p5(sketch_process);
+const p5_inst = new p5(sketch_process);
 
 /* DEFINE BUTTON CALLBACKS */
 function seekBackward() {
   MPState.back();
   strokes = MPState.getVisibleStrokes();
   p5_inst.resetCanvas();
-  for (var i = 0; i < strokes.shape[0]; i++) {
+  for (let i = 0; i < strokes.shape[0]; i++) {
     stroke = strokes.pick(i);
     p5_inst.drawStroke(stroke);
+
+    // Partially completed function - clean up code
+    function accessStroke(index) {
+      return strokes.get(i, index)
+    }
+
+    stroke = strokes;
+
+    p5_inst.stroke(accessStroke(DataIndices.colorR),
+                   accessStroke(DataIndices.colorG),
+                   accessStroke(DataIndices.colorB));
+    p5_inst.line(accessStroke(DataIndices.startX),
+                 accessStroke(DataIndices.startY),
+                 accessStroke(DataIndices.endX),
+                 accessStroke(DataIndices.endY));
   }
+  
 }
 
 function seekForward() {
