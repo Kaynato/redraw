@@ -1,4 +1,6 @@
 ## ReDRAW (Restricted Deep Recurrent Attentive Writer)
 
 ### Installing Npm modules
-Within the root directory: "npm install"
+ - Open terminal
+ - Cd into project root directory
+ - `npm install` => this will install all necessary modules within the project directory called `node_modules`

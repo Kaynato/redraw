@@ -19,3 +19,9 @@ function decrement() {
 function currentState() {
     return imagestate;
 }
+
+module.exports = {
+    increment, 
+    decrement, 
+    currentState,
+};
