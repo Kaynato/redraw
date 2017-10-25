@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" width="device-width", initial-scale=1, maximum-scale=1.0, user-scalable=0>
-  
+
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <title>ReDRAW - Automatic Sequential Image Vectorization</title>
 
@@ -27,23 +27,28 @@
 
   <div class="center">
     <div class="inline">
-      
+
       <button type="button" onclick="seekBackward()">
         <img src="img/back.png" width="50" height="50">
       </button>
-      
+
       <button type="button" onclick="togglePlay()">
         <img src="img/pause.png" width="50" height="50">
         <!-- Pause / Play - should default as Play and switch to Pause when pressed. -->
       </button>
-      
+
       <button type="button" onclick="seekForward()">
         <img src="img/forward.png" width="50" height="50">
       </button>
-      
+
       <button type="button" onclick="exportData()">
         <img src="img/download.png" width="50" height="50">
       </button>
+
+      <label class="switch">
+        <input type="checkbox" checked>
+        <span class="slider round"></span>
+      </label>
 
        <button type="button" onclick="toggleGenerate()">
         <img src="img/generate.png" width="50" height="50">
