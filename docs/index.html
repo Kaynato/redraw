@@ -41,25 +41,25 @@
         <img src="img/forward.png" width="50" height="50">
       </button>
 
-      <button type="button" onclick="exportData()">
-        <img src="img/download.png" width="50" height="50">
-      </button>
-
       <label class="switch">
         <input type="checkbox" checked>
         <span class="slider round"></span>
       </label>
 
-       <button type="button" onclick="toggleGenerate()">
+       <!-- <button type="button" onclick="toggleGenerate()">
         <img src="img/generate.png" width="50" height="50">
-      </button>
+      </button> -->
 
       <div class="image-upload" style="display: inline">
       <label for="file-input">
-          <img src="img/upload.png" width="50" height="50">
+          <img src="img/import.png" width="50" height="50">
       </label>
       <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
       </div>
+
+      <button type="button" onclick="exportData()">
+        <img src="img/export.png" width="50" height="50">
+      </button>
 
       <!-- Download button -->
       <!-- <button type="button">
