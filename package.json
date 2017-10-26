@@ -1,7 +1,7 @@
 {
   "name": "redraw",
   "version": "0.0.1",
-  "description": "### Installing Npm modules Within the root directory: \"npm install\"",
+  "description": "Automatic Sequential Image Vectorization",
   "main": "index.js",
   "directories": {
     "test": "test"

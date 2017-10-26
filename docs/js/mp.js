@@ -1,9 +1,9 @@
-/**
-  mp.js
-  Defines the multipurpose panel state and handles UI interaction.
-
-  Should be loaded after the network interfaces are exposed.
-*/
+// /**
+//  * @module mp.js
+//  * 
+//  * Defines the multipurpose panel state and handles UI interaction. 
+//  * Should be loaded after the network interfaces are exposed.
+//  */
 
 /* DEFINE ARBITRARILY-DETERMINED GLOBAL VARIABLES */
 
@@ -245,3 +245,11 @@ function togglePlay() {
 //     }
 //     reader.readAsDataURL(e.target.files[0]);
 // }
+
+module.exports = {
+  MPState,
+  sketch_process, 
+  seekBackward,
+  seekForward,
+  togglePlay
+}
