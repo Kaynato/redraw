@@ -1,8 +1,7 @@
-/*
-model_decomposition.js
-
-Decomposition network. Loaded with TensorFire.
-*/
+/**
+ * @module model_decompostion.js
+ * Decomposition network. Loaded with TensorFire.
+ */
 
 DecomposeModel = {
 
@@ -29,3 +28,6 @@ DecomposeModel = {
 
 }
 
+module.exports = {
+	DecomposeModel,
+}

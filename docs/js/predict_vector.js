@@ -1,8 +1,7 @@
-/*
-predict_vector.js
-
-Generation network. Loaded with TensorFire.
-*/
+/**
+ * @module predict_vector.js
+ * Generation network. Loaded with TensorFire
+ */
 
 GenerateModel = {
 
@@ -21,8 +20,12 @@ GenerateModel = {
 		repeatedly using ndpack.
 	*/
 	nextStroke(mpState) {
-		state = ndpack(mpState);
+		// state = ndpack(mpState);
 		throw Error("Not implemented!")
 	}
 
+}
+
+module.exports = {
+	GenerateModel,
 }
