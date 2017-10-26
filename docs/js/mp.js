@@ -59,8 +59,14 @@ let MPState = {
       newStroke = [startX, startY, endX, endY, lineSize];
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
+
+      // Overwrite
+      if (this.dataIndex > this.strokeIndex) {
+        this.state = this.state.slice(0, this.strokeIndex)
+      }
+
       this.strokeIndex++;
-      this.dataIndex++;
+      this.dataIndex = this.strokeIndex;
     }
 
   },
@@ -85,6 +91,11 @@ let MPState = {
   /* Getter for "generating" */
   isGenerating() {
     return this.generating;
+  },
+
+  /* Setter for "generating" */
+  setGenerating(val) {
+    this.generating = val;
   },
 
   /**
@@ -210,13 +221,20 @@ function seekBackward() {
 }
 
 function seekForward() {
-  MPState.forward();
-  stroke = MPState.getCurrentStroke();
-  p5_inst.drawStroke(stroke);
+  if (MPState.forward()) {
+    stroke = MPState.getCurrentStroke();
+    p5_inst.drawStroke(stroke);
+  }
+  
 }
 
 function togglePlay() {
   throw new Error("Not implemented!");
+}
+
+function updateGenerateToggle() {
+  checkbox = document.getElementById('generate-toggle-box');
+  MPState.setGenerating(checkbox.checked);
 }
 
 

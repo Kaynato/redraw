@@ -56,32 +56,37 @@
         <img src="img/forward.png" width="50" height="50">
       </button>
 
-      <div class="mp-control" id="state-slider" style="display: inline">
+      <div class="mp-control inline" id="state-slider">
         <!-- Inject state slider here through p5js -->
       </div>
 
 
-      <div class="image-upload mp-control" style="display: inline">
+      <div class="image-upload mp-control inline">
       <label for="file-input">
           <img src="img/import.png" width="50" height="50">
       </label>
       <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
       </div>
 
-      <div class="image-download" style="display: inline">
+      <div class="image-download inline">
       <button type="button" onclick="exportData()">
         <img src="img/export.png" width="50" height="50">
         <a id="dl" download="Canvas.png" href="#"><!-- Download Canvas --></a>
       </button>
+      </div>
 
-      <label class="switch">
-        <input type="checkbox" checked>
-        <span class="slider round"></span>
-      </label>
+      <div class="inline">
+        Generate<br>
+        <label class="switch">
+          <input type="checkbox" id="generate-toggle-box" onclick="updateGenerateToggle()">
+          <span class="slider round"></span>
+        </label>
+      </div>
 
-    </div>
   </div>
 
+  <script src="js/model_decomposition.js"></script>
+  <script src="js/predict_vector.js"></script>
   <script src="js/mp.js"></script>
 </body>
 

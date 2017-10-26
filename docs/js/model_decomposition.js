@@ -18,14 +18,14 @@ DecomposeModel = {
 	*/
 	imageToTensor(image) {
 		throw new Error("Not implemented!");
-	}
+	},
 
 	/*
 		Convert image tensor to descriptive strokes.
 	*/
 	imageToStrokes(imageTensor) {
 		throw new Error("Not implemented!");
-	}
+	},
 
 }
 
