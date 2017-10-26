@@ -48,12 +48,15 @@ let MPState = {
         endY >= 0 && endY <= this.HEIGHT;
   },
 
-  /*
-    Add a stroke to the state.
-    p: p5 instance
-    lineSize: Number - describes width
-    color: p5.Color - describes color
-  */
+  /**
+   * Add a stroke to the state. 
+   * @param {int} startX        
+   * @param {int} startY 
+   * @param {int} endX 
+   * @param {int} endY 
+   * @param {Number} lineSize       describes width
+   * @param {p5.Color} color        describes color
+   */
   addStroke(startX, startY, endX, endY, lineSize, color) {
     if (this.inBounds(startX, startY, endX, endY)) {
       newStroke = [startX, startY, endX, endY, lineSize];
@@ -66,8 +69,8 @@ let MPState = {
   },
 
   /**
-    Get current stroke.
-  */
+   * Gets the current stroke from the canvas
+   */
   getCurrentStroke() {
     if (this.strokeIndex > 0)
       return this.state[this.strokeIndex - 1];
@@ -100,7 +103,7 @@ let MPState = {
     }
   },
 
-  /*
+  /**
     Step stroke index forward or call the generator network.
     Returns whether the operation was effective.
   */
@@ -206,7 +209,6 @@ function seekBackward() {
   for (var i = 0; i < strokes.length; i++) {
     p5_inst.drawStroke(strokes[i]);
   }
-
 }
 
 function seekForward() {
@@ -218,8 +220,6 @@ function seekForward() {
 function togglePlay() {
   throw new Error("Not implemented!");
 }
-
-
 
 
 // Load input files
@@ -245,4 +245,3 @@ function togglePlay() {
 //     }
 //     reader.readAsDataURL(e.target.files[0]);
 // }
-

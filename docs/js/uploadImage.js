@@ -1,8 +1,10 @@
-/*
-uploadImage.js
+/**
+ * @module uploadImage.js
+ * Handles image upload
+ */
 
-Handle image upload.
-*/
+// Set height and width of canvas
+const canvas = document.getElementById('canvas-holder');
 
 // Load input files
 const imageLoader = document.getElementById('file-input');

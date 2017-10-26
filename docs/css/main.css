@@ -5,6 +5,7 @@ html, body {
   height: 100%;
   width: 100%;
   margin: 0;
+  padding: 0;
 }
 
 
@@ -53,10 +54,10 @@ button {
 }
 
 .inline {
-  display: inline-block;
+  display: inline;
 }
 
-/* The slider */
+/* Slider */
 .switch {
   position: relative;
   display: inline-block;
@@ -140,10 +141,11 @@ input:checked + .slider:before {
     color:#ccc;
     padding:3px;
 }
+
 #d1:hover {
     color:#fff;
 }
-.image-download > input
-{
+
+.image-download > input {
     display: none;
 }

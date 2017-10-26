@@ -9,7 +9,6 @@
   <title>ReDRAW</title>
 
   <!-- Load CSS -->
-  <style> body {padding: 0; margin: 0;} </style>
   <link rel="stylesheet" href="css/main.css">
 
   <!-- Load JS -->
@@ -48,27 +47,27 @@
       </button>
 
       <button type="button" onclick="togglePlay()">
-        <img src="img/pause.png" width="50" height="50">
         <!-- Pause / Play - should default as Play and switch to Pause when pressed. -->
+        <img src="img/pause.png" width="50" height="50">
       </button>
 
       <button type="button" onclick="seekForward()">
         <img src="img/forward.png" width="50" height="50">
       </button>
 
-      <div class="mp-control" id="state-slider" style="display: inline">
+      <div class="mp-control inline" id="state-slider">
         <!-- Inject state slider here through p5js -->
       </div>
 
 
-      <div class="image-upload mp-control" style="display: inline">
+      <div class="image-upload mp-control inline">
       <label for="file-input">
           <img src="img/import.png" width="50" height="50">
       </label>
       <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="readURL(this);"/>
       </div>
 
-      <div class="image-download" style="display: inline">
+      <div class="image-download inline">
       <button type="button" onclick="exportData()">
         <img src="img/export.png" width="50" height="50">
         <a id="dl" download="Canvas.png" href="#"><!-- Download Canvas --></a>
