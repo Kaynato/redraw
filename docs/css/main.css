@@ -1,20 +1,55 @@
+html, body {
+  background-color: #efefff;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+
+canvas {
+  margin: 0 auto;
+  display: block;
+  padding: 10px;
+}
+
 button {
   padding: 0;
-  border: none;
+  border: 1px solid grey;
+  background: none;
+  /*height: 50px;*/
+  /*width: 50px;*/
+}
+
+/* Workaround for non-button */
+.image-upload {
+  border: 1px solid grey;
+  background: none;
+  height: 50px;
+  width: 50px;
+}
+
+.mp-control {
+  padding: 0;
+  border: 1px solid grey;
   background: none;
 }
 
-.image-upload > input
-{
+.title {
+  font-family: "Trebuchet MS", sans-serif;
+}
+
+.image-upload > input {
     display: none;
 }
 
-
-
 .center {
-  margin: auto;
+  margin: 0 auto;
   width: 80%;
-  padding: 10px;
+  display: block;
+  text-align: center;
+  /*padding: 10px;*/
 }
 
 .inline {
@@ -29,7 +64,9 @@ button {
   height: 34px;
 }
 
-.switch input {display:none;}
+.switch input {
+  display: none;
+}
 
 .slider {
   position: absolute;
@@ -77,6 +114,7 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
 /* DOWNLOAD CANVAS */
 /*body {
     background-color:#555557;
@@ -95,6 +133,7 @@ input:checked + .slider:before {
     float:left;
     clear:both;
 }*/
+
 #d1 {
     float:left;
     cursor:pointer;

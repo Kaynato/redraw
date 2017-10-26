@@ -146,6 +146,7 @@ function sketch_process(p) {
     sizeSlider = p.createSlider(0, 10, lineSize);
 
     canvas.parent("canvas-holder");
+    sizeSlider.parent("size-slider");
     p.predraw();
   }
 

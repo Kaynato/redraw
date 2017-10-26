@@ -6,12 +6,11 @@
   <meta name="viewport" width="device-width", initial-scale=1, maximum-scale=1.0, user-scalable=0>
 
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <h1>ReDRAW - Automatic Sequential Image Vectorization</h1>
   <title>ReDRAW</title>
 
   <!-- Load CSS -->
   <style> body {padding: 0; margin: 0;} </style>
-  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/main.css">
 
   <!-- Load JS -->
   <script src="lib/utils_package.js"></script>
@@ -22,12 +21,27 @@
 </head>
 
 <body>
+  <div class="center title">
+    <h1>ReDRAW - Automatic Sequential Image Vectorization</h1>
+  </div>
+
   <div class="center" id="canvas-holder">
     <!-- Canvas will be injected here by p5js -->
   </div>
 
   <div class="center">
-    <div class="inline">
+
+    <!-- Input controls (Drawing) -->
+    <div id="draw-controls">
+      
+      <div id="size-slider" style="display: inline">
+        <!-- Inject size slider here through p5js -->
+      </div>
+
+    </div>
+
+    <!-- MP controls -->
+    <div id="mp-controls">
 
       <button type="button" onclick="seekBackward()">
         <img src="img/back.png" width="50" height="50">
@@ -42,12 +56,12 @@
         <img src="img/forward.png" width="50" height="50">
       </button>
 
-      <label class="switch">
-        <input type="checkbox" checked>
-        <span class="slider round"></span>
-      </label>
+      <div class="mp-control" id="state-slider" style="display: inline">
+        <!-- Inject state slider here through p5js -->
+      </div>
 
-      <div class="image-upload" style="display: inline">
+
+      <div class="image-upload mp-control" style="display: inline">
       <label for="file-input">
           <img src="img/import.png" width="50" height="50">
       </label>
@@ -57,13 +71,13 @@
       <div class="image-download" style="display: inline">
       <button type="button" onclick="exportData()">
         <img src="img/export.png" width="50" height="50">
-        <a id="dl" download="Canvas.png" href="#">Download Canvas</a>
+        <a id="dl" download="Canvas.png" href="#"><!-- Download Canvas --></a>
       </button>
 
-      <!-- Download button -->
-      <!-- <button type="button">
-        <img src="img/download.png" width="50" height="50">
-      </button> -->
+      <label class="switch">
+        <input type="checkbox" checked>
+        <span class="slider round"></span>
+      </label>
 
     </div>
   </div>
