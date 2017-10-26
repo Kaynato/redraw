@@ -73,7 +73,7 @@
 
   <div class="center">
     
-    <br><br><h1>Testing suite.</h1>
+    <br><br><h1>Mocha testing suite.</h1>
 
     <div id="mocha"></div>
 
@@ -85,22 +85,20 @@
   <script src="../docs/js/mp.js"></script>
   <script src="../docs/js/uploadImage.js"></script>
 
+  <!-- Set up mocha and chai -->
   <script type="text/javascript" src="lib/mocha.js"></script>
-  <!-- Set up mocha -->
+  <script type="text/javascript" src="lib/libs_package.js"></script>
   <script type="text/javascript">
-    mocha.setup('bdd')
+    mocha.setup('bdd');
   </script>
-  
-  <script type="text/javascript" src="lib/chai_package.js"></script>
   
   <!-- Here we load the testing scripts -->
   <script type="text/javascript" src="js/mp.test.js"></script>
-
   <script type="text/javascript" src="js/uploadImage.test.js"></script>
 
   <script type="text/javascript">
     mocha.checkLeaks();
-    mocha.globals(['MPState']);
+    mocha.globals(['chai, assert, MPState']);
     mocha.run();
   </script>
 

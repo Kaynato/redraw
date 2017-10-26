@@ -27,7 +27,3 @@ DecomposeModel = {
 	},
 
 }
-
-module.exports = {
-	DecomposeModel,
-}

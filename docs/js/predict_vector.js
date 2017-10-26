@@ -26,6 +26,3 @@ GenerateModel = {
 
 }
 
-module.exports = {
-	GenerateModel,
-}
