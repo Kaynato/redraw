@@ -7,10 +7,7 @@
 
 /* DEFINE ARBITRARILY-DETERMINED GLOBAL VARIABLES */
 
-// Amount of rows to pre-allocate for State Tensor.
-const ROWS = 64;
-
-// Definition of data stored in MPState state array (tensor)
+// Definition of data stored in MPState state (array)
 const DataIndices = {
   startX: 0,
   startY: 1,
@@ -23,11 +20,14 @@ const DataIndices = {
 }
 
 let MPState = {
-  // This is something like an arraylist.
-  // Each row should store a line segment and auxillary data.
-  // Since we are using this form of data storage,
-  // Using OOP paradigms are too costly for consistent use.
-  array: ndarray(new Float64Array(8 * ROWS), [ROWS, 8]),
+  WIDTH: 640,
+  HEIGHT: 480,
+
+  // Despite ndarray being loaded, using the dynamically altered
+  // linkedlist-like array is easier for us here.
+  // We can simply use ndpack to convert to ndarray when calling
+  // the network.
+  state: [],
 
   // Determines mode.
   generating: false,
@@ -41,6 +41,13 @@ let MPState = {
   // Otherwise, this serves as an upper limit on 
   dataIndex: 0,
 
+  inBounds(startX, startY, endX, endY) {
+    return startX >= 0 && startX <= this.WIDTH &&
+        startY >= 0 && startY <= this.HEIGHT &&
+        endX >= 0 && endX <= this.WIDTH &&
+        endY >= 0 && endY <= this.HEIGHT;
+  },
+
   /*
     Add a stroke to the state.
     p: p5 instance
@@ -48,19 +55,14 @@ let MPState = {
     color: p5.Color - describes color
   */
   addStroke(startX, startY, endX, endY, lineSize, color) {
-    // We must use the interface provided by ndarray :(
-    // Thus, this code is unavoidably a bit messy...
-    newStroke = this.array.pick(this.strokeIndex);
-    newStroke.set(DataIndices.startX, startX);
-    newStroke.set(DataIndices.startY, startY);
-    newStroke.set(DataIndices.endX, endX);
-    newStroke.set(DataIndices.endY, endY);
-    newStroke.set(DataIndices.width, lineSize);
-    newStroke.set(DataIndices.colorR, color.levels[0]);
-    newStroke.set(DataIndices.colorG, color.levels[1]);
-    newStroke.set(DataIndices.colorB, color.levels[2]);
-    this.strokeIndex++;
-    this.dataIndex++;
+    if (this.inBounds(startX, startY, endX, endY)) {
+      newStroke = [startX, startY, endX, endY, lineSize];
+      newStroke.push(color.levels.slice(0, 3));
+      this.state.push(newStroke);
+      this.strokeIndex++;
+      this.dataIndex++;
+    }
+
   },
 
   /**
@@ -68,7 +70,7 @@ let MPState = {
   */
   getCurrentStroke() {
     if (this.strokeIndex > 0)
-      return this.array.pick(this.strokeIndex - 1);
+      return this.state[this.strokeIndex - 1];
     else
       return null;
   },
@@ -77,7 +79,7 @@ let MPState = {
     Get all visible strokes.
   */
   getVisibleStrokes() {
-    return this.array.hi(this.strokeIndex)
+    return this.state.slice(0, this.strokeIndex);
   },
 
   /* Getter for "generating" */
@@ -105,13 +107,13 @@ let MPState = {
   forward() {
     if (this.isGenerating()) {
       // predictVector / nextStroke - update SDD
-      stroke = GenerateModel.nextStroke(this.array)
+      stroke = GenerateModel.nextStroke(this.state)
 
       // Single stroke addition.
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
                      stroke.width,
-                     stroke.colorR, stroke.G, stroke.B);
+                     stroke.colorR, stroke.colorG, stroke.colorB);
     } else {
       if (this.strokeIndex < this.dataIndex) {
         this.strokeIndex++;
@@ -143,7 +145,7 @@ function sketch_process(p) {
     // They aren't anywhere in our SDS.
     sizeSlider = p.createSlider(0, 10, lineSize);
 
-    canvas.parent("canvas-holder")
+    canvas.parent("canvas-holder");
     p.predraw();
   }
 
@@ -178,14 +180,17 @@ function sketch_process(p) {
     return lineSize;
   }
 
+  /*
+    Draw a stroke as described by in vector form.
+  */
   p.drawStroke = function(strokeVec) {
-    p5_inst.stroke(strokeVec.get(DataIndices.colorR),
-                   strokeVec.get(DataIndices.colorG),
-                   strokeVec.get(DataIndices.colorB));
-    p5_inst.line(strokeVec.get(DataIndices.startX),
-                 strokeVec.get(DataIndices.startY),
-                 strokeVec.get(DataIndices.endX),
-                 strokeVec.get(DataIndices.endY));
+    p5_inst.stroke(strokeVec[DataIndices.colorR],
+                   strokeVec[DataIndices.colorG],
+                   strokeVec[DataIndices.colorB]);
+    p5_inst.line(strokeVec[DataIndices.startX],
+                 strokeVec[DataIndices.startY],
+                 strokeVec[DataIndices.endX],
+                 strokeVec[DataIndices.endY]);
   }
 }
 
@@ -197,26 +202,10 @@ function seekBackward() {
   MPState.back();
   strokes = MPState.getVisibleStrokes();
   p5_inst.resetCanvas();
-  for (let i = 0; i < strokes.shape[0]; i++) {
-    stroke = strokes.pick(i);
-    p5_inst.drawStroke(stroke);
-
-    // Partially completed function - clean up code
-    function accessStroke(index) {
-      return strokes.get(i, index)
-    }
-
-    stroke = strokes;
-
-    p5_inst.stroke(accessStroke(DataIndices.colorR),
-                   accessStroke(DataIndices.colorG),
-                   accessStroke(DataIndices.colorB));
-    p5_inst.line(accessStroke(DataIndices.startX),
-                 accessStroke(DataIndices.startY),
-                 accessStroke(DataIndices.endX),
-                 accessStroke(DataIndices.endY));
+  for (var i = 0; i < strokes.length; i++) {
+    p5_inst.drawStroke(strokes[i]);
   }
-  
+
 }
 
 function seekForward() {
@@ -224,4 +213,35 @@ function seekForward() {
   stroke = MPState.getCurrentStroke();
   p5_inst.drawStroke(stroke);
 }
+
+function togglePlay() {
+  throw new Error("Not implemented!");
+}
+
+
+
+
+// Load input files
+// const imageLoader = document.getElementById('file-input');
+// const ctx = canvas.getContext('2d');
+
+// imageLoader.addEventListener('change', uploadImage, false);
+
+// /**
+//  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
+//  * @param {*} e 
+//  */
+// async function uploadImage(e){
+//     const reader = new FileReader();
+//     reader.onload = function(event){
+//         const img = new Image();
+//         img.onload = function() {
+//             canvas.width = windowHeight;
+//             canvas.height = windowHeight;
+//             ctx.drawImage(img, 0, 0);
+//         }
+//         img.src = event.target.result;
+//     }
+//     reader.readAsDataURL(e.target.files[0]);
+// }
 

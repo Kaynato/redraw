@@ -16,8 +16,12 @@ GenerateModel = {
 	/*
 		Should return a stroke-descriptive ndarray. 
 		Update once we get TensorFire working.
+
+		For continuous calling, we probably want to avoid
+		repeatedly using ndpack.
 	*/
 	nextStroke(mpState) {
+		state = ndpack(mpState);
 		throw Error("Not implemented!")
 	}
 

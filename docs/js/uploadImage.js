@@ -1,11 +1,8 @@
-// Set height and width of canvas
-const canvas = document.getElementById('myCanvas');
+/*
+uploadImage.js
 
-const windowHeight = parseInt(window.innerHeight) - 200;;
-const windowWidth = window.innerWidth;
-
-canvas.width = windowWidth;
-canvas.height = windowHeight;
+Handle image upload.
+*/
 
 // Load input files
 const imageLoader = document.getElementById('file-input');
