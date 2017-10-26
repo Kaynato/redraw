@@ -72,15 +72,20 @@
         <img src="img/export.png" width="50" height="50">
         <a id="dl" download="Canvas.png" href="#"><!-- Download Canvas --></a>
       </button>
+      </div>
 
-      <label class="switch">
-        <input type="checkbox" checked>
-        <span class="slider round"></span>
-      </label>
+      <div class="inline">
+        Generate<br>
+        <label class="switch">
+          <input type="checkbox" id="generate-toggle-box" onclick="updateGenerateToggle()">
+          <span class="slider round"></span>
+        </label>
+      </div>
 
-    </div>
   </div>
 
+  <script src="js/model_decomposition.js"></script>
+  <script src="js/predict_vector.js"></script>
   <script src="js/mp.js"></script>
   <script src="js/uploadImage.js"></script>
 </body>

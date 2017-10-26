@@ -24,7 +24,7 @@ DecomposeModel = {
 	*/
 	imageToStrokes(imageTensor) {
 		throw new Error("Not implemented!");
-	}
+	},
 
 }
 
