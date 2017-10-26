@@ -264,7 +264,7 @@ function updateGenerateToggle() {
 //     reader.readAsDataURL(e.target.files[0]);
 // }
 
-module.exports = {
+exports = {
   MPState,
   sketch_process, 
   seekBackward,

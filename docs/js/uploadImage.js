@@ -30,8 +30,8 @@ async function uploadImage(e){
     }
     reader.readAsDataURL(e.target.files[0]);
     console.log('true')
-}
+};
 
-module.exports = {
+exports = {
     uploadImage,
 };
