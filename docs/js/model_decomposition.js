@@ -1,8 +1,7 @@
-/*
-model_decomposition.js
-
-Decomposition network. Loaded with TensorFire.
-*/
+/**
+ * @module model_decompostion.js
+ * Decomposition network. Loaded with TensorFire.
+ */
 
 DecomposeModel = {
 
@@ -18,7 +17,7 @@ DecomposeModel = {
 	*/
 	imageToTensor(image) {
 		throw new Error("Not implemented!");
-	}
+	},
 
 	/*
 		Convert image tensor to descriptive strokes.
@@ -29,3 +28,6 @@ DecomposeModel = {
 
 }
 
+module.exports = {
+	DecomposeModel,
+}
