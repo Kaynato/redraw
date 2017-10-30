@@ -1,7 +1,11 @@
 /**
  * @module predict_vector.js
- * Generation network. Loaded with TensorFire
+ * Generation network. Loaded with TensorFire.
+ * Slated for release 2.
  */
+
+// Is this being run by client or by npm?
+var isNode = (typeof global !== "undefined");
 
 GenerateModel = {
 
@@ -26,6 +30,8 @@ GenerateModel = {
 
 }
 
-module.exports = {
-	GenerateModel,
+if (isNode) {
+	module.exports = {
+		GenerateModel,
+	}
 }
