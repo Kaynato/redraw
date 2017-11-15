@@ -125,10 +125,13 @@ class Model(TrainableNetwork):
         # Setup inputs. Images should be resized before entering graph. RGB input images.
         inputs = tf.placeholder(tf.float32, shape=[FLAGS.batchsize, input_size, input_size, 3], name='inputs')
 
-        # Initialize state, attentional window, spatial memory, and brush holders
+        # Initialize state 
         history_state = [inputs]
+        # Initialize attentional window
         history_window = [self.initialize_window()]
+        # Initialize spatial memory
         history_memory = []
+        #brush holders
         history_brush = []
 
         # Initial step
@@ -155,21 +158,26 @@ class Model(TrainableNetwork):
 
         # Prepare brush parameters for output
         output_brush = tf.stack(history_brush, axis=0, name='output_brush')
-
+    
+    #Sample a memory tensor from the state using the prescribed window
+    #not yet implemented 
     def read(self, state, window):
-        """
-        Sample a memory tensor from the state using the prescribed window
-        """
         raise NotImplementedError()
 
         return new_memory
-
+    
+    #function to handle brush
+    #not yet implemented
     def brush(self, memory):
         raise NotImplementedError()
 
+    #function to generate brush strokes
+    #not yet implemented 
     def write(self, old_state, brush):
         raise NotImplementedError()
 
+    #function to create window
+    #not yet implemented
     def window(self, state):
         raise NotImplementedError()
 
