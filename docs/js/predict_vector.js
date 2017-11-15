@@ -37,7 +37,7 @@ const GenerateModel = {
 		// 		a. If not, retry with a new vector
 		// 	5. return new vector indicies
 
-		state = ndunpack(mpState);
+		// state = mpState;
 		// state = ndpack(mpState);
 		// if (mp.MPState.inBounds()) {
 		// 	let newStroke = 
