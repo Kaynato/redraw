@@ -143,35 +143,39 @@ let MPState = {
     Returns whether the operation was effective.
   */
   forward() {
-    console.log('1')
-
     if (this.isGenerating()) {
       // predictVector / nextStroke - update SDD
       // stroke = GenerateModel.nextStroke(this.state)
 
       // Single stroke addition.
-      console.log('1')
-      let cur_stroke = MPState.getCurrentStroke();
-      let stroke = {
-        startX: cur_stroke.startX,
-        startY: cur_stroke.startY,
-        endX: Math.random,
-        endY: Math.random,
-        width: cur_stroke.lineSize,
-        colorR: 255,
-        colorG: 255,
-        colorB: 255
-       }
+      const cur_stroke = this.getCurrentStroke();
+      console.log(cur_stroke);      
+      const stroke = {
+        startX: cur_stroke[2], // start new endX value from endX value of previos vector
+        startY: cur_stroke[3], // start new endY value from endY value of previos vector
+        endX: Math.random()*200,
+        endY: Math.random()*200,
+        width: cur_stroke[4],
+        color: {
+          _array: [0,0,0,1],
+          levels: [0,0,0,255],
+          maxes: {
+            hsb: [360, 100, 100, 1],
+            hsl: [360, 100, 100, 1],
+            rgb: [255,255,255,255]
+          }, 
+          mode: "rgb",
+          name: "p5.Color"
+        }
+       };
        console.log(stroke);
-
 
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
                      stroke.width,
-                     stroke.colorR, stroke.colorG, stroke.colorB);
+                     stroke.color);
+      return true;
     } else {
-      console.log('2')
-
       if (this.strokeIndex < this.dataIndex) {
         this.strokeIndex++;
         return true;
@@ -377,15 +381,11 @@ function seekBackward() {
 }
 
 function seekForward() {
-  console.log(MPState);
-  console.log('0');
   if (MPState.forward()) {
     let lineSize = MPState.getCurrentSize();
     let stroke = MPState.getCurrentStroke();
     p5_inst.drawStroke(stroke, lineSize);
-    console.log('Moving forward!');
   }
-  console.log('Cannot move forward!');
 }
 
 function togglePlay() {
