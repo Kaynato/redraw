@@ -94,12 +94,12 @@ let MPState = {
   /**
     Get size of current stroke from the canvas
   */
-    getCurrentSize() {
-      if (this.strokeIndex > 0)
-        return this.sizes[this.strokeIndex - 1];
-      else
-        return null;
-    },
+  getCurrentSize() {
+    if (this.strokeIndex > 0)
+      return this.sizes[this.strokeIndex - 1];
+    else
+      return null;
+  },
 
   /**
     Get all visible strokes.
@@ -150,10 +150,10 @@ let MPState = {
       // Single stroke addition.
       const cur_stroke = this.getCurrentStroke();
       const stroke = {
-        startX: cur_stroke[2], // start new endX value from endX value of previos vector
-        startY: cur_stroke[3], // start new endY value from endY value of previos vector
-        endX: Math.random()*200,
-        endY: Math.random()*200,
+        startX: cur_stroke[2], // start new endX value from endX value of previous vector
+        startY: cur_stroke[3], // start new endY value from endY value of previous vector
+        endX: (Math.random() < 0.33) ? cur_stroke[2] - Math.random()*20 : cur_stroke[2] + Math.random()*20,
+        endY: (Math.random() < 0.33) ? cur_stroke[3] - Math.random()*20 : cur_stroke[3] + Math.random()*20,
         width: cur_stroke[4],
         color: {
           _array: [0,0,0,1],
@@ -166,7 +166,7 @@ let MPState = {
           mode: "rgb",
           name: "p5.Color"
         }
-       };
+      };
 
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
@@ -316,7 +316,7 @@ function MockP5(sketch_process) {
   }
 
   this.stroke = function() {
-    let colorArgs = arguments;
+    const colorArgs = arguments;
     switch (colorArgs.length) {
       case 1:
         this.strokeColorProperty = colorArgs[0];
@@ -368,20 +368,19 @@ if (!isNode) {
 /* DEFINE BUTTON CALLBACKS */
 function seekBackward() {
   MPState.back();
-  let strokes = MPState.getVisibleStrokes();
-  let sizes = MPState.getVisibleSizes();
+  const strokes = MPState.getVisibleStrokes();
+  const sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
-  for (var i = 0; i < strokes.length; i++) {
-    let lineSize = sizes[i]
-    p5_inst.drawStroke(strokes[i], lineSize);
+  for (let i = 0; i < strokes.length; i++) {
+    p5_inst.drawStroke(strokes[i], sizes[i]);
   }
 
 }
 
 function seekForward() {
   if (MPState.forward()) {
-    let lineSize = MPState.getCurrentSize();
-    let stroke = MPState.getCurrentStroke();
+    const lineSize = MPState.getCurrentSize();
+    const stroke = MPState.getCurrentStroke();
     p5_inst.drawStroke(stroke, lineSize);
   }
 }

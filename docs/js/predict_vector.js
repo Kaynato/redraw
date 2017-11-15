@@ -45,9 +45,6 @@ const GenerateModel = {
 	// 	}
 	// 	let newStroke =
 	}
-
-
-
 }
 
 if (isNode) {
