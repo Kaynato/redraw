@@ -8,7 +8,7 @@
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
-if (typeof p5_inst === "undefined") {
+if (!isNode && typeof p5_inst === "undefined") {
   throw Error();
 }
 
@@ -52,7 +52,6 @@ function uploadImage(e){
       let img = p5_inst.createImg(e.target.result).hide();
       p5_inst.image(img, 0, 0);
     }
-    console.log('true')
 };
 
 if (isNode) {
