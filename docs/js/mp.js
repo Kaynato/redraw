@@ -1,7 +1,7 @@
 // /**
 //  * @module mp.js
-//  * 
-//  * Defines the multipurpose panel state and handles UI interaction. 
+//  *
+//  * Defines the multipurpose panel state and handles UI interaction.
 //  * Should be loaded after the network interfaces are exposed.
 //  */
 
@@ -27,6 +27,7 @@ let MPState = {
   // linkedlist-like array is easier for us here.
   // We can simply use ndpack to convert to ndarray when calling
   // the network.
+  sizes: [],
   state: [],
 
   // Determines mode.
@@ -38,7 +39,7 @@ let MPState = {
 
   // This index sits at the next available empty position.
   // If we overwrite anything, we should set this to strokeIndex.
-  // Otherwise, this serves as an upper limit on 
+  // Otherwise, this serves as an upper limit on
   dataIndex: 0,
 
   inBounds(startX, startY, endX, endY) {
@@ -49,11 +50,11 @@ let MPState = {
   },
 
   /**
-   * Add a stroke to the state. 
-   * @param {int} startX        
-   * @param {int} startY 
-   * @param {int} endX 
-   * @param {int} endY 
+   * Add a stroke to the state.
+   * @param {int} startX
+   * @param {int} startY
+   * @param {int} endX
+   * @param {int} endY
    * @param {Number} lineSize       describes width
    * @param {p5.Color} color        describes color
    */
@@ -62,10 +63,12 @@ let MPState = {
       newStroke = [startX, startY, endX, endY, lineSize];
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
+      this.sizes.push(lineSize);
 
       // Overwrite
       if (this.dataIndex > this.strokeIndex) {
         this.state = this.state.slice(0, this.strokeIndex)
+        this.sizes = this.sizes.slice(0, this.strokeIndex)
       }
 
       this.strokeIndex++;
@@ -85,10 +88,27 @@ let MPState = {
   },
 
   /**
+    Get size of current stroke from the canvas
+  */
+    getCurrentSize() {
+      if (this.strokeIndex > 0)
+        return this.sizes[this.strokeIndex - 1];
+      else
+        return null;
+    },
+
+  /**
     Get all visible strokes.
   */
   getVisibleStrokes() {
     return this.state.slice(0, this.strokeIndex);
+  },
+
+  /**
+    Get sizes of all visibile strokes
+  */
+  getVisibleSizes() {
+      return this.sizes.slice(0, this.strokeIndex)
   },
 
   /* Getter for "generating" */
@@ -198,7 +218,8 @@ function sketch_process(p) {
   /*
     Draw a stroke as described by in vector form.
   */
-  p.drawStroke = function(strokeVec) {
+  p.drawStroke = function(strokeVec, lineSize) {
+    p5_inst.strokeWeight(lineSize);
     p5_inst.stroke(strokeVec[DataIndices.colorR],
                    strokeVec[DataIndices.colorG],
                    strokeVec[DataIndices.colorB]);
@@ -216,18 +237,22 @@ const p5_inst = new p5(sketch_process);
 function seekBackward() {
   MPState.back();
   strokes = MPState.getVisibleStrokes();
+  sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
   for (var i = 0; i < strokes.length; i++) {
-    p5_inst.drawStroke(strokes[i]);
+    lineSize = sizes[i]
+    p5_inst.drawStroke(strokes[i], lineSize);
   }
 }
 
 function seekForward() {
   if (MPState.forward()) {
+    lineSize = MPState.getCurrentSize();
     stroke = MPState.getCurrentStroke();
-    p5_inst.drawStroke(stroke);
+    p5_inst.drawStroke(stroke, lineSize);
+    console.log('Moving forward!');
   }
-  
+  console.log('Cannot move forward!');
 }
 
 function togglePlay() {
@@ -248,7 +273,7 @@ function updateGenerateToggle() {
 
 // /**
 //  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
-//  * @param {*} e 
+//  * @param {*} e
 //  */
 // async function uploadImage(e){
 //     const reader = new FileReader();
@@ -266,7 +291,7 @@ function updateGenerateToggle() {
 
 exports = {
   MPState,
-  sketch_process, 
+  sketch_process,
   seekBackward,
   seekForward,
   togglePlay
