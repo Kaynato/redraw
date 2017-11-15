@@ -1,7 +1,12 @@
+"use strict";
 /**
  * @module model_decompostion.js
  * Decomposition network. Loaded with TensorFire.
+ * Neural network currently held off due to ongoing training and TensorFire wrangling.
  */
+
+// Is this being run by client or by npm?
+const isNode = (typeof global !== "undefined");
 
 DecomposeModel = {
 
@@ -26,4 +31,10 @@ DecomposeModel = {
 		throw new Error("Not implemented!");
 	},
 
+}
+
+if (isNode) {
+	module.exports = {
+		DecomposeModel,
+	}
 }

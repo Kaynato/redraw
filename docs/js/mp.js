@@ -1,9 +1,13 @@
-// /**
-//  * @module mp.js
-//  *
-//  * Defines the multipurpose panel state and handles UI interaction.
-//  * Should be loaded after the network interfaces are exposed.
-//  */
+"use strict";
+/**
+ * @module mp.js
+ * 
+ * Defines the multipurpose panel state and handles UI interaction. 
+ * Should be loaded after the network interfaces are exposed.
+ */
+
+// Is this being run by client or by npm?
+const isNode = (typeof global !== "undefined");
 
 /* DEFINE ARBITRARILY-DETERMINED GLOBAL VARIABLES */
 
@@ -60,7 +64,7 @@ let MPState = {
    */
   addStroke(startX, startY, endX, endY, lineSize, color) {
     if (this.inBounds(startX, startY, endX, endY)) {
-      newStroke = [startX, startY, endX, endY, lineSize];
+      let newStroke = [startX, startY, endX, endY, lineSize];
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
       this.sizes.push(lineSize);
@@ -230,8 +234,114 @@ function sketch_process(p) {
   }
 }
 
+// Because of the inclusion issue from mp.test.js, we have to unfortunately define these here
+function MockDOMObject(obj) {
+  // Compose over
+  for (let property in Object.keys(obj)) {
+    this[property] = obj[property];
+  }
+
+  this.parentDiv = "window";
+
+  this.parent = function(divId) {
+    this.parentDiv = divId;
+  }
+
+  this.value = function() {
+    return 1;
+  }
+
+}
+
+function MockP5(sketch_process) {
+  this.canvas = null;
+  this.slider = null;
+  this.strokes = [];
+  this.rectList = [];
+  this.strokeColorProperty = {"levels": [0, 0, 0, 0]};
+  this.strokeWidthProperty = 1;
+
+  this.createCanvas = function(width, height) {
+    this.canvas = new MockDOMObject({"width": width, "height": height});
+    return this.canvas;
+  }
+
+  this.createSlider = function(min, max, step) {
+    this.slider = new MockDOMObject({
+      "min": min,
+      "max": max,
+      "step": step,
+      value: function() {
+        return 1;
+      }
+    });
+    return this.slider;
+  }
+
+  // p5 functionality - no testing required
+  this.color = function(r, g, b, a) {
+    return {"levels": [r, g, b, a]};
+  }
+
+  this.clear = function() {
+    // p5 - do not test
+    this.strokes = [];
+    this.rectList = [];
+  }
+
+  this.strokeWeight = function(weight) {
+    // p5 - do not test
+    this.strokeWidthProperty = weight;
+  }
+
+  this.stroke = function() {
+    let colorArgs = arguments;
+    switch (colorArgs.length) {
+      case 1:
+        this.strokeColorProperty = colorArgs[0];
+        break;
+      case 3:
+        this.strokeColorProperty = {"levels": [colorArgs[0], colorArgs[1], colorArgs[2], 1]};
+        break;
+      case 4:
+        this.strokeColorProperty = {"levels": [colorArgs[0], colorArgs[1], colorArgs[2], colorArgs[3]]};
+        break;
+    }
+  }
+
+  this.line = function(startX, startY, endX, endY) {
+    this.strokes.push([startX, startY, endX, endY, this.strokeWidthProperty, this.strokeColorProperty]);
+  }
+
+  this.rect = function(left, top, right, bottom) {
+    this.rectList.push([left, top, right, bottom]);
+  }
+
+  // Mouse parameters
+  this.mouseX = 0;
+  this.mouseY = 0;
+  this.pmouseX = 0;
+  this.pmouseY = 0;
+  this.setMouse = function(newX, newY) {
+    this.pmouseX = this.mouseX;
+    this.pmouseY = this.mouseY;
+    this.mouseX = newX;
+    this.mouseY = newY;
+  }
+
+  sketch_process(this);
+}
+
+
+/////////////
 // Instantiate the p5js instance.
-const p5_inst = new p5(sketch_process);
+
+let p5_inst = null;
+if (!isNode) {
+  p5_inst = new p5(sketch_process);
+} else {
+  p5_inst = new MockP5(sketch_process);
+}
 
 /* DEFINE BUTTON CALLBACKS */
 function seekBackward() {
@@ -243,6 +353,7 @@ function seekBackward() {
     lineSize = sizes[i]
     p5_inst.drawStroke(strokes[i], lineSize);
   }
+
 }
 
 function seekForward() {
@@ -256,43 +367,23 @@ function seekForward() {
 }
 
 function togglePlay() {
+  // Not slated for this release.
   throw new Error("Not implemented!");
 }
 
 function updateGenerateToggle() {
-  checkbox = document.getElementById('generate-toggle-box');
+  // Cannot be auto-tested due to document interaction.
+  let checkbox = document.getElementById('generate-toggle-box');
   MPState.setGenerating(checkbox.checked);
 }
 
-
-// Load input files
-// const imageLoader = document.getElementById('file-input');
-// const ctx = canvas.getContext('2d');
-
-// imageLoader.addEventListener('change', uploadImage, false);
-
-// /**
-//  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
-//  * @param {*} e
-//  */
-// async function uploadImage(e){
-//     const reader = new FileReader();
-//     reader.onload = function(event){
-//         const img = new Image();
-//         img.onload = function() {
-//             canvas.width = windowHeight;
-//             canvas.height = windowHeight;
-//             ctx.drawImage(img, 0, 0);
-//         }
-//         img.src = event.target.result;
-//     }
-//     reader.readAsDataURL(e.target.files[0]);
-// }
-
-exports = {
-  MPState,
-  sketch_process,
-  seekBackward,
-  seekForward,
-  togglePlay
+if (isNode) {
+  module.exports = {
+    p5_inst,
+    MPState,
+    sketch_process, 
+    seekBackward,
+    seekForward,
+    togglePlay
+  }
 }
