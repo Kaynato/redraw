@@ -6,9 +6,9 @@
  */
 
 // Is this being run by client or by npm?
-const isNode = (typeof global !== "undefined");
+var isNode = (typeof global !== "undefined");
 
-DecomposeModel = {
+const DecomposeModel = {
 
 	/*
 		Load model from json dict files.

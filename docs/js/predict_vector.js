@@ -6,13 +6,13 @@
  */
 
 // Is this being run by client or by npm?
-const isNode = (typeof global !== "undefined");
+var isNode = (typeof global !== "undefined");
 
 // local
-const mp = require('./mp.js');
+// const mp = require('./mp.js');
 
 
-GenerateModel = {
+const GenerateModel = {
 
 	/*
 		Load model from json dict files.

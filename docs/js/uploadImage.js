@@ -6,7 +6,7 @@
  */
 
 // Is this being run by client or by npm?
-const isNode = (typeof global !== "undefined");
+var isNode = (typeof global !== "undefined");
 
 // Set height and width of canvas
 if (!isNode) {
