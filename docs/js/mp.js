@@ -149,7 +149,6 @@ let MPState = {
 
       // Single stroke addition.
       const cur_stroke = this.getCurrentStroke();
-      console.log(cur_stroke);      
       const stroke = {
         startX: cur_stroke[2], // start new endX value from endX value of previos vector
         startY: cur_stroke[3], // start new endY value from endY value of previos vector
@@ -168,7 +167,6 @@ let MPState = {
           name: "p5.Color"
         }
        };
-       console.log(stroke);
 
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
