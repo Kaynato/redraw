@@ -5,7 +5,7 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai');
 
 // local
-const uploadImage = require('../docs/js/uploadImage.js');
+const uploadImage = require('../docs/js/upload_image.js');
 
 /* === Setup === */
 const expect = chai.expect;
