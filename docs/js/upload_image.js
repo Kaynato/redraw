@@ -1,6 +1,6 @@
 "use strict";
 /**
- * @module uploadImage.js
+ * @module upload_image.js
  *
  * Handles image upload.
  */
