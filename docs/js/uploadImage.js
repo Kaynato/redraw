@@ -1,12 +1,16 @@
 "use strict";
 /**
  * @module uploadImage.js
- * 
+ *
  * Handles image upload.
  */
 
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
+
+if (typeof p5_inst === "undefined") {
+  throw Error();
+}
 
 // Set height and width of canvas
 if (!isNode) {
@@ -29,22 +33,25 @@ if (!isNode) {
 
 imageLoader.addEventListener('change', uploadImage, false);
 
+var debugvariable = undefined;
 /**
  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
- * @param {*} e 
+ * @param {*} e
  */
 function uploadImage(e){
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const img = new Image();
-        img.onload = function() {
-            canvas.width = windowHeight;
-            canvas.height = windowHeight;
-            // ctx.drawImage(img, 0, 0);
-        }
-        img.src = event.target.result;
+    // A FileList
+    if (typeof e.target === "undefined") {
+      return;
     }
-    reader.readAsDataURL(e.target.files[0]);
+
+    let file = e.target.files[0];
+    let reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function(e) {
+      debugvariable = e;
+      let img = p5_inst.createImg(e.target.result).hide();
+      p5_inst.image(img, 0, 0);
+    }
     console.log('true')
 };
 
