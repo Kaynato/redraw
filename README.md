@@ -1,5 +1,7 @@
 ## ReDRAW (Restricted Deep Recurrent Attentive Writer)
 
+[![Coverage Status](https://coveralls.io/repos/github/Kaynato/redraw/badge.svg?branch=npmtests)](https://coveralls.io/github/Kaynato/redraw?branch=npmtests)
+
 ### Installing Npm modules
  - Open terminal
  - Cd into project root directory
