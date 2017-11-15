@@ -9,11 +9,7 @@
 var isNode = (typeof global !== "undefined");
 
 // local
-if (!isNode) {
-  const mp = require('./mp.js');
-} else {
-  import { MPState } from './mp.js'  
-}
+// const mp = require('./mp.js');
 
 const GenerateModel = {
 
