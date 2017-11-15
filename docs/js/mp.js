@@ -1,13 +1,13 @@
 "use strict";
-// /**
-//  * @module mp.js
-//  * 
-//  * Defines the multipurpose panel state and handles UI interaction. 
-//  * Should be loaded after the network interfaces are exposed.
-//  */
+/**
+ * @module mp.js
+ * 
+ * Defines the multipurpose panel state and handles UI interaction. 
+ * Should be loaded after the network interfaces are exposed.
+ */
 
 // Is this being run by client or by npm?
-var isNode = (typeof global !== "undefined");
+const isNode = (typeof global !== "undefined");
 
 /* DEFINE ARBITRARILY-DETERMINED GLOBAL VARIABLES */
 
@@ -315,7 +315,7 @@ function MockP5(sketch_process) {
 /////////////
 // Instantiate the p5js instance.
 
-var p5_inst = null;
+let p5_inst = null;
 if (!isNode) {
   p5_inst = new p5(sketch_process);
 } else {

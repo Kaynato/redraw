@@ -1,11 +1,12 @@
-// /**
-//  * @module uploadImage.js
-//  * 
-//  * Handles image upload.
-//  */
+"use strict";
+/**
+ * @module uploadImage.js
+ * 
+ * Handles image upload.
+ */
 
 // Is this being run by client or by npm?
-var isNode = (typeof global !== "undefined");
+const isNode = (typeof global !== "undefined");
 
 // Set height and width of canvas
 if (!isNode) {

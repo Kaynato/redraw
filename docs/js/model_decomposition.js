@@ -1,3 +1,4 @@
+"use strict";
 /**
  * @module model_decompostion.js
  * Decomposition network. Loaded with TensorFire.
@@ -5,7 +6,7 @@
  */
 
 // Is this being run by client or by npm?
-var isNode = (typeof global !== "undefined");
+const isNode = (typeof global !== "undefined");
 
 DecomposeModel = {
 
