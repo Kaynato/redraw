@@ -9,3 +9,9 @@
 
 ### Github Pages
 View the site [here](https://kaynato.github.io/redraw/)
+
+## program uses this to generate test log
+https://travis-ci.org/
+
+## Code coverage done via this
+https://coveralls.io/
