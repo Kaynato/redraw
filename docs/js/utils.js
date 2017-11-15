@@ -12,3 +12,5 @@ ndunpack = require('ndarray-unpack')
 ndshow = require('ndarray-show')
 ndops = require('ndarray-ops')
 zeros = require('zeros')
+
+jsfeat = require('jsfeat')

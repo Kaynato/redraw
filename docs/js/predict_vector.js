@@ -12,7 +12,6 @@ var isNode = (typeof global !== "undefined");
 // import { MPState } from './mp.js';
 // const mp = require('./mp.js');
 
-
 const GenerateModel = {
 
 	/*
@@ -52,7 +51,7 @@ const GenerateModel = {
 }
 
 if (isNode) {
-	module.exports = {
-		GenerateModel,
-	}
+  module.exports = {
+    GenerateModel,
+  }
 }
