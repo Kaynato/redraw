@@ -1,8 +1,8 @@
 "use strict";
 /**
  * @module mp.js
- * 
- * Defines the multipurpose panel state and handles UI interaction. 
+ *
+ * Defines the multipurpose panel state and handles UI interaction.
  * Should be loaded after the network interfaces are exposed.
  */
 
@@ -346,11 +346,11 @@ if (!isNode) {
 /* DEFINE BUTTON CALLBACKS */
 function seekBackward() {
   MPState.back();
-  strokes = MPState.getVisibleStrokes();
-  sizes = MPState.getVisibleSizes();
+  let strokes = MPState.getVisibleStrokes();
+  let sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
   for (var i = 0; i < strokes.length; i++) {
-    lineSize = sizes[i]
+    let lineSize = sizes[i]
     p5_inst.drawStroke(strokes[i], lineSize);
   }
 
@@ -358,8 +358,8 @@ function seekBackward() {
 
 function seekForward() {
   if (MPState.forward()) {
-    lineSize = MPState.getCurrentSize();
-    stroke = MPState.getCurrentStroke();
+    let lineSize = MPState.getCurrentSize();
+    let stroke = MPState.getCurrentStroke();
     p5_inst.drawStroke(stroke, lineSize);
     console.log('Moving forward!');
   }
@@ -381,7 +381,7 @@ if (isNode) {
   module.exports = {
     p5_inst,
     MPState,
-    sketch_process, 
+    sketch_process,
     seekBackward,
     seekForward,
     togglePlay
