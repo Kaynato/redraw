@@ -9,6 +9,7 @@
 var isNode = (typeof global !== "undefined");
 
 // local
+// import { MPState } from './mp.js';
 // const mp = require('./mp.js');
 
 
@@ -22,13 +23,14 @@ const GenerateModel = {
 	},
 
 	/*
-		Should return a stroke-descriptive ndarray. 
+		Should return a stroke-descriptive ndarray.
 		Update once we get TensorFire working.
 
 		For continuous calling, we probably want to avoid
 		repeatedly using ndpack.
 	*/
 	nextStroke(mpState) {
+		throw Error("Not implemented!")
 		// Procedure:
 		// 	1. Unpack the current state
 		// 	2. Get the current stroke
@@ -37,14 +39,15 @@ const GenerateModel = {
 		// 		a. If not, retry with a new vector
 		// 	5. return new vector indicies
 
-		// state = mpState;
-		// state = ndpack(mpState);
-		// if (mp.MPState.inBounds()) {
-		// 	let newStroke = 
-		// }
-		// let newStroke = 
-		throw Error("Not implemented!")
+	// 	state = mpState;
+	// 	state = ndpack(mpState);
+	// 	if (mp.MPState.inBounds()) {
+	// 		let newStroke =
+	// 	}
+	// 	let newStroke =
 	}
+
+
 
 }
 

@@ -143,16 +143,35 @@ let MPState = {
     Returns whether the operation was effective.
   */
   forward() {
+    console.log('1')
+
     if (this.isGenerating()) {
       // predictVector / nextStroke - update SDD
-      stroke = GenerateModel.nextStroke(this.state)
+      // stroke = GenerateModel.nextStroke(this.state)
 
       // Single stroke addition.
+      console.log('1')
+      let cur_stroke = MPState.getCurrentStroke();
+      let stroke = {
+        startX: cur_stroke.startX,
+        startY: cur_stroke.startY,
+        endX: Math.random,
+        endY: Math.random,
+        width: cur_stroke.lineSize,
+        colorR: 255,
+        colorG: 255,
+        colorB: 255
+       }
+       console.log(stroke);
+
+
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
                      stroke.width,
                      stroke.colorR, stroke.colorG, stroke.colorB);
     } else {
+      console.log('2')
+
       if (this.strokeIndex < this.dataIndex) {
         this.strokeIndex++;
         return true;
@@ -358,6 +377,8 @@ function seekBackward() {
 }
 
 function seekForward() {
+  console.log(MPState);
+  console.log('0');
   if (MPState.forward()) {
     let lineSize = MPState.getCurrentSize();
     let stroke = MPState.getCurrentStroke();
