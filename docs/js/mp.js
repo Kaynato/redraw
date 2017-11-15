@@ -336,7 +336,8 @@ function MockP5(sketch_process) {
 /////////////
 // Instantiate the p5js instance.
 
-let p5_inst = null;
+// MUST be var - persists across scripts
+var p5_inst;
 if (!isNode) {
   p5_inst = new p5(sketch_process);
 } else {
