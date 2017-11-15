@@ -1,8 +1,9 @@
-// /**
-//  * @module uploadImage.js
-//  * 
-//  * Handles image upload.
-//  */
+"use strict";
+/**
+ * @module uploadImage.js
+ * 
+ * Handles image upload.
+ */
 
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
@@ -45,7 +46,7 @@ function uploadImage(e){
     }
     reader.readAsDataURL(e.target.files[0]);
     console.log('true')
-}
+};
 
 if (isNode) {
     module.exports = {

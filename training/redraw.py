@@ -421,7 +421,6 @@ class Model(tp.ModelDesc):
 
 
 
-
         raise NotImplementedError()
 
     def sample_color(self, delta, pos):
@@ -585,3 +584,4 @@ References:
 [10] https://richzhang.github.io/ideepcolor/
 [11] https://paintschainer.preferred.tech/index_en.html
 
+"""
