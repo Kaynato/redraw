@@ -1,11 +1,10 @@
+"use strict";
 /**
-utils.js
-
-Should be processed with browserify (npm)
-*/
+ * @module utils.js
+ * Should be processed with browerify (npm)
+ */
 
 // For browserify to grab requirements.
-
 ndarray = require('ndarray')
 ndpack = require('ndarray-pack')
 ndunpack = require('ndarray-unpack')
