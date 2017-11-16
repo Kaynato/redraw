@@ -168,6 +168,12 @@ let MPState = {
     }
   },
 
+  clear() {
+    this.strokeIndex = 0;
+    this.dataIndex = 0;
+    this.state = [];
+  }
+
 }
 
 /**

@@ -55,8 +55,27 @@ function uploadImage(e){
     img.hide();
 
     // TODO - call into model decomp
-    let p5img = p5_inst.image(img, 0, 0);
-    debugvariable = img;
+    // let p5img = p5_inst.image(img, 0, 0);
+
+    // ProcessImage
+    let tensor = DecomposeModel.imageToTensor(img);
+    let strokes = DecomposeModel.imageToStrokes(tensor);
+    // TODO - edit later. Maybe use point to sample from image.
+    // Should probably even be inside the returned strokes.
+    let temp_color = {levels: [0, 0, 0]};
+
+    for (var i = 0; i < strokes.length; i++) {
+      let stroke = strokes[i];
+      console.log(stroke);
+      MPState.addStroke(stroke[0], stroke[1], stroke[2], stroke[3], 5.0, temp_color);
+
+      // Very, very buggy
+      // Esp. stroke outside of MP...
+      p5_inst.line(stroke[0], stroke[1], stroke[2], stroke[3]);
+    }
+
+    DecomposeModel.render2(DecomposeModel.interimModel(tensor));
+
   }
 };
 
