@@ -152,29 +152,7 @@ let MPState = {
   forward() {
     if (this.isGenerating()) {
       // predictVector / nextStroke - update SDD
-      // stroke = GenerateModel.nextStroke(this.state)
-
-      // Single stroke addition.
-      const cur_stroke = this.getCurrentStroke();
-      const stroke = {
-        startX: cur_stroke[2], // start new endX value from endX value of previous vector
-        startY: cur_stroke[3], // start new endY value from endY value of previous vector
-        endX: (gaussian() < 0.5) ? cur_stroke[2] - gaussian()*100 : cur_stroke[2] + gaussian()*100,
-        endY: (gaussian() < 0.5) ? cur_stroke[3] - gaussian()*100 : cur_stroke[3] + gaussian()*100,
-        width: cur_stroke[4],
-        color: {
-          _array: [0,0,0,1],
-          levels: [0,0,0,255],
-          maxes: {
-            hsb: [360, 100, 100, 1],
-            hsl: [360, 100, 100, 1],
-            rgb: [255,255,255,255]
-          },
-          mode: "rgb",
-          name: "p5.Color"
-        }
-      };
-
+      let stroke = GenerateModel.nextStroke(this)
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
                      stroke.width,
@@ -421,13 +399,6 @@ function updateGenerateToggle() {
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('generate-toggle-box');
   MPState.setGenerating(checkbox.checked);
-}
-
-/**
- * Gaussian distribution. Note, this is just an approximation...probably not right
- */
-function gaussian() {
-  return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
 }
 
 

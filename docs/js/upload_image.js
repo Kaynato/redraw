@@ -34,7 +34,7 @@ if (!isNode) {
 
 imageLoader.addEventListener('change', uploadImage, false);
 
-var debugvariable = undefined;
+var debugvariable = [];
 /**
  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
  * @param {*} e
@@ -50,9 +50,12 @@ function uploadImage(e){
   let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = function(e) {
-    debugvariable = e;
-    let img = p5_inst.createImg(e.target.result).hide();
+    // TODO - we'll need to not allocate for each new submission
+    let img = p5_inst.createImg(e.target.result);
+    img.hide();
     p5_inst.image(img, 0, 0);
+    debugvariable.push(e.target.result);
+    debugvariable.push(img);
   }
 };
 

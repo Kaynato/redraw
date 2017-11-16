@@ -14,14 +14,20 @@ const DecomposeModel = {
 		Load model from json dict files.
 	*/
 	loadModel() {
-		throw new Error("Not implemented!");
+		// Interim model.
+		console.log('Decomposition model loaded.');
+		// throw new Error("Not implemented!");
 	},
 
 	/*
 		Convert image into a tensor.
 	*/
-	imageToTensor(image) {
-		throw new Error("Not implemented!");
+	imageToTensor(imageelement) {
+		var i = new Image();
+
+		i.onload = function() {
+			tensor = new jsfeat.matrix_t(width, height, jsfeat.U8_t | jsfeat.C3_t);
+		}
 	},
 
 	/*
