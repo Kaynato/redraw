@@ -53,9 +53,10 @@ function uploadImage(e){
     // TODO - we'll need to not allocate for each new submission
     let img = p5_inst.createImg(e.target.result);
     img.hide();
-    p5_inst.image(img, 0, 0);
-    debugvariable.push(e.target.result);
-    debugvariable.push(img);
+
+    // TODO - call into model decomp
+    let p5img = p5_inst.image(img, 0, 0);
+    debugvariable = img;
   }
 };
 
