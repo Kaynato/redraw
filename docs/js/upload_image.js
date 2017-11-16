@@ -5,7 +5,7 @@
  * Handles image upload.
  */
 
- 
+
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
@@ -41,6 +41,7 @@ var debugvariable = undefined;
  */
 function uploadImage(e){
   // A FileList
+  console.log(e.target);
   if (typeof e.target === "undefined") {
     return;
   }

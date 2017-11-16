@@ -125,7 +125,7 @@ let MPState = {
   /** Getter for "play". */
   isPlay() {
     return this.play;
-  }, 
+  },
 
   /** Setter for "play". */
   setPlay(val) {
@@ -169,7 +169,7 @@ let MPState = {
             hsb: [360, 100, 100, 1],
             hsl: [360, 100, 100, 1],
             rgb: [255,255,255,255]
-          }, 
+          },
           mode: "rgb",
           name: "p5.Color"
         }
@@ -395,7 +395,7 @@ function seekForward() {
 function togglePlay() {
 	let img = document.getElementById('play-pause-img');
 	MPState.setPlay(img.src.includes('play'));
-	
+
 	// If its in the play state, show the pause button, and vice versa
 	if (MPState.play) {
 		img.src='./img/pause.png';
@@ -416,11 +416,29 @@ function updateGenerateToggle() {
 }
 
 /**
- * Gaussian distribution. Note, this is just an approximation...probably not right 
+ * Gaussian distribution. Note, this is just an approximation...probably not right
  */
 function gaussian() {
   return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
 }
+
+
+function exportData(){
+  const strokes = MPState.getVisibleStrokes();
+  const sizes = MPState.getVisibleSizes();
+  p5_inst.resetCanvas();
+  for (let i = 0; i < strokes.length; i++) {
+    p5_inst.drawStroke(strokes[i], sizes[i]);
+  }
+  p5_inst.save('myCanvas.jpg');           // Saves canvas as an image
+
+}
+
+
+  // console.log(canvas);
+
+
+
 
 if (isNode) {
   module.exports = {

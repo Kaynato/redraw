@@ -1,20 +1,44 @@
-var canvas = document.getElementById("canvas-holder");
-var ctx = canvas.getContext("2d");
-
-/**
- * REGISTER DOWNLOAD HANDLER
- * 
- * Only convert the canvas to Data URL when the user clicks. 
- * This saves RAM and CPU resources in case this feature is not required. 
- */
-function exportData() {
-  var dt = canvas.toDataURL('image/png');
-  // Change MIME type to trick the browser to downlaod the file instead of displaying it
-  dt = dt.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-
-  // In addition to <a>'s "download" attribute, you can define HTTP-style headers
-  dt = dt.replace(/^data:application\/octet-stream/, 'data:application/octet-stream;headers=Content-Disposition%3A%20attachment%3B%20filename=Canvas.png');
-
-  this.href = dt;
-};
-document.getElementById("dl").addEventListener('click', dlCanvas, false);
+// "use strict";
+// /**
+//  * @module download_image.js
+//  *
+//  * Handles image download.
+//  */
+//
+//
+// // Is this being run by client or by npm?
+// var isNode = (typeof global !== "undefined");
+//
+// if (!isNode && typeof p5_inst === "undefined") {
+//   throw Error();
+// }
+//
+// // Set height and width of canvas
+// if (!isNode) {
+//   // Must declare using var to work around mocha
+//   var canvas = document.getElementById('canvas-holder');
+//   // Load input files
+//   var downloadImage = document.getElementById('dl');
+// } else {
+//   // Mock objects - necessary in our case.
+//   var canvas = {width: 640, height: 480};
+//   var downloadImage = {
+//     listeners: [],
+//     addEventListener: function(eventName, func, useCapture) {
+//       this.listeners.push({"name": eventName, "func": func, "useCapture": useCapture})
+//     }
+//   };
+// }
+//
+// downloadImage.addEventListener('change', exportData, false);
+//
+//
+// function exportData(){
+//
+//
+//   var canvas = document.getElementById('canvas-holder');
+//   console.log(canvas);
+//   // console.log(canvas);
+//
+//
+// }
