@@ -393,17 +393,18 @@ function seekForward() {
 }
 
 function togglePlay() {
-  let img = document.getElementById('play-pause-img');
-  MPState.setPlay(img.src.includes('play.png'));
-
-  // If its in the play state, show the pause button, and vice versa
-  if (MPState.play) {
-    img.src='./img/pause.png';
-    console.log('is in play state');
-  } else {
-    img.src='./img/play.png';
-    console.log('is is pause state');
-  }
+	let img = document.getElementById('play-pause-img');
+	MPState.setPlay(img.src.includes('play'));
+	
+	// If its in the play state, show the pause button, and vice versa
+	if (MPState.play) {
+		img.src='./img/pause.png';
+		console.log('Is in play state');
+		setTimeout(seekForward, 500);
+	} else {
+		img.src='./img/play.png';
+		console.log('Is is pause state');
+	}
   // Not slated for this release.
   // throw new Error("Not implemented!");
 }
