@@ -393,18 +393,26 @@ function seekForward() {
 }
 
 function togglePlay() {
-	let img = document.getElementById('play-pause-img');
-	MPState.setPlay(img.src.includes('play'));
+  if (isNode) {
+    if (MPState.forward()) {
+      const lineSize = MPState.getCurrentSize();
+      const stroke = MPState.getCurrentStroke();
+      p5_inst.drawStroke(stroke, lineSize);
+    }
+  } else {
+  	let img = document.getElementById('play-pause-img');
+  	MPState.setPlay(img.src.includes('play'));
 
-	// If its in the play state, show the pause button, and vice versa
-	if (MPState.play) {
-		img.src='./img/pause.png';
-		console.log('Is in play state');
-		setTimeout(seekForward, 500);
-	} else {
-		img.src='./img/play.png';
-		console.log('Is is pause state');
-	}
+  	// If its in the play state, show the pause button, and vice versa
+  	if (MPState.play) {
+  		img.src='./img/pause.png';
+  		console.log('Is in play state');
+  		setTimeout(seekForward, 500);
+  	} else {
+  		img.src='./img/play.png';
+  		console.log('Is is pause state');
+  	}
+  }
   // Not slated for this release.
   // throw new Error("Not implemented!");
 }

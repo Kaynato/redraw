@@ -1,7 +1,7 @@
-/* eslint-env node, mocha */
+  /* eslint-env node, mocha */
 process.env.NODE_ENV = 'test';
 
-// npm 
+// npm
 const chai = require('chai');
 
 // local
@@ -47,13 +47,22 @@ describe('Multipurpose Panel Unit Tests', function() {
     	mp.p5_inst.mouseDragged();
     	mp.seekBackward();
     	assert.isTrue(mp.MPState.strokeIndex < mp.MPState.dataIndex);
-    })
+    });
 
     it('should return future strokes with seekForward()', function() {
     	mp.seekForward();
     	assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
-    })
+    });
 
+    it('should have a different number of vectors', function() {
+      mp.p5_inst.setMouse(5, 5);
+      mp.p5_inst.mouseDragged();
+      mp.MPState.setGenerating(true);
+      const strokesI = mp.MPState.getVisibleStrokes();
+      mp.togglePlay();
+      const strokesF = mp.MPState.getVisibleSizes();
+      assert.notEqual(strokesF.length, strokesI.length, 'not equal');
+    });
     // There is no way to test further p5 interaction, especially the parts having
     //    to do with file interaction, complex user behavior and interactivity.
     // ...which means automating unit testing for that is not feasible.
