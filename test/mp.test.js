@@ -55,11 +55,11 @@ describe('Multipurpose Panel Unit Tests', function() {
     });
 
     it('should have a different number of vectors', function() {
-      mp.p5_inst.setMouse(5, 5);
-      mp.p5_inst.mouseDragged();
       mp.MPState.setGenerating(true);
       const strokesI = mp.MPState.getVisibleStrokes();
       mp.togglePlay();
+      mp.p5_inst.setMouse(5, 5);
+      mp.p5_inst.mouseDragged();
       const strokesF = mp.MPState.getVisibleSizes();
       assert.notEqual(strokesF.length, strokesI.length, 'not equal');
     });
