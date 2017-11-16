@@ -438,7 +438,7 @@ function exportData(){
   for (let i = 0; i < strokes.length; i++) {
     p5_inst.drawStroke(strokes[i], sizes[i]);
   }
-  p5_inst.save('myCanvas.jpg');           // Saves canvas as an image
+  p5_inst.save('my_canvas.png');           // Saves canvas as an image
 
 }
 
