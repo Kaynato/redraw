@@ -14,20 +14,22 @@ var isNode = (typeof global !== "undefined");
 
 const GenerateModel = {
 
-	/*
-		Load model from json dict files.
-	*/
+	/**
+	 * Load model fron json dict files. 
+	 */
 	loadModel() {
 		throw Error("Not implemented!")
 	},
 
-	/*
-		Should return a stroke-descriptive ndarray.
-		Update once we get TensorFire working.
-
-		For continuous calling, we probably want to avoid
-		repeatedly using ndpack.
-	*/
+	/**
+	 * Predicts the next stroke based off previous strokes. 
+	 * Update sonce we get TensorFire working. 
+	 * 
+	 * For continous calling, we probably want to avoid repeatedly using ndpack. 
+	 * 
+	 * @param {mp.object} mpState 
+	 * @returns newStroke 	- a stroke object containing a startX, startY, endX, endY, width and color.
+	 */
 	nextStroke(mpState) {
 		throw Error("Not implemented!")
 		// Procedure:
@@ -37,13 +39,6 @@ const GenerateModel = {
 		// 	4. Check if the indicies of that stroke are within the window
 		// 		a. If not, retry with a new vector
 		// 	5. return new vector indicies
-
-	// 	state = mpState;
-	// 	state = ndpack(mpState);
-	// 	if (mp.MPState.inBounds()) {
-	// 		let newStroke =
-	// 	}
-	// 	let newStroke =
 	}
 }
 

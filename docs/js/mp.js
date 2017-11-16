@@ -34,8 +34,9 @@ let MPState = {
   sizes: [],
   state: [],
 
-  // Determines mode.
+  // Determines toggle mode.
   generating: false,
+  play: false,
 
   // The index sits at the next-written position.
   // We display all vectors up to, but not including the position.
@@ -101,28 +102,34 @@ let MPState = {
       return null;
   },
 
-  /**
-    Get all visible strokes.
-  */
+  /** Get all visible strokes. */
   getVisibleStrokes() {
     return this.state.slice(0, this.strokeIndex);
   },
 
-  /**
-    Get sizes of all visibile strokes
-  */
+  /** Get sizes of all visible strokes. */
   getVisibleSizes() {
       return this.sizes.slice(0, this.strokeIndex)
   },
 
-  /* Getter for "generating" */
+  /** Getter for "generating". */
   isGenerating() {
     return this.generating;
   },
 
-  /* Setter for "generating" */
+  /** Setter for "generating". */
   setGenerating(val) {
     this.generating = val;
+  },
+
+  /** Getter for "play". */
+  isPlay() {
+    return this.play;
+  }, 
+
+  /** Setter for "play". */
+  setPlay(val) {
+    this.play = val;
   },
 
   /**
@@ -152,8 +159,8 @@ let MPState = {
       const stroke = {
         startX: cur_stroke[2], // start new endX value from endX value of previous vector
         startY: cur_stroke[3], // start new endY value from endY value of previous vector
-        endX: (Math.random() < 0.33) ? cur_stroke[2] - Math.random()*20 : cur_stroke[2] + Math.random()*20,
-        endY: (Math.random() < 0.33) ? cur_stroke[3] - Math.random()*20 : cur_stroke[3] + Math.random()*20,
+        endX: (gaussian() < 0.5) ? cur_stroke[2] - gaussian()*100 : cur_stroke[2] + gaussian()*100,
+        endY: (gaussian() < 0.5) ? cur_stroke[3] - gaussian()*100 : cur_stroke[3] + gaussian()*100,
         width: cur_stroke[4],
         color: {
           _array: [0,0,0,1],
@@ -386,14 +393,32 @@ function seekForward() {
 }
 
 function togglePlay() {
+  let img = document.getElementById('play-pause-img');
+  MPState.setPlay(img.src.includes('play.png'));
+
+  // If its in the play state, show the pause button, and vice versa
+  if (MPState.play) {
+    img.src='./img/pause.png';
+    console.log('is in play state');
+  } else {
+    img.src='./img/play.png';
+    console.log('is is pause state');
+  }
   // Not slated for this release.
-  throw new Error("Not implemented!");
+  // throw new Error("Not implemented!");
 }
 
 function updateGenerateToggle() {
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('generate-toggle-box');
   MPState.setGenerating(checkbox.checked);
+}
+
+/**
+ * Gaussian distribution. Note, this is just an approximation...probably not right 
+ */
+function gaussian() {
+  return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
 }
 
 if (isNode) {
