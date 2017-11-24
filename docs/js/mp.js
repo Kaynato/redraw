@@ -66,15 +66,18 @@ let MPState =
    * @param {Number} lineSize       describes width
    * @param {p5.Color} color        describes color
    */
-  addStroke(startX, startY, endX, endY, lineSize, color) {
-    if (this.inBounds(startX, startY, endX, endY)) {
+  addStroke(startX, startY, endX, endY, lineSize, color) 
+  {
+    if (this.inBounds(startX, startY, endX, endY))
+    {
       let newStroke = [startX, startY, endX, endY, lineSize];
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
       this.sizes.push(lineSize);
 
       // Overwrite
-      if (this.dataIndex > this.strokeIndex) {
+      if (this.dataIndex > this.strokeIndex) 
+      {
         this.state = this.state.slice(0, this.strokeIndex)
         this.sizes = this.sizes.slice(0, this.strokeIndex)
       }
@@ -88,50 +91,79 @@ let MPState =
   /**
    * Gets the current stroke from the canvas
    */
-  getCurrentStroke() {
+  getCurrentStroke() 
+  {
+    console.log('Stroke Index: ' + this.strokeIndex);
+    console.log('Data Index: ' + this.dataIndex)
+    console.log(this.state)
     if (this.strokeIndex > 0)
+    {
       return this.state[this.strokeIndex - 1];
+    }
     else
+    {
       return null;
+    }
   },
 
   /**
     Get size of current stroke from the canvas
   */
-  getCurrentSize() {
+  getCurrentSize() 
+  {
     if (this.strokeIndex > 0)
+    {
       return this.sizes[this.strokeIndex - 1];
+    }
     else
+    {
       return null;
+    }
   },
 
   /** Get all visible strokes. */
-  getVisibleStrokes() {
+  getVisibleStrokes() 
+  {
     return this.state.slice(0, this.strokeIndex);
   },
 
   /** Get sizes of all visible strokes. */
-  getVisibleSizes() {
+  getVisibleSizes() 
+  {
       return this.sizes.slice(0, this.strokeIndex)
   },
 
+  getState() 
+  {
+    return this.state;
+  },
+
+  getSizes() 
+  {
+    return this.sizes;
+  },
+
   /** Getter for "generating". */
-  isGenerating() {
+  isGenerating() 
+  {
     return this.generating;
   },
 
   /** Setter for "generating". */
-  setGenerating(val) {
+  setGenerating(val) 
+  {
     this.generating = val;
   },
 
   /** Getter for "play". */
-  isPlay() {
+  isPlay() 
+  {
     return this.play;
   },
 
   /** Setter for "play". */
-  setPlay(val) {
+  setPlay(val) 
+  {
     this.play = val;
   },
 
@@ -139,11 +171,15 @@ let MPState =
     Step stroke index backward.
     Returns whether the operation was effective.
   */
-  back() {
-    if (this.strokeIndex > 0) {
+  back() 
+  {
+    if (this.strokeIndex > 0) 
+    {
       this.strokeIndex--;
       return true;
-    } else {
+    } 
+    else 
+    {
       return false;
     }
   },
@@ -154,19 +190,23 @@ let MPState =
   */
 
 
-  forward() {
-    if (this.isGenerating()) {
+  forward() 
+  {
+    // console.log('State Length: ' + this.state.length);
+    if (this.isGenerating()) 
+    {
       // predictVector / nextStroke - update SDD
       // stroke = GenerateModel.nextStroke(this.state)
 
       // Single stroke addition.
       const cur_stroke = this.getCurrentStroke();
-      const stroke = {
+      const stroke = 
+      {
         startX: cur_stroke[2], // start new endX value from endX value of previous vector
         startY: cur_stroke[3], // start new endY value from endY value of previous vector
         endX: (gaussian() < 0.5) ? cur_stroke[2] - gaussian()*100 : cur_stroke[2] + gaussian()*100,
         endY: (gaussian() < 0.5) ? cur_stroke[3] - gaussian()*100 : cur_stroke[3] + gaussian()*100,
-        width: cur_stroke[4],
+        width: this.getCurrentSize(),
         color: {
           _array: [0,0,0,1],
           levels: [0,0,0,255],
@@ -185,11 +225,16 @@ let MPState =
                      stroke.width,
                      stroke.color);
       return true;
-    } else {
-      if (this.strokeIndex < this.dataIndex) {
+    } 
+    else 
+    {
+      if (this.strokeIndex < this.dataIndex) 
+      {
         this.strokeIndex++;
         return true;
-      } else {
+      } 
+      else 
+      {
         return false;
       }
     }
@@ -223,17 +268,20 @@ function sketch_process(p) {
   }
 
   // Additional function for non-interfering setup
-  p.predraw = function() {
+  p.predraw = function() 
+  {
     p.strokeWeight(1);
     p.rect(1, 0, 638, 479);
     p.strokeWeight(lineSize);
   }
 
-  p.draw = function() {
+  p.draw = function() 
+  {
 
   }
 
-  p.mouseDragged = function() {
+  p.mouseDragged = function() 
+  {
     lineSize = sizeSlider.value();
     p.strokeWeight(lineSize);
     p.stroke(color);
@@ -243,20 +291,23 @@ function sketch_process(p) {
                       lineSize, color);
   }
 
-  p.resetCanvas = function() {
+  p.resetCanvas = function() 
+  {
     p.clear();
     p.predraw();
     // Don't call setup since we'll proliferate sliders, etc.
   }
 
-  p.getSize = function() {
+  p.getSize = function() 
+  {
     return lineSize;
   }
 
   /*
     Draw a stroke as described by in vector form.
   */
-  p.drawStroke = function(strokeVec, lineSize) {
+  p.drawStroke = function(strokeVec, lineSize) 
+  {
     p5_inst.strokeWeight(lineSize);
     p5_inst.stroke(strokeVec[DataIndices.colorR],
                    strokeVec[DataIndices.colorG],
@@ -269,25 +320,30 @@ function sketch_process(p) {
 }
 
 // Because of the inclusion issue from mp.test.js, we have to unfortunately define these here
-function MockDOMObject(obj) {
+function MockDOMObject(obj) 
+{
   // Compose over
-  for (let property in Object.keys(obj)) {
+  for (let property in Object.keys(obj)) 
+  {
     this[property] = obj[property];
   }
 
   this.parentDiv = "window";
 
-  this.parent = function(divId) {
+  this.parent = function(divId) 
+  {
     this.parentDiv = divId;
   }
 
-  this.value = function() {
+  this.value = function() 
+  {
     return 1;
   }
 
 }
 
-function MockP5(sketch_process) {
+function MockP5(sketch_process) 
+{
   this.canvas = null;
   this.slider = null;
   this.strokes = [];
@@ -295,17 +351,20 @@ function MockP5(sketch_process) {
   this.strokeColorProperty = {"levels": [0, 0, 0, 0]};
   this.strokeWidthProperty = 1;
 
-  this.createCanvas = function(width, height) {
+  this.createCanvas = function(width, height) 
+  {
     this.canvas = new MockDOMObject({"width": width, "height": height});
     return this.canvas;
   }
 
-  this.createSlider = function(min, max, step) {
+  this.createSlider = function(min, max, step) 
+  {
     this.slider = new MockDOMObject({
       "min": min,
       "max": max,
       "step": step,
-      value: function() {
+      value: function() 
+      {
         return 1;
       }
     });
@@ -313,22 +372,26 @@ function MockP5(sketch_process) {
   }
 
   // p5 functionality - no testing required
-  this.color = function(r, g, b, a) {
+  this.color = function(r, g, b, a) 
+  {
     return {"levels": [r, g, b, a]};
   }
 
-  this.clear = function() {
+  this.clear = function() 
+  {
     // p5 - do not test
     this.strokes = [];
     this.rectList = [];
   }
 
-  this.strokeWeight = function(weight) {
+  this.strokeWeight = function(weight) 
+  {
     // p5 - do not test
     this.strokeWidthProperty = weight;
   }
 
-  this.stroke = function() {
+  this.stroke = function() 
+  {
     const colorArgs = arguments;
     switch (colorArgs.length) {
       case 1:
@@ -343,11 +406,13 @@ function MockP5(sketch_process) {
     }
   }
 
-  this.line = function(startX, startY, endX, endY) {
+  this.line = function(startX, startY, endX, endY) 
+  {
     this.strokes.push([startX, startY, endX, endY, this.strokeWidthProperty, this.strokeColorProperty]);
   }
 
-  this.rect = function(left, top, right, bottom) {
+  this.rect = function(left, top, right, bottom) 
+  {
     this.rectList.push([left, top, right, bottom]);
   }
 
@@ -356,7 +421,8 @@ function MockP5(sketch_process) {
   this.mouseY = 0;
   this.pmouseX = 0;
   this.pmouseY = 0;
-  this.setMouse = function(newX, newY) {
+  this.setMouse = function(newX, newY) 
+  {
     this.pmouseX = this.mouseX;
     this.pmouseY = this.mouseY;
     this.mouseX = newX;
@@ -372,26 +438,33 @@ function MockP5(sketch_process) {
 
 // MUST be var - persists across scripts
 var p5_inst;
-if (!isNode) {
+if (!isNode) 
+{
   p5_inst = new p5(sketch_process);
-} else {
+} 
+else 
+{
   p5_inst = new MockP5(sketch_process);
 }
 
 /* DEFINE BUTTON CALLBACKS */
-function seekBackward() {
+function seekBackward() 
+{
   MPState.back();
   const strokes = MPState.getVisibleStrokes();
   const sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
-  for (let i = 0; i < strokes.length; i++) {
+  for (let i = 0; i < strokes.length; i++) 
+  {
     p5_inst.drawStroke(strokes[i], sizes[i]);
   }
 
 }
 
-function seekForward() {
-  if (MPState.forward()) {
+function seekForward() 
+{
+  if (MPState.forward()) 
+  {
     const lineSize = MPState.getCurrentSize();
     const stroke = MPState.getCurrentStroke();
     p5_inst.drawStroke(stroke, lineSize);
@@ -400,30 +473,50 @@ function seekForward() {
 
 function togglePlay() 
 {
+  // Unit testing
   if (isNode) 
   {
-    if (MPState.forward()) 
-    {
-      const lineSize = MPState.getCurrentSize();
-      const stroke = MPState.getCurrentStroke();
-      p5_inst.drawStroke(stroke, lineSize);
-    }
-  } else 
+    seekForward();
+  } 
+  // Functional testing, unfortunately cannot unit test...
+  else 
   {
   	let img = document.getElementById('play-pause-img');
-  	MPState.setPlay(img.src.includes('play'));
+		MPState.setPlay(img.src.includes('play'));
 
   	// If its in the play state, show the pause button, and vice versa
   	if (MPState.play) 
     {
   		img.src='./img/pause.png';
-  		console.log('Is in play state');
-  		setTimeout(seekForward, 500);
-  	} else 
+      console.log('Is in the "Play" state');
+
+      // If its the generate mode, then simply seekForward
+      if (MPState.isGenerating()) 
+      {
+        setTimeout(seekForward, 500);      
+      }
+      // otherwise draw all the previous strokes
+      else 
+      {
+        const state = MPState.getState();
+        const sizes = MPState.getSizes();
+        const visibleStrokes = MPState.getVisibleStrokes();
+        console.log(state);
+        console.log(sizes);
+        console.log('Visible Strokes Length: ' + visibleStrokes[2])
+
+        for (let i = visibleStrokes.length; i < state.length; i++) 
+        {
+          console.log("Current stroke: " + visibleStrokes[i-1]);
+          p5_inst.drawStroke(state[i-1], sizes[i-1]);
+        }
+      }
+    } 
+    else 
     {
   		img.src='./img/play.png';
-  		console.log('Is is pause state');
-  	}
+  		console.log('Is in the "Pause" state');
+    }
   }
   // Not slated for this release.
   // throw new Error("Not implemented!");
@@ -454,15 +547,17 @@ function exportData(){
   const strokes = MPState.getVisibleStrokes();
   const sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
-  for (let i = 0; i < strokes.length; i++) {
+  for (let i = 0; i < strokes.length; i++) 
+  {
     p5_inst.drawStroke(strokes[i], sizes[i]);
   }
   p5_inst.save('my_canvas.png');           // Saves canvas as an image
-
 }
 
-function jpMode(){
-  for (let i = 0; i < 3000; i++) {
+function jpMode()
+{
+  for (let i = 0; i < 3000; i++) 
+  {
     const startX =  Math.random()*640;
     const startY =  Math.random()*480;
 
@@ -513,7 +608,8 @@ function jpMode(){
       width = Math.random()*5;
     }
 
-    const stroke = {
+    const stroke = 
+    {
       startX: startX, // start new endX value from endX value of previous vector
       startY: startY, // start new endY value from endY value of previous vector
       endX: end_X,
@@ -543,15 +639,10 @@ function jpMode(){
     }
       
   }
-  
-
-  // console.log(canvas);
-
-
-
 
 if (isNode) {
-  module.exports = {
+  module.exports = 
+  {
     p5_inst,
     MPState,
     sketch_process,
