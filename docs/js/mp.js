@@ -12,7 +12,8 @@ var isNode = (typeof global !== "undefined");
 /* DEFINE ARBITRARILY-DETERMINED GLOBAL VARIABLES */
 
 // Definition of data stored in MPState state (array)
-const DataIndices = {
+const DataIndices = 
+{
   startX: 0,
   startY: 1,
   endX: 2,
@@ -23,7 +24,8 @@ const DataIndices = {
   colorB: 7
 }
 
-let MPState = {
+let MPState = 
+{
   WIDTH: 640,
   HEIGHT: 480,
 
@@ -47,7 +49,8 @@ let MPState = {
   // Otherwise, this serves as an upper limit on
   dataIndex: 0,
 
-  inBounds(startX, startY, endX, endY) {
+  inBounds(startX, startY, endX, endY) 
+  {
     return startX >= 0 && startX <= this.WIDTH &&
         startY >= 0 && startY <= this.HEIGHT &&
         endX >= 0 && endX <= this.WIDTH &&
@@ -395,23 +398,29 @@ function seekForward() {
   }
 }
 
-function togglePlay() {
-  if (isNode) {
-    if (MPState.forward()) {
+function togglePlay() 
+{
+  if (isNode) 
+  {
+    if (MPState.forward()) 
+    {
       const lineSize = MPState.getCurrentSize();
       const stroke = MPState.getCurrentStroke();
       p5_inst.drawStroke(stroke, lineSize);
     }
-  } else {
+  } else 
+  {
   	let img = document.getElementById('play-pause-img');
   	MPState.setPlay(img.src.includes('play'));
 
   	// If its in the play state, show the pause button, and vice versa
-  	if (MPState.play) {
+  	if (MPState.play) 
+    {
   		img.src='./img/pause.png';
   		console.log('Is in play state');
   		setTimeout(seekForward, 500);
-  	} else {
+  	} else 
+    {
   		img.src='./img/play.png';
   		console.log('Is is pause state');
   	}
@@ -420,7 +429,8 @@ function togglePlay() {
   // throw new Error("Not implemented!");
 }
 
-function updateGenerateToggle() {
+function updateGenerateToggle() 
+{
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('generate-toggle-box');
   MPState.setGenerating(checkbox.checked);
@@ -429,8 +439,14 @@ function updateGenerateToggle() {
 /**
  * Gaussian distribution. Note, this is just an approximation...probably not right
  */
-function gaussian() {
+function gaussian() 
+{
   return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
+}
+
+function pickColor()
+{
+
 }
 
 
@@ -541,6 +557,7 @@ if (isNode) {
     sketch_process,
     seekBackward,
     seekForward,
+    pickColor,
     togglePlay,
     jpMode
   }
