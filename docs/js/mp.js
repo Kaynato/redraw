@@ -149,6 +149,8 @@ let MPState = {
     Step stroke index forward or call the generator network.
     Returns whether the operation was effective.
   */
+
+
   forward() {
     if (this.isGenerating()) {
       // predictVector / nextStroke - update SDD
@@ -191,6 +193,7 @@ let MPState = {
   },
 
 }
+
 
 /**
   Function definition for p5 object.
@@ -442,6 +445,89 @@ function exportData(){
 
 }
 
+function jpMode(){
+  for (let i = 0; i < 3000; i++) {
+    const startX =  Math.random()*640;
+    const startY =  Math.random()*480;
+
+    const rand = Math.random();
+    let end_X = null;
+    if (rand < 0.5) 
+    {
+      end_X = startX + Math.random()*5;
+    } 
+    else 
+    {
+      const rand1 = Math.random();
+      if(rand1 < .5)
+      {
+        end_X = startX + Math.random()*100;
+      }
+      else
+      {
+        end_X = startX - Math.random()*100;
+      }
+    }
+
+    let end_Y = null;
+    if (rand < 0.5) 
+    {
+      end_Y = startY + Math.random()*5;
+    } 
+    else 
+    {
+      const rand1 = Math.random();
+      if(rand1 < .5)
+      {
+        end_Y = startY + Math.random()*100;
+      }
+      else
+      {
+        end_Y = startY - Math.random()*100;
+      }
+    }
+
+    let width = null;
+    if (rand < 0.5) 
+    {
+      width = Math.random()*15;
+    } 
+    else 
+    {
+      width = Math.random()*5;
+    }
+
+    const stroke = {
+      startX: startX, // start new endX value from endX value of previous vector
+      startY: startY, // start new endY value from endY value of previous vector
+      endX: end_X,
+      endY: end_Y,
+      width: width,
+      color: {
+        _array: [0,0,0,1],
+        levels: [Math.random()*255,Math.random()*255,Math.random()*255,Math.random()*255],
+        maxes: {
+          hsb: [360, 100, 100, 1],
+          hsl: [360, 100, 100, 1],
+          rgb: [255,255,255,255]
+        },
+        mode: "rgb",
+        name: "p5.Color"
+      }
+    };
+
+    MPState.addStroke(stroke.startX, stroke.startY,
+                   stroke.endX, stroke.endY,
+                   stroke.width,
+                   stroke.color);
+    const new_stroke = MPState.getCurrentStroke();
+    const lineSize = MPState.getCurrentSize();
+
+    p5_inst.drawStroke(new_stroke, lineSize);
+    }
+      
+  }
+  
 
   // console.log(canvas);
 
@@ -455,6 +541,7 @@ if (isNode) {
     sketch_process,
     seekBackward,
     seekForward,
-    togglePlay
+    togglePlay,
+    jpMode
   }
 }
