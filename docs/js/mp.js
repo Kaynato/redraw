@@ -88,14 +88,28 @@ let MPState =
 
   },
 
+  setStrokeIndex(val) {
+    if (val < 0) {
+      return null;
+    }
+    return this.strokeIndex = val;
+  },
+
+  setDataIndex(val) {
+    if (val < 0) {
+      return null;
+    }
+    return this.dataIndex = val;
+  },
+
   /**
    * Gets the current stroke from the canvas
    */
   getCurrentStroke() 
   {
-    console.log('Stroke Index: ' + this.strokeIndex);
-    console.log('Data Index: ' + this.dataIndex)
-    console.log(this.state)
+    // console.log('Stroke Index: ' + this.strokeIndex);
+    // console.log('Data Index: ' + this.dataIndex)
+    // console.log(this.state)
     if (this.strokeIndex > 0)
     {
       return this.state[this.strokeIndex - 1];
@@ -468,9 +482,11 @@ function seekBackward()
 
 function clears()
 {
-  // Reset all visible strokes and sizes to 0
+  // Reset all visible strokes, sizes, and indicies to 0
   MPState.setVisibleStrokes([]);
   MPState.setVisibleSizes([]);
+  MPState.setDataIndex(0);
+  MPState.setStrokeIndex(0);
   p5_inst.resetCanvas();
 }
 
@@ -514,9 +530,9 @@ function togglePlay()
         const state = MPState.getState();
         const sizes = MPState.getSizes();
         const visibleStrokes = MPState.getVisibleStrokes();
-        console.log(state);
-        console.log(sizes);
-        console.log('Visible Strokes Length: ' + visibleStrokes[2])
+        // console.log(state);
+        // console.log(sizes);
+        // console.log('Visible Strokes Length: ' + visibleStrokes[2])
 
         for (let i = visibleStrokes.length; i < state.length; i++) 
         {

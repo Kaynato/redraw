@@ -121,36 +121,3 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
-/* DOWNLOAD CANVAS */
-/*body {
-    background-color:#555557;
-    padding:0;
-    margin:0;
-    overflow:hidden;
-    font-family:sans-serif;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}*/
-/*canvas {
-    border:1px solid #000;
-    float:left;
-    clear:both;
-}*/
-
-#d1 {
-    float:left;
-    cursor:pointer;
-    color:#ccc;
-    padding:3px;
-}
-
-#d1:hover {
-    color:#fff;
-}
-
-.image-download > input {
-    display: none;
-}
