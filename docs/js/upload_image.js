@@ -30,13 +30,15 @@ if (!isNode) {
   };
 }
 
-// const ctx = canvas.getContext('2d');
-
 imageLoader.addEventListener('change', uploadImage, false);
 
 var debugvariable = [];
 /**
- * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive
+ * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive.
+ * 
+ * When uploading an image, actually click the button to import the image, 
+ * otherwise the import will not work properly.
+ * 
  * @param {*} e
  */
 function uploadImage(e){
@@ -74,8 +76,7 @@ function uploadImage(e){
       p5_inst.line(stroke[0], stroke[1], stroke[2], stroke[3]);
     }
 
-    DecomposeModel.render2(DecomposeModel.interimModel(tensor));
-
+    // DecomposeModel.render2(DecomposeModel.interimModel(tensor));
   }
 };
 

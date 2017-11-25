@@ -5,6 +5,7 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai');
 
 // local
+const mp = require('../docs/js/mp.js');
 const predict = require('../docs/js/predict_vector.js');
 
 
@@ -18,7 +19,16 @@ describe('predict', function() {
         assert.throws(predict.GenerateModel.loadModel, /Not implemented!/)
     });
 
-    it('should indicate current implementation status of nextStroke(ndpack)', function() {
-        assert.throws(predict.GenerateModel.nextStroke, /Not implemented!/)
+    it('Should return some stroke even for an empty MP state', function() {
+        mp.p5_inst.setup();
+        var nextStroke = predict.GenerateModel.nextStroke(mp.MPState);
+        assert.isNotNull(nextStroke);
+    });
+
+    it('Should return some stroke for a nonempty MP state', function() {
+        // mp.p5_inst.setMouse(5, 5);
+    	// mp.p5_inst.mouseDragged();
+    	// var nextStroke = predict.GenerateModel.nextStroke(mp.MPState);
+        // assert.isNotNull(nextStroke);
     });
 })

@@ -14,6 +14,9 @@ const assert = chai.assert;
 
 describe('uploadImage', function() {
     it('should tell whether the image was uploaded', function() {
-    	// No way to really test aside from really uploading an image.
+    	
+    	var mockImage = {e: {target: {files: [new File("./assets/test.png")]}}}
+    	// console.log(mockImage);
+
     });
 });

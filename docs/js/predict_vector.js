@@ -14,12 +14,16 @@ var isNode = (typeof global !== "undefined");
 
 const PredictUtils = {
 	box_mueller_gaussian() {
-	    var x = 0, y = 0;
+	    var x = 0;
+	    var y = 0;
+	    const pi = Math.PI;
 	    while(x === 0)
 	    	x = Math.random();
 	    while(y === 0)
 	    	y = Math.random();
-	    return Math.sqrt(-2.0*Math.log(x)) * Math.cos(2.0*Math.PI*y);
+	    let a = Math.sqrt(-2.0 * Math.log(x));
+	    let ret = a * Math.cos(2.0 * pi * y);
+	    return ret;
 	}
 }
 
