@@ -461,6 +461,11 @@ function seekBackward()
 
 }
 
+function clears()
+{
+  p5_inst.resetCanvas();
+}
+
 function seekForward() 
 {
   if (MPState.forward()) 
@@ -656,6 +661,7 @@ if (isNode) {
     seekForward,
     pickColor,
     togglePlay,
-    jpMode
+    jpMode,
+    clears
   }
 }
