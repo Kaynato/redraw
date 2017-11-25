@@ -134,25 +134,25 @@ let MPState =
   },
 
   /**
-   * Sets the stroke to get upto. Displays the strokes upto the specified amount.
-   * @param {int} strokeIndex   the stroke index to get upto
+   * Sets the visible strokes to specified ones.
+   * @param {array} strokes   - strokes of 
    */
-  setVisibleStrokes(strokeIndex) {
-    if (strokeIndex == 0) {
+  setVisibleStrokes(strokes) {
+    if (strokes.length == 0) {
       return this.state = [];
     }
-    return this.state.slice(0, strokeIndex);
+    return this.state = strokes;
   },
 
   /**
-   * Sets the stroke size to get upto. Displays the strokes upto the specified amount.
-   * @param {int} strokeIndex   the stroke index to get upto
+   * Sets the visible stroke sizes to the specified ones.
+   * @param {array} strokeSizes   - line sizes of the visible strokes
    */
-  setVisibleSizes(strokeIndex) {
-    if (strokeIndex == 0) {
+  setVisibleSizes(strokeSizes) {
+    if (strokeSizes.length == 0) {
       return this.sizes = [];
     }
-    return this.sizes.slice(0, strokeIndex);
+    return this.sizes = strokeSizes;
   },
 
   getState() 
@@ -486,8 +486,8 @@ function seekBackward()
 function clears()
 {
   // Reset all visible strokes and sizes to 0
-  MPState.setVisibleStrokes(0);
-  MPState.setVisibleSizes(0);
+  MPState.setVisibleStrokes([]);
+  MPState.setVisibleSizes([]);
   p5_inst.resetCanvas();
 }
 
