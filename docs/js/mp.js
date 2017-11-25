@@ -88,6 +88,20 @@ let MPState =
 
   },
 
+  setStrokeIndex(val) {
+    if (val < 0) {
+      return null;
+    }
+    return this.strokeIndex = val;
+  },
+
+  setDataIndex(val) {
+    if (val < 0) {
+      return null;
+    }
+    return this.dataIndex = val;
+  },
+
   /**
    * Gets the current stroke from the canvas
    */
@@ -485,9 +499,11 @@ function seekBackward()
 
 function clears()
 {
-  // Reset all visible strokes and sizes to 0
+  // Reset all visible strokes, sizes, and indicies to 0
   MPState.setVisibleStrokes([]);
   MPState.setVisibleSizes([]);
+  MPState.setDataIndex(0);
+  MPState.setStrokeIndex(0);
   p5_inst.resetCanvas();
 }
 
