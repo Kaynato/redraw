@@ -35,6 +35,9 @@ let MPState =
   // the network.
   sizes: [],
   state: [],
+  colorsR: [],
+  colorsG: [],
+  colorsB: [],
 
   // Determines toggle mode.
   generating: false,
@@ -74,12 +77,18 @@ let MPState =
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
       this.sizes.push(lineSize);
+      this.colorsR.push(color.levels[0]);
+      this.colorsG.push(color.levels[1]);
+      this.colorsB.push(color.levels[2]);
 
       // Overwrite
       if (this.dataIndex > this.strokeIndex) 
       {
         this.state = this.state.slice(0, this.strokeIndex)
         this.sizes = this.sizes.slice(0, this.strokeIndex)
+        this.colorsR = this.colorsR.slice(0, this.strokeIndex)
+        this.colorsG = this.colorsG.slice(0, this.strokeIndex)
+        this.colorsB = this.colorsB.slice(0, this.strokeIndex)
       }
 
       this.strokeIndex++;
@@ -88,15 +97,19 @@ let MPState =
 
   },
 
-  setStrokeIndex(val) {
-    if (val < 0) {
+  setStrokeIndex(val) 
+  {
+    if (val < 0) 
+    {
       return null;
     }
     return this.strokeIndex = val;
   },
 
-  setDataIndex(val) {
-    if (val < 0) {
+  setDataIndex(val) 
+  {
+    if (val < 0) 
+    {
       return null;
     }
     return this.dataIndex = val;
@@ -147,12 +160,29 @@ let MPState =
       return this.sizes.slice(0, this.strokeIndex)
   },
 
+  getVisibleReds() 
+  {
+      return this.colorsR.slice(0, this.strokeIndex)
+  },
+
+  getVisibleGreens() 
+  {
+      return this.colorsG.slice(0, this.strokeIndex)
+  },
+
+  getVisibleBlues() 
+  {
+      return this.colorsB.slice(0, this.strokeIndex)
+  },
+
   /**
    * Sets the visible strokes to specified ones.
    * @param {array} strokes   - strokes of 
    */
-  setVisibleStrokes(strokes) {
-    if (strokes.length == 0) {
+  setVisibleStrokes(strokes) 
+  {
+    if (strokes.length == 0) 
+    {
       return this.state = [];
     }
     return this.state = strokes;
@@ -162,8 +192,10 @@ let MPState =
    * Sets the visible stroke sizes to the specified ones.
    * @param {array} strokeSizes   - line sizes of the visible strokes
    */
-  setVisibleSizes(strokeSizes) {
-    if (strokeSizes.length == 0) {
+  setVisibleSizes(strokeSizes) 
+  {
+    if (strokeSizes.length == 0) 
+    {
       return this.sizes = [];
     }
     return this.sizes = strokeSizes;
@@ -282,24 +314,38 @@ let MPState =
 /**
   Function definition for p5 object.
 */
-function sketch_process(p) {
+function sketch_process(p) 
+{
 
   let canvas = null;
   let color = null;
   let sizeSlider = null;
+  let redSlider = null;
+  let greenSlider = null;
+  let blueSlider = null;
+  let red = 0;
+  let green = 0;
+  let blue = 0;
   let lineSize = 1;
 
-  p.setup = function() {
+  p.setup = function() 
+  {
     canvas = p.createCanvas(640, 480);
     lineSize = 5;
-    color = p.color(0, 0, 0, 255);
+    color = p.color(red, green, blue, 255);
 
     // For now, it's probably better to fix opacity and width.
     // They aren't anywhere in our SDS.
     sizeSlider = p.createSlider(0, 10, lineSize);
+    redSlider = p.createSlider(0, 255, red);
+    greenSlider = p.createSlider(0, 255, green);
+    blueSlider = p.createSlider(0, 255, blue);
 
     canvas.parent("canvas-holder");
     sizeSlider.parent("size-slider");
+    redSlider.parent("red-slider");
+    greenSlider.parent("green-slider");
+    blueSlider.parent("blue-slider");
     p.predraw();
   }
 
@@ -309,6 +355,8 @@ function sketch_process(p) {
     p.strokeWeight(1);
     p.rect(1, 0, 638, 479);
     p.strokeWeight(lineSize);
+    p.color(red, green, blue, 255)
+
   }
 
   p.draw = function() 
@@ -319,8 +367,11 @@ function sketch_process(p) {
   p.mouseDragged = function() 
   {
     lineSize = sizeSlider.value();
+    red = redSlider.value();
+    green = greenSlider.value();
+    blue = blueSlider.value();
     p.strokeWeight(lineSize);
-    p.stroke(color);
+    p.stroke(p.color(red, green, blue, 255));
     p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
     MPState.addStroke(p.pmouseX, p.pmouseY,
                       p.mouseX, p.mouseY,
