@@ -107,9 +107,9 @@ let MPState =
    */
   getCurrentStroke() 
   {
-    console.log('Stroke Index: ' + this.strokeIndex);
-    console.log('Data Index: ' + this.dataIndex)
-    console.log(this.state)
+    // console.log('Stroke Index: ' + this.strokeIndex);
+    // console.log('Data Index: ' + this.dataIndex)
+    // console.log(this.state)
     if (this.strokeIndex > 0)
     {
       return this.state[this.strokeIndex - 1];
@@ -547,9 +547,9 @@ function togglePlay()
         const state = MPState.getState();
         const sizes = MPState.getSizes();
         const visibleStrokes = MPState.getVisibleStrokes();
-        console.log(state);
-        console.log(sizes);
-        console.log('Visible Strokes Length: ' + visibleStrokes[2])
+        // console.log(state);
+        // console.log(sizes);
+        // console.log('Visible Strokes Length: ' + visibleStrokes[2])
 
         for (let i = visibleStrokes.length; i < state.length; i++) 
         {
