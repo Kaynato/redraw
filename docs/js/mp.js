@@ -542,8 +542,10 @@ function pickColor()
 
 }
 
-
-function exportData(){
+/**
+ * Downloads the current state of the canvas.
+ */
+function exportData() {
   const strokes = MPState.getVisibleStrokes();
   const sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
@@ -554,47 +556,52 @@ function exportData(){
   p5_inst.save('my_canvas.png');           // Saves canvas as an image
 }
 
+/**
+ * Implements the artistic style of Jackson Pollack.
+ */
 function jpMode()
 {
-  for (let i = 0; i < 3000; i++) 
+  for (let i = 0; i < 1000; i++) 
   {
     const startX =  Math.random()*640;
     const startY =  Math.random()*480;
 
     const rand = Math.random();
-    let end_X = null;
+    let endX = null;
     if (rand < 0.5) 
     {
-      end_X = startX + Math.random()*5;
+      endX = startX + Math.random()*5;
     } 
+    // If it is a line segment, randomize the X direction
     else 
     {
       const rand1 = Math.random();
       if(rand1 < .5)
       {
-        end_X = startX + Math.random()*100;
+        endX = startX + Math.random()*100;
       }
       else
       {
-        end_X = startX - Math.random()*100;
+        endX = startX - Math.random()*100;
       }
     }
 
-    let end_Y = null;
+    let endY = null;
     if (rand < 0.5) 
     {
-      end_Y = startY + Math.random()*5;
+      endY = startY + Math.random()*5;
     } 
+    // If it is a line segment, randomize the Y direction
     else 
     {
       const rand1 = Math.random();
       if(rand1 < .5)
       {
-        end_Y = startY + Math.random()*100;
+        endY = startY + Math.random()*100;
       }
       else
       {
-        end_Y = startY - Math.random()*100;
+        endY = startY - Math.random()*100;
       }
     }
 
@@ -612,12 +619,12 @@ function jpMode()
     {
       startX: startX, // start new endX value from endX value of previous vector
       startY: startY, // start new endY value from endY value of previous vector
-      endX: end_X,
-      endY: end_Y,
+      endX: endX,
+      endY: endY,
       width: width,
       color: {
         _array: [0,0,0,1],
-        levels: [Math.random()*255,Math.random()*255,Math.random()*255,Math.random()*255],
+        levels: [Math.random()*255, Math.random()*255, Math.random()*255, Math.random()*255],
         maxes: {
           hsb: [360, 100, 100, 1],
           hsl: [360, 100, 100, 1],
@@ -637,7 +644,6 @@ function jpMode()
 
     p5_inst.drawStroke(new_stroke, lineSize);
     }
-      
   }
 
 if (isNode) {
