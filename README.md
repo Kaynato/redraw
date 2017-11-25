@@ -9,6 +9,13 @@
  - Cd into project's root directory
  - `npm install` -> this will install all project specific package modules within the project's root directory called `node_modules`
 
+### Unit Testing
+ - Open bash/terminal
+ - CD inot project's root directory
+ - Update local npm packages using `npm install`
+ - `npm test`
+    * This will run both the unit tests as well as the coveralls code coverage tool
+
 ### Github Pages
 View the site [here](https://redrawteam.github.io/redraw/)
 
