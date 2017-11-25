@@ -63,7 +63,7 @@ const GenerateModel = {
 			let dx = cur_stroke[2] - cur_stroke[0];
 			let dy = cur_stroke[3] - cur_stroke[1];
 			let jitter = radius_jitter * PredictUtils.box_mueller_gaussian();
-			est_radius = Math.max(Math.min(Math.sqrt(dx**2 + dy**2) + jitter, 80.0), 5.0);
+			est_radius = Math.max(Math.min(Math.sqrt(dx * dx + dy * dy) + jitter, 80.0), 5.0);
 		}
 
 		let dx = PredictUtils.box_mueller_gaussian()*est_radius;

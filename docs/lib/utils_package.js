@@ -1,7 +1,504 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+},{}],2:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}],3:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],4:[function(require,module,exports){
 /**
  * @module utils.js
  * Should be processed with browerify (npm)
+
+ * DO NOT PUT "USE STRICT" ON THE TOP OF THIS DOCUMENT!
+ * THAT BREAKS THE LIBRARY LOADING!
+
+ * browserify utils.js > [utils_package.js]
  */
 
 // For browserify to grab requirements.
@@ -12,10 +509,13 @@ ndshow = require('ndarray-show');
 ndops = require('ndarray-ops');
 zeros = require('zeros');
 
+dominant_color = require('dominant-color');
+imagemagick = require('imagemagick');
+
 // Client-side jsfeat is newer.
 // jsfeat = require('jsfeat');
 
-},{"ndarray":15,"ndarray-ops":10,"ndarray-pack":11,"ndarray-show":13,"ndarray-unpack":14,"zeros":18}],2:[function(require,module,exports){
+},{"dominant-color":22,"imagemagick":23,"ndarray":18,"ndarray-ops":13,"ndarray-pack":14,"ndarray-show":16,"ndarray-unpack":17,"zeros":21}],5:[function(require,module,exports){
 "use strict"
 
 var createThunk = require("./lib/thunk.js")
@@ -126,7 +626,7 @@ function compileCwise(user_args) {
 
 module.exports = compileCwise
 
-},{"./lib/thunk.js":4}],3:[function(require,module,exports){
+},{"./lib/thunk.js":7}],6:[function(require,module,exports){
 "use strict"
 
 var uniq = require("uniq")
@@ -486,7 +986,7 @@ function generateCWiseOp(proc, typesig) {
 }
 module.exports = generateCWiseOp
 
-},{"uniq":17}],4:[function(require,module,exports){
+},{"uniq":20}],7:[function(require,module,exports){
 "use strict"
 
 // The function below is called when constructing a cwise function object, and does the following:
@@ -574,9 +1074,9 @@ function createThunk(proc) {
 
 module.exports = createThunk
 
-},{"./compile.js":3}],5:[function(require,module,exports){
+},{"./compile.js":6}],8:[function(require,module,exports){
 module.exports = require("cwise-compiler")
-},{"cwise-compiler":2}],6:[function(require,module,exports){
+},{"cwise-compiler":5}],9:[function(require,module,exports){
 "use strict"
 
 function dupe_array(count, value, i) {
@@ -626,7 +1126,7 @@ function dupe(count, value) {
 }
 
 module.exports = dupe
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var sprintf = require('sprintf');
 module.exports = format;
 
@@ -713,7 +1213,7 @@ function packf (x, bytes) {
     return pad(s, bytes).slice(0, bytes);
 }
 
-},{"sprintf":16}],8:[function(require,module,exports){
+},{"sprintf":19}],11:[function(require,module,exports){
 "use strict"
 
 function iota(n) {
@@ -725,7 +1225,7 @@ function iota(n) {
 }
 
 module.exports = iota
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -748,7 +1248,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict"
 
 var compile = require("cwise-compiler")
@@ -1211,7 +1711,7 @@ exports.equals = compile({
 
 
 
-},{"cwise-compiler":2}],11:[function(require,module,exports){
+},{"cwise-compiler":5}],14:[function(require,module,exports){
 "use strict"
 
 var ndarray = require("ndarray")
@@ -1234,10 +1734,10 @@ module.exports = function convert(arr, result) {
   return result
 }
 
-},{"./doConvert.js":12,"ndarray":15}],12:[function(require,module,exports){
+},{"./doConvert.js":15,"ndarray":18}],15:[function(require,module,exports){
 module.exports=require('cwise-compiler')({"args":["array","scalar","index"],"pre":{"body":"{}","args":[],"thisVars":[],"localVars":[]},"body":{"body":"{\nvar _inline_1_v=_inline_1_arg1_,_inline_1_i\nfor(_inline_1_i=0;_inline_1_i<_inline_1_arg2_.length-1;++_inline_1_i) {\n_inline_1_v=_inline_1_v[_inline_1_arg2_[_inline_1_i]]\n}\n_inline_1_arg0_=_inline_1_v[_inline_1_arg2_[_inline_1_arg2_.length-1]]\n}","args":[{"name":"_inline_1_arg0_","lvalue":true,"rvalue":false,"count":1},{"name":"_inline_1_arg1_","lvalue":false,"rvalue":true,"count":1},{"name":"_inline_1_arg2_","lvalue":false,"rvalue":true,"count":4}],"thisVars":[],"localVars":["_inline_1_i","_inline_1_v"]},"post":{"body":"{}","args":[],"thisVars":[],"localVars":[]},"funcName":"convert","blockSize":64})
 
-},{"cwise-compiler":2}],13:[function(require,module,exports){
+},{"cwise-compiler":5}],16:[function(require,module,exports){
 var showf = require('fixed-width-float');
 var ndarray = require('ndarray');
 
@@ -1293,7 +1793,7 @@ function d4 (m, opts) {
     return rows.join('\n' + Array(len+1).join('-') + '\n\n');
 }
 
-},{"fixed-width-float":7,"ndarray":15}],14:[function(require,module,exports){
+},{"fixed-width-float":10,"ndarray":18}],17:[function(require,module,exports){
 "use strict"
 
 var dup = require("dup")
@@ -1307,7 +1807,7 @@ module.exports = function unpack(arr) {
   return result
 }
 
-},{"cwise/lib/wrapper":5,"dup":6}],15:[function(require,module,exports){
+},{"cwise/lib/wrapper":8,"dup":9}],18:[function(require,module,exports){
 var iota = require("iota-array")
 var isBuffer = require("is-buffer")
 
@@ -1652,7 +2152,7 @@ function wrappedNDArrayCtor(data, shape, stride, offset) {
 
 module.exports = wrappedNDArrayCtor
 
-},{"iota-array":8,"is-buffer":9}],16:[function(require,module,exports){
+},{"iota-array":11,"is-buffer":12}],19:[function(require,module,exports){
 /**
 sprintf() for JavaScript 0.7-beta1
 http://www.diveintojavascript.com/projects/javascript-sprintf
@@ -1903,7 +2403,7 @@ module.exports = sprintf;
 sprintf.sprintf = sprintf;
 sprintf.vsprintf = vsprintf;
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -1962,7 +2462,7 @@ function unique(list, compare, sorted) {
 
 module.exports = unique
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict"
 
 var ndarray = require("ndarray")
@@ -2008,4 +2508,461 @@ module.exports = function zeros(shape, dtype) {
   return ndarray(new (dtypeToType(dtype))(sz), shape);
 }
 
-},{"ndarray":15}]},{},[1]);
+},{"ndarray":18}],22:[function(require,module,exports){
+var im     = require('imagemagick')
+
+module.exports = function(path, opts, next){
+  if (typeof opts === 'function'){
+    next = opts
+    opts = undefined
+  }
+  if (!next) next = function(){}
+  if (!opts) opts = {}
+  if (!opts.format) opts.format = 'hex'
+
+  var imArgs = [path, '-scale', '1x1\!', '-format', '%[pixel:u]', 'info:-']
+
+  im.convert(imArgs, function(err, stdout){
+    if (err) next(err)
+    var rgb = stdout.substring(stdout.indexOf('(') + 1, stdout.indexOf(')'))
+
+    var results = {
+      hex: function(){ return require('rgb-hex').apply(this, rgb.split(',')) },
+      rgb: function(){ return rgb.split(',') }
+    }
+
+    next(null, results[opts.format]())
+  })
+}
+
+},{"imagemagick":23,"rgb-hex":24}],23:[function(require,module,exports){
+(function (process){
+var childproc = require('child_process'),
+    EventEmitter = require('events').EventEmitter;
+
+
+function exec2(file, args /*, options, callback */) {
+  var options = { encoding: 'utf8'
+                , timeout: 0
+                , maxBuffer: 500*1024
+                , killSignal: 'SIGKILL'
+                , output: null
+                };
+
+  var callback = arguments[arguments.length-1];
+  if ('function' != typeof callback) callback = null;
+
+  if (typeof arguments[2] == 'object') {
+    var keys = Object.keys(options);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (arguments[2][k] !== undefined) options[k] = arguments[2][k];
+    }
+  }
+
+  var child = childproc.spawn(file, args);
+  var killed = false;
+  var timedOut = false;
+
+  var Wrapper = function(proc) {
+    this.proc = proc;
+    this.stderr = new Accumulator();
+    proc.emitter = new EventEmitter();
+    proc.on = proc.emitter.on.bind(proc.emitter);
+    this.out = proc.emitter.emit.bind(proc.emitter, 'data');
+    this.err = this.stderr.out.bind(this.stderr);
+    this.errCurrent = this.stderr.current.bind(this.stderr);
+  };
+  Wrapper.prototype.finish = function(err) {
+    this.proc.emitter.emit('end', err, this.errCurrent());
+  };
+
+  var Accumulator = function(cb) {
+    this.stdout = {contents: ""};
+    this.stderr = {contents: ""};
+    this.callback = cb;
+
+    var limitedWrite = function(stream) {
+      return function(chunk) {
+        stream.contents += chunk;
+        if (!killed && stream.contents.length > options.maxBuffer) {
+          child.kill(options.killSignal);
+          killed = true;
+        }
+      };
+    };
+    this.out = limitedWrite(this.stdout);
+    this.err = limitedWrite(this.stderr);
+  };
+  Accumulator.prototype.current = function() { return this.stdout.contents; };
+  Accumulator.prototype.errCurrent = function() { return this.stderr.contents; };
+  Accumulator.prototype.finish = function(err) { this.callback(err, this.stdout.contents, this.stderr.contents); };
+
+  var std = callback ? new Accumulator(callback) : new Wrapper(child);
+
+  var timeoutId;
+  if (options.timeout > 0) {
+    timeoutId = setTimeout(function () {
+      if (!killed) {
+        child.kill(options.killSignal);
+        timedOut = true;
+        killed = true;
+        timeoutId = null;
+      }
+    }, options.timeout);
+  }
+
+  child.stdout.setEncoding(options.encoding);
+  child.stderr.setEncoding(options.encoding);
+
+  child.stdout.addListener("data", function (chunk) { std.out(chunk, options.encoding); });
+  child.stderr.addListener("data", function (chunk) { std.err(chunk, options.encoding); });
+
+  var version = process.versions.node.split('.');
+  child.addListener(version[0] == 0 && version[1] < 7 ? "exit" : "close", function (code, signal) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (code === 0 && signal === null) {
+      std.finish(null);
+    } else {
+      var e = new Error("Command "+(timedOut ? "timed out" : "failed")+": " + std.errCurrent());
+      e.timedOut = timedOut;
+      e.killed = killed;
+      e.code = code;
+      e.signal = signal;
+      std.finish(e);
+    }
+  });
+
+  return child;
+};
+
+
+function parseIdentify(input) {
+  var lines = input.split("\n"),
+      prop = {},
+      props = [prop],
+      prevIndent = 0,
+      indents = [indent],
+      currentLine, comps, indent, i;
+
+  lines.shift(); //drop first line (Image: name.jpg)
+
+  for (i in lines) {
+    currentLine = lines[i];
+    indent = currentLine.search(/\S/);
+    if (indent >= 0) {
+      comps = currentLine.split(': ');
+      if (indent > prevIndent) indents.push(indent);
+      while (indent < prevIndent && props.length) {
+        indents.pop();
+        prop = props.pop();
+        prevIndent = indents[indents.length - 1];
+      }
+      if (comps.length < 2) {
+        props.push(prop);
+        prop = prop[currentLine.split(':')[0].trim().toLowerCase()] = {};
+      } else {
+        prop[comps[0].trim().toLowerCase()] = comps[1].trim()
+      }
+      prevIndent = indent;
+    }
+  }
+  return prop;
+};
+
+exports.identify = function(pathOrArgs, callback) {
+  var isCustom = Array.isArray(pathOrArgs),
+      isData,
+      args = isCustom ? ([]).concat(pathOrArgs) : ['-verbose', pathOrArgs];
+
+  if (typeof args[args.length-1] === 'object') {
+    isData = true;
+    pathOrArgs = args[args.length-1];
+    args[args.length-1] = '-';
+    if (!pathOrArgs.data)
+      throw new Error('first argument is missing the "data" member');
+  } else if (typeof pathOrArgs === 'function') {
+    args[args.length-1] = '-';
+    callback = pathOrArgs;
+  }
+  var proc = exec2(exports.identify.path, args, {timeout:120000}, function(err, stdout, stderr) {
+    var result, geometry;
+    if (!err) {
+      if (isCustom) {
+        result = stdout;
+      } else {
+        result = parseIdentify(stdout);
+        geometry = result['geometry'].split(/x/);
+
+        result.format = result.format.match(/\S*/)[0]
+        result.width = parseInt(geometry[0]);
+        result.height = parseInt(geometry[1]);
+        result.depth = parseInt(result.depth);
+        if (result.quality !== undefined) result.quality = parseInt(result.quality) / 100;
+      }
+    }
+    callback(err, result);
+  });
+  if (isData) {
+    if ('string' === typeof pathOrArgs.data) {
+      proc.stdin.setEncoding('binary');
+      proc.stdin.write(pathOrArgs.data, 'binary');
+      proc.stdin.end();
+    } else {
+      proc.stdin.end(pathOrArgs.data);
+    }
+  }
+  return proc;
+}
+exports.identify.path = 'identify';
+
+function ExifDate(value) {
+  // YYYY:MM:DD HH:MM:SS -> Date(YYYY-MM-DD HH:MM:SS +0000)
+  value = value.split(/ /);
+  return new Date(value[0].replace(/:/g, '-')+' '+
+    value[1]+' +0000');
+}
+
+function exifKeyName(k) {
+  return k.replace(exifKeyName.RE, function(x){
+    if (x.length === 1) return x.toLowerCase();
+    else return x.substr(0,x.length-1).toLowerCase()+x.substr(x.length-1);
+  });
+}
+exifKeyName.RE = /^[A-Z]+/;
+
+var exifFieldConverters = {
+  // Numbers
+  bitsPerSample:Number, compression:Number, exifImageLength:Number,
+  exifImageWidth:Number, exifOffset:Number, exposureProgram:Number,
+  flash:Number, imageLength:Number, imageWidth:Number, isoSpeedRatings:Number,
+  jpegInterchangeFormat:Number, jpegInterchangeFormatLength:Number,
+  lightSource:Number, meteringMode:Number, orientation:Number,
+  photometricInterpretation:Number, planarConfiguration:Number,
+  resolutionUnit:Number, rowsPerStrip:Number, samplesPerPixel:Number,
+  sensingMethod:Number, stripByteCounts:Number, subSecTime:Number,
+  subSecTimeDigitized:Number, subSecTimeOriginal:Number, customRendered:Number,
+  exposureMode:Number, focalLengthIn35mmFilm:Number, gainControl:Number,
+  saturation:Number, sharpness:Number, subjectDistanceRange:Number,
+  subSecTime:Number, subSecTimeDigitized:Number, subSecTimeOriginal:Number,
+  whiteBalance:Number, sceneCaptureType:Number,
+
+  // Dates
+  dateTime:ExifDate, dateTimeDigitized:ExifDate, dateTimeOriginal:ExifDate
+};
+
+exports.readMetadata = function(path, callback) {
+  return exports.identify(['-format', '%[EXIF:*]', path], function(err, stdout) {
+    var meta = {};
+    if (!err) {
+      stdout.split(/\n/).forEach(function(line){
+        var eq_p = line.indexOf('=');
+        if (eq_p === -1) return;
+        var key = line.substr(0, eq_p).replace('/','-'),
+            value = line.substr(eq_p+1).trim(),
+            typekey = 'default';
+        var p = key.indexOf(':');
+        if (p !== -1) {
+          typekey = key.substr(0, p);
+          key = key.substr(p+1);
+          if (typekey === 'exif') {
+            key = exifKeyName(key);
+            var converter = exifFieldConverters[key];
+            if (converter) value = converter(value);
+          }
+        }
+        if (!(typekey in meta)) meta[typekey] = {key:value};
+        else meta[typekey][key] = value;
+      })
+    }
+    callback(err, meta);
+  });
+}
+
+exports.convert = function(args, timeout, callback) {
+  var procopt = {encoding: 'binary'};
+  if (typeof timeout === 'function') {
+    callback = timeout;
+    timeout = 0;
+  } else if (typeof timeout !== 'number') {
+    timeout = 0;
+  }
+  if (timeout && (timeout = parseInt(timeout)) > 0 && !isNaN(timeout))
+    procopt.timeout = timeout;
+  return exec2(exports.convert.path, args, procopt, callback);
+}
+exports.convert.path = 'convert';
+
+var resizeCall = function(t, callback) {
+  var proc = exports.convert(t.args, t.opt.timeout, callback);
+  if (t.opt.srcPath.match(/-$/)) {
+    if ('string' === typeof t.opt.srcData) {
+      proc.stdin.setEncoding('binary');
+      proc.stdin.write(t.opt.srcData, 'binary');
+      proc.stdin.end();
+    } else {
+      proc.stdin.end(t.opt.srcData);
+    }
+  }
+  return proc;
+}
+
+exports.resize = function(options, callback) {
+  var t = exports.resizeArgs(options);
+  return resizeCall(t, callback)
+}
+
+exports.crop = function (options, callback) {
+  if (typeof options !== 'object')
+    throw new TypeError('First argument must be an object');
+  if (!options.srcPath && !options.srcData)
+    throw new TypeError("No srcPath or data defined");
+  if (!options.height && !options.width)
+    throw new TypeError("No width or height defined");
+  
+  if (options.srcPath){
+    var args = options.srcPath;
+  } else {
+    var args = {
+      data: options.srcData
+    };
+  }
+
+  exports.identify(args, function(err, meta) {
+    if (err) return callback && callback(err);
+    var t         = exports.resizeArgs(options),
+        ignoreArg = false,
+        printNext  = false,
+        args      = [];
+    t.args.forEach(function (arg) {
+      if (printNext === true){
+        console.log("arg", arg);
+        printNext = false;
+      }
+      // ignoreArg is set when resize flag was found
+      if (!ignoreArg && (arg != '-resize'))
+        args.push(arg);
+      // found resize flag! ignore the next argument
+      if (arg == '-resize'){
+        console.log("resize arg");
+        ignoreArg = true;
+        printNext = true;
+      }
+      if (arg === "-crop"){
+        console.log("crop arg");
+        printNext = true;
+      }
+      // found the argument after the resize flag; ignore it and set crop options
+      if ((arg != "-resize") && ignoreArg) {
+        var dSrc      = meta.width / meta.height,
+            dDst      = t.opt.width / t.opt.height,
+            resizeTo  = (dSrc < dDst) ? ''+t.opt.width+'x' : 'x'+t.opt.height,
+            dGravity  = options.gravity ? options.gravity : "Center";
+        args = args.concat([
+          '-resize', resizeTo,
+          '-gravity', dGravity,
+          '-crop', ''+t.opt.width + 'x' + t.opt.height + '+0+0',
+          '+repage'
+        ]);
+        ignoreArg = false;
+      }
+    })
+
+    t.args = args;
+    resizeCall(t, callback);
+  })
+}
+
+exports.resizeArgs = function(options) {
+  var opt = {
+    srcPath: null,
+    srcData: null,
+    srcFormat: null,
+    dstPath: null,
+    quality: 0.8,
+    format: 'jpg',
+    progressive: false,
+    colorspace: null,
+    width: 0,
+    height: 0,
+    strip: true,
+    filter: 'Lagrange',
+    sharpening: 0.2,
+    customArgs: [],
+    timeout: 0
+  }
+
+  // check options
+  if (typeof options !== 'object')
+    throw new Error('first argument must be an object');
+  for (var k in opt) if (k in options) opt[k] = options[k];
+  if (!opt.srcPath && !opt.srcData)
+    throw new Error('both srcPath and srcData are empty');
+
+  // normalize options
+  if (!opt.format) opt.format = 'jpg';
+  if (!opt.srcPath) {
+    opt.srcPath = (opt.srcFormat ? opt.srcFormat +':-' : '-'); // stdin
+  }
+  if (!opt.dstPath)
+    opt.dstPath = (opt.format ? opt.format+':-' : '-'); // stdout
+  if (opt.width === 0 && opt.height === 0)
+    throw new Error('both width and height can not be 0 (zero)');
+
+  // build args
+  var args = [opt.srcPath];
+  if (opt.sharpening > 0) {
+    args = args.concat([
+      '-set', 'option:filter:blur', String(1.0-opt.sharpening)]);
+  }
+  if (opt.filter) {
+    args.push('-filter');
+    args.push(opt.filter);
+  }
+  if (opt.strip) {
+    args.push('-strip');
+  }
+  if (opt.width || opt.height) {
+    args.push('-resize');
+    if (opt.height === 0) args.push(String(opt.width));
+    else if (opt.width === 0) args.push('x'+String(opt.height));
+    else args.push(String(opt.width)+'x'+String(opt.height));
+  }
+  opt.format = opt.format.toLowerCase();
+  var isJPEG = (opt.format === 'jpg' || opt.format === 'jpeg');
+  if (isJPEG && opt.progressive) {
+    args.push('-interlace');
+    args.push('plane');
+  }
+  if (isJPEG || opt.format === 'png') {
+    args.push('-quality');
+    args.push(Math.round(opt.quality * 100.0).toString());
+  }
+  else if (opt.format === 'miff' || opt.format === 'mif') {
+    args.push('-quality');
+    args.push(Math.round(opt.quality * 9.0).toString());
+  }
+  if (opt.colorspace) {
+    args.push('-colorspace');
+    args.push(opt.colorspace);
+  }
+  if (Array.isArray(opt.customArgs) && opt.customArgs.length)
+    args = args.concat(opt.customArgs);
+  args.push(opt.dstPath);
+
+  return {opt:opt, args:args};
+}
+
+}).call(this,require('_process'))
+},{"_process":3,"child_process":1,"events":2}],24:[function(require,module,exports){
+'use strict';
+module.exports = function (red, green, blue) {
+	if ((typeof red !== 'number' || typeof green !== 'number' || typeof blue !== 'number') &&
+		(red > 255 || green > 255 || blue > 255)) {
+		throw new TypeError('Expected three numbers below 256');
+	}
+
+	return ((blue | green << 8 | red << 16) | 1 << 24).toString(16).slice(1);
+};
+
+},{}]},{},[4]);
