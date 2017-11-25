@@ -485,8 +485,9 @@ function seekBackward()
 
 function clears()
 {
+  // Reset all visible strokes and sizes to 0
   MPState.setVisibleStrokes(0);
-  MPState.setVisibleStrokes(0);
+  MPState.setVisibleSizes(0);
   p5_inst.resetCanvas();
 }
 
