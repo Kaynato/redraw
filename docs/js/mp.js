@@ -277,7 +277,7 @@ let MPState =
         width: this.getCurrentSize(),
         color: {
           _array: [0,0,0,1],
-          levels: [0,0,0,255],
+          levels: [cur_stroke[5][0], cur_stroke[5][1], cur_stroke[5][2], 255],
           maxes: {
             hsb: [360, 100, 100, 1],
             hsl: [360, 100, 100, 1],
@@ -332,7 +332,6 @@ function sketch_process(p)
   {
     canvas = p.createCanvas(640, 480);
     lineSize = 5;
-    color = p.color(red, green, blue, 255);
 
     // For now, it's probably better to fix opacity and width.
     // They aren't anywhere in our SDS.
@@ -360,7 +359,6 @@ function sketch_process(p)
 
   p.draw = function() 
   {
-
   }
 
   p.mouseDragged = function() 
@@ -632,11 +630,6 @@ function updateGenerateToggle()
 function gaussian() 
 {
   return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
-}
-
-function pickColor()
-{
-
 }
 
 /**
