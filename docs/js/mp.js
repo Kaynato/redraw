@@ -42,6 +42,7 @@ let MPState =
   // Determines toggle mode.
   generating: false,
   play: false,
+  eraser: false,
 
   // The index sits at the next-written position.
   // We display all vectors up to, but not including the position.
@@ -277,6 +278,15 @@ let MPState =
     this.play = val;
   },
 
+
+  inEraserMode() {
+    return this.eraser;
+  },
+
+  setEraserMode(val) {
+    this.eraser = val;
+  },
+
   /**
     Step stroke index backward.
     Returns whether the operation was effective.
@@ -403,20 +413,69 @@ function sketch_process(p)
   {
   }
 
-  p.mouseDragged = function() 
+   p.mouseDragged = function() 
   {
-    lineSize = sizeSlider.value();
-    red = redSlider.value();
-    green = greenSlider.value();
-    blue = blueSlider.value();
-    color = p.color(red, green, blue, 255);
-    p.strokeWeight(lineSize);
-    p.stroke(color);
-    p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
-    MPState.addStroke(p.pmouseX, p.pmouseY,
-                      p.mouseX, p.mouseY,
-                      lineSize, color);
+    // We have to change this so that it compares the mouseX and y over here and 
+    // then adds a stroke of the same start and end coordinates as the closest stroke.
+    if (MPState.inEraserMode()) 
+    {
+      color = p.color(255, 255, 255, 255); // Make the line of white color
+      p.stroke(color);
+
+      // Compare coordinates to closest stroke here
+      const strokes = MPState.getVisibleStrokes();
+      const sizes = MPState.getVisibleSizes();
+      const mouseX = p.mouseX;
+      const mouseY = p.mouseY;
+      // console.log(p);
+
+      let current_closestx = 10000;
+      let current_closesty = 10000;
+      let endof_closestx = 10000;
+      let endof_closesty = 10000;
+      let lineSize = 0;
+      for (let i=0; i<strokes.length; i++) 
+      {
+        if ((Math.abs(mouseX - strokes[i][0]) + Math.abs(mouseY - strokes[i][1])) < (Math.abs(mouseX - current_closestx) + Math.abs(mouseY - current_closesty)))
+        {
+          current_closestx = strokes[i][0];
+          current_closesty = strokes[i][1];
+          endof_closestx = strokes[i][2];
+          endof_closesty = strokes[i][3];
+          lineSize = strokes[i][4];
+        }
+        // 
+      }
+      console.log(current_closestx);
+      console.log(current_closesty);
+      p.strokeWeight(lineSize+10);
+      p.line(current_closestx, 
+             current_closesty, 
+             endof_closestx, 
+             endof_closesty); // has to be the startX, startY, endX, endY of closest stroke, not the dragged mouse
+      MPState.addStroke(current_closestx, 
+                        current_closesty,
+                        endof_closestx, 
+                        endof_closesty,
+                        lineSize+10, 
+                        color);
+    }
+    else 
+    {
+      lineSize = sizeSlider.value();
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+      p.strokeWeight(lineSize);
+      p.stroke(color);
+      p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+      MPState.addStroke(p.pmouseX, p.pmouseY,
+                        p.mouseX, p.mouseY,
+                        lineSize, color);
+    }
   }
+
 
   p.resetCanvas = function() 
   {
@@ -1165,6 +1224,13 @@ function mirrorMode()
     }
   }
 
+}
+
+function updateEraserToggle() 
+{
+  // Cannot be auto-tested due to document interaction.
+  let checkbox = document.getElementById('eraser-toggle-box');
+  MPState.setEraserMode(checkbox.checked);
 }
 
 if (isNode) 
