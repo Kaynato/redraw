@@ -77,7 +77,6 @@ let MPState =
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
       this.sizes.push(lineSize);
-      console.log(color.levels);
       this.colorsR.push(color.levels[0]);
       this.colorsG.push(color.levels[1]);
       this.colorsB.push(color.levels[2]);
@@ -357,7 +356,6 @@ function sketch_process(p)
     p.rect(1, 0, 638, 479);
     p.strokeWeight(lineSize);
     p.color(red, green, blue, 255)
-
   }
 
   p.draw = function() 
@@ -606,7 +604,7 @@ function togglePlay()
 
         for (let i = visibleStrokes.length; i < state.length; i++) 
         {
-          console.log("Current stroke: " + visibleStrokes[i-1]);
+          // console.log("Current stroke: " + visibleStrokes[i-1]);
           p5_inst.drawStroke(state[i-1], sizes[i-1]);
         }
       }
