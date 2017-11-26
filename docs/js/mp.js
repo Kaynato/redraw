@@ -160,27 +160,60 @@ let MPState =
   /** Get sizes of all visible strokes. */
   getVisibleSizes() 
   {
-      return this.sizes.slice(0, this.strokeIndex)
+    return this.sizes.slice(0, this.strokeIndex)
   },
 
   getVisibleReds() 
   {
-      return this.colorsR.slice(0, this.strokeIndex)
+    return this.colorsR.slice(0, this.strokeIndex)
   },
 
   getVisibleGreens() 
   {
-      return this.colorsG.slice(0, this.strokeIndex)
+    return this.colorsG.slice(0, this.strokeIndex)
   },
 
   getVisibleBlues() 
   {
-      return this.colorsB.slice(0, this.strokeIndex)
+    return this.colorsB.slice(0, this.strokeIndex)
+  },
+
+  /**
+   * Sets the red color of the strokes to the specified ones.
+   * @param {array} colorsR   - red colors of the visible strokes
+   */
+  setVisibleReds(colorsR) {
+    if (colorsR.length == 0) {
+      return this.colorsR = [];
+    }
+    return this.colorsR = colorsR;
+  },
+
+  /**
+   * Sets the green color of the strokes to the specified ones.
+   * @param {array} colorsG   - green colors of the visible strokes
+   */
+  setVisibleGreens(colorsG) {
+    if (colorsG.length == 0) {
+      return this.colorsG = [];
+    }
+    return this.colorsG = colorsG;
+  },
+
+  /**
+   * Sets the blue color of the strokes to the specified ones.
+   * @param {array} colorsB   - blue colors of the visible strokes
+   */
+  setVisibleBlues(colorsB) {
+    if (colorsB.length == 0) {
+      return this.colorsB = [];
+    }
+    return this.colorsB = colorsB;
   },
 
   /**
    * Sets the visible strokes to specified ones.
-   * @param {array} strokes   - strokes of 
+   * @param {array} strokes   - strokes
    */
   setVisibleStrokes(strokes) 
   {
@@ -557,9 +590,12 @@ function seekBackward()
 
 function clears()
 {
-  // Reset all visible strokes, sizes, and indicies to 0
+  // Reset all visible strokes, sizes, colors, and indicies to 0
   MPState.setVisibleStrokes([]);
   MPState.setVisibleSizes([]);
+  MPState.setVisibleReds([]);
+  MPState.setVisibleGreens([]);
+  MPState.setVisibleReds([]);
   MPState.setDataIndex(0);
   MPState.setStrokeIndex(0);
   p5_inst.resetCanvas();
