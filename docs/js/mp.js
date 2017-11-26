@@ -925,7 +925,6 @@ if (isNode)
     sketch_process,
     seekBackward,
     seekForward,
-    pickColor,
     togglePlay,
     jpMode,
     clears
