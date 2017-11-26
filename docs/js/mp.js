@@ -35,6 +35,9 @@ let MPState =
   // the network.
   sizes: [],
   state: [],
+  colorsR: [],
+  colorsG: [],
+  colorsB: [],
 
   // Determines toggle mode.
   generating: false,
@@ -77,12 +80,18 @@ let MPState =
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
       this.sizes.push(lineSize);
+      this.colorsR.push(color.levels[0]);
+      this.colorsG.push(color.levels[1]);
+      this.colorsB.push(color.levels[2]);
 
       // Overwrite
       if (this.dataIndex > this.strokeIndex) 
       {
         this.state = this.state.slice(0, this.strokeIndex)
         this.sizes = this.sizes.slice(0, this.strokeIndex)
+        this.colorsR = this.colorsR.slice(0, this.strokeIndex)
+        this.colorsG = this.colorsG.slice(0, this.strokeIndex)
+        this.colorsB = this.colorsB.slice(0, this.strokeIndex)
       }
 
       this.strokeIndex++;
@@ -91,15 +100,19 @@ let MPState =
 
   },
 
-  setStrokeIndex(val) {
-    if (val < 0) {
+  setStrokeIndex(val) 
+  {
+    if (val < 0) 
+    {
       return null;
     }
     return this.strokeIndex = val;
   },
 
-  setDataIndex(val) {
-    if (val < 0) {
+  setDataIndex(val) 
+  {
+    if (val < 0) 
+    {
       return null;
     }
     return this.dataIndex = val;
@@ -148,6 +161,21 @@ let MPState =
   getVisibleSizes() 
   {
       return this.sizes.slice(0, this.strokeIndex)
+  },
+
+  getVisibleReds() 
+  {
+      return this.colorsR.slice(0, this.strokeIndex)
+  },
+
+  getVisibleGreens() 
+  {
+      return this.colorsG.slice(0, this.strokeIndex)
+  },
+
+  getVisibleBlues() 
+  {
+      return this.colorsB.slice(0, this.strokeIndex)
   },
 
   /**
@@ -258,7 +286,7 @@ let MPState =
         width: this.getCurrentSize(),
         color: {
           _array: [0,0,0,1],
-          levels: [0,0,0,255],
+          levels: [cur_stroke[5][0], cur_stroke[5][1], cur_stroke[5][2], 255],
           maxes: {
             hsb: [360, 100, 100, 1],
             hsl: [360, 100, 100, 1],
@@ -301,20 +329,31 @@ function sketch_process(p)
   let canvas = null;
   let color = null;
   let sizeSlider = null;
+  let redSlider = null;
+  let greenSlider = null;
+  let blueSlider = null;
+  let red = 0;
+  let green = 0;
+  let blue = 0;
   let lineSize = 1;
 
   p.setup = function() 
   {
     canvas = p.createCanvas(640, 480);
     lineSize = 5;
-    color = p.color(0, 0, 0, 255);
 
     // For now, it's probably better to fix opacity and width.
     // They aren't anywhere in our SDS.
     sizeSlider = p.createSlider(0, 10, lineSize);
+    redSlider = p.createSlider(0, 255, red);
+    greenSlider = p.createSlider(0, 255, green);
+    blueSlider = p.createSlider(0, 255, blue);
 
     canvas.parent("canvas-holder");
     sizeSlider.parent("size-slider");
+    redSlider.parent("red-slider");
+    greenSlider.parent("green-slider");
+    blueSlider.parent("blue-slider");
     p.predraw();
   }
 
@@ -324,16 +363,20 @@ function sketch_process(p)
     p.strokeWeight(1);
     p.rect(1, 0, 638, 478);
     p.strokeWeight(lineSize);
+    p.color(red, green, blue, 255)
   }
 
   p.draw = function() 
   {
-
   }
 
   p.mouseDragged = function() 
   {
     lineSize = sizeSlider.value();
+    red = redSlider.value();
+    green = greenSlider.value();
+    blue = blueSlider.value();
+    color = p.color(red, green, blue, 255);
     p.strokeWeight(lineSize);
     p.stroke(color);
     p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
@@ -568,7 +611,7 @@ function togglePlay()
 
         for (let i = visibleStrokes.length; i < state.length; i++) 
         {
-          console.log("Current stroke: " + visibleStrokes[i-1]);
+          // console.log("Current stroke: " + visibleStrokes[i-1]);
           p5_inst.drawStroke(state[i-1], sizes[i-1]);
         }
       }
@@ -598,14 +641,7 @@ function gaussian()
   return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
 }
 
-function pickColor()
-{
-
-}
-
-
 // TODO update
-
 function rotate()
 {
   const strokes = MPState.getVisibleStrokes();
