@@ -94,12 +94,21 @@
         </button>
       </div>
 
-        <div class="inline">
+      <div class="inline">
         <button type="button" onclick="clears()">
           <img src="img/del.png" width="50" height="50">
         </button>
       </div>
 
+      <div class="inline">
+        <button class="btn btn-primary" type="button" value="Save Image" onclick="saveImage()">Save image</button>
+        <div>
+          <!-- Allows us to switch between image states. `None` option allows us to switch to other saved image states. -->
+          <select id="img-num" onchange="loadImage()">
+            <option value="-1" disabled selected>None</option>
+          </select>
+        </div>
+      </div>
   </div>
 
   <script src="js/model_decomposition.js"></script>
