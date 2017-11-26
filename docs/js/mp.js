@@ -1042,6 +1042,131 @@ function loadImage()
   }
 }
 
+function mirrorMode()
+{
+  const modeID = document.getElementById('mode').value;
+
+  if(modeID == 1)
+  {
+    //vertical
+    //divide size of vertical compoent 2
+    const strokes = MPState.getVisibleStrokes();
+    const sizes = MPState.getVisibleSizes();
+    p5_inst.resetCanvas();
+    for (let i = 0; i < strokes.length; i++)
+    {
+      strokes[i][0] = strokes[i][0]/2;
+      strokes[i][1] = strokes[i][1];
+      strokes[i][2] = strokes[i][2]/2;
+      strokes[i][3] = strokes[i][3];
+
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+    }
+
+    for (let i = 0; i < strokes.length; i++)
+    {
+      const diff_start = (320 - strokes[i][0])*2;
+      const diff_end = (320 - strokes[i][2])*2;
+      strokes[i][0] = strokes[i][0] + diff_start;
+      strokes[i][1] = strokes[i][1];
+      strokes[i][2] = strokes[i][2] + diff_end;
+      strokes[i][3] = strokes[i][3];
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+
+    }
+  }
+
+  else if(modeID == 2)
+  {
+    const strokes = MPState.getVisibleStrokes();
+    const sizes = MPState.getVisibleSizes();
+    p5_inst.resetCanvas();
+    for (let i = 0; i < strokes.length; i++)
+    {
+      strokes[i][0] = strokes[i][0];
+      strokes[i][1] = strokes[i][1]/2;
+      strokes[i][2] = strokes[i][2];
+      strokes[i][3] = strokes[i][3]/2;
+
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+    }
+
+    for (let i = 0; i < strokes.length; i++)
+    {
+      const diff_start = (240 - strokes[i][1])*2;
+      const diff_end = (240 - strokes[i][3])*2;
+      strokes[i][0] = strokes[i][0];
+      strokes[i][1] = strokes[i][1] + diff_start;
+      strokes[i][2] = strokes[i][2];
+      strokes[i][3] = strokes[i][3]+ diff_end;
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+
+    }
+  }
+   else if(modeID == 3)
+  {
+    const strokes = MPState.getVisibleStrokes();
+    const sizes = MPState.getVisibleSizes();
+    p5_inst.resetCanvas();
+    for (let i = 0; i < strokes.length; i++)
+    {
+      strokes[i][0] = strokes[i][0]/2;
+      strokes[i][1] = strokes[i][1]/2;
+      strokes[i][2] = strokes[i][2]/2;
+      strokes[i][3] = strokes[i][3]/2;
+
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+    }
+
+    for (let i = 0; i < strokes.length; i++)
+    {
+      let diff_startx = (320 - strokes[i][0])*2;
+      let diff_endx = (320 - strokes[i][2])*2;
+      strokes[i][0] = strokes[i][0] + diff_startx;
+      strokes[i][1] = strokes[i][1];
+      strokes[i][2] = strokes[i][2] + diff_endx;
+      strokes[i][3] = strokes[i][3];
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+      strokes[i][0] = strokes[i][0] - diff_startx;
+      strokes[i][2] = strokes[i][2] - diff_endx;
+
+    }
+
+    for (let i = 0; i < strokes.length; i++)
+    {
+      let diff_starty = (240 - strokes[i][1])*2;
+      let diff_endy = (240 - strokes[i][3])*2;
+      strokes[i][0] = strokes[i][0];
+      strokes[i][1] = strokes[i][1] + diff_starty;
+      strokes[i][2] = strokes[i][2];
+      strokes[i][3] = strokes[i][3]+ diff_endy;
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+      strokes[i][1] = strokes[i][1] - diff_starty;
+      strokes[i][3] = strokes[i][3] - diff_endy;
+
+    }
+
+    for (let i = 0; i < strokes.length; i++)
+    {
+      let diff_startx = (320 - strokes[i][0])*2;
+      let diff_starty = (240 - strokes[i][1])*2;
+      let diff_endx = (320 - strokes[i][2])*2;
+      let diff_endy = (240 - strokes[i][3])*2;
+      strokes[i][0] = strokes[i][0] + diff_startx;
+      strokes[i][1] = strokes[i][1] + diff_starty;
+      strokes[i][2] = strokes[i][2] + diff_endx;
+      strokes[i][3] = strokes[i][3] + diff_endy;
+      p5_inst.drawStroke(strokes[i], sizes[i]);
+      strokes[i][0] = strokes[i][0] - diff_startx;
+      strokes[i][1] = strokes[i][1] - diff_starty;
+      strokes[i][2] = strokes[i][2] - diff_endx;
+      strokes[i][3] = strokes[i][3] - diff_endy;
+
+    }
+  }
+
+}
+
 if (isNode) 
 {
   module.exports = 

@@ -132,6 +132,15 @@
         </button>
       </div>
 
+       <div class="inline">
+          <select id="mode" onchange="mirrorMode()">
+            <option value="-1" disabled selected>None</option>
+            <option value="1">Vertical</option>
+            <option value="2">Horizontal</option>
+            <option value="3">Both</option>
+          </select>
+        </div>
+
       <div class="inline">
         <button class="btn btn-primary" type="button" value="Save Image" onclick="saveImage()">Save image</button>
         <div>
