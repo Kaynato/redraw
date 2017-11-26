@@ -77,6 +77,7 @@ let MPState =
       newStroke.push(color.levels.slice(0, 3));
       this.state.push(newStroke);
       this.sizes.push(lineSize);
+      console.log(color.levels);
       this.colorsR.push(color.levels[0]);
       this.colorsG.push(color.levels[1]);
       this.colorsB.push(color.levels[2]);
@@ -370,8 +371,9 @@ function sketch_process(p)
     red = redSlider.value();
     green = greenSlider.value();
     blue = blueSlider.value();
+    color = p.color(red, green, blue, 255);
     p.strokeWeight(lineSize);
-    p.stroke(p.color(red, green, blue, 255));
+    p.stroke(color);
     p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
     MPState.addStroke(p.pmouseX, p.pmouseY,
                       p.mouseX, p.mouseY,
