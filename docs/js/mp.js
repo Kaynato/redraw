@@ -812,6 +812,96 @@ function jpMode()
     }
   }
 
+function warholMode()
+{
+  const strokes = MPState.getVisibleStrokes();
+  const sizes = MPState.getVisibleSizes();
+  p5_inst.resetCanvas();
+  const initalstrokes = strokes.slice();
+  for (let i = 0; i < strokes.length; i++)
+  {
+    strokes[i][0] = strokes[i][0]/4;
+    strokes[i][1] = strokes[i][1]/4;
+    strokes[i][2] = strokes[i][2]/4;
+    strokes[i][3] = strokes[i][3]/4;
+  }
+
+  for(let x = 0; x < 16; x++)
+  {
+    let red = Math.random()*255;
+    let green = Math.random()*255;
+    let blue = Math.random()*255;
+    for (let j = 0; j < strokes.length; j++)
+    {
+      initalstrokes[j][5] = p5_inst.color(red, green, blue, 255);
+    }
+    for (let i = 0; i < strokes.length; i++)
+    {
+      if((x % 4) == 0) // 0 to 160 width
+      {
+        initalstrokes[i][0] = strokes[i][0];
+        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+        initalstrokes[i][2] = strokes[i][2];
+        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
+      }
+      else if((x % 4) == 1) // 161 to 320 width
+      {
+        initalstrokes[i][0] = 160 + strokes[i][0];
+        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+        initalstrokes[i][2] = 160 +strokes[i][2];
+        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
+        
+      }
+      else if((x % 4) == 2) // 321 to 480 width
+      {
+        initalstrokes[i][0] = 320 + strokes[i][0];
+        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+        initalstrokes[i][2] = 320 + strokes[i][2];
+        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3]; 
+      }
+      else if((x % 4) == 3) // 481 to 640 width
+      {
+       initalstrokes[i][0] = 480 + strokes[i][0];
+       initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+       initalstrokes[i][2] = 480 + strokes[i][2];
+       initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];  
+      }
+      p5_inst.drawStroke(initalstrokes[i], sizes[i]);
+      //i'm amazed i can't think of a better way to do this that works.
+      if((x % 4) == 0) // 0 to 160 width
+      {
+        initalstrokes[i][0] = strokes[i][0];
+        initalstrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120;
+        initalstrokes[i][2] = strokes[i][2];
+        initalstrokes[i][3] = strokes[i][3] -Math.floor(x/4)*120;
+      }
+      else if((x % 4) == 1) // 161 to 320 width
+      {
+        initalstrokes[i][0] = strokes[i][0] - 160;
+        initalstrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
+        initalstrokes[i][2] = strokes[i][2] - 160;
+        initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120;
+        
+      }
+      else if((x % 4) == 2) // 321 to 480 width
+      {
+        initalstrokes[i][0] = strokes[i][0] -320;
+        initalstrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
+        initalstrokes[i][2] = strokes[i][2] - 320;
+        initalstrokes[i][3] = strokes[i][3]- Math.floor(x/4)*120; 
+      }
+      else if((x % 4) == 3) // 481 to 640 width
+      {
+       initalstrokes[i][0] = strokes[i][0] - 480;
+       initalstrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120 ;
+       initalstrokes[i][2] = strokes[i][2] - 480;
+       initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120 ;  
+      }
+    }
+  }
+
+}
+
 function generateBrushstrokes()
 {
   const strokes = MPState.getVisibleStrokes();
