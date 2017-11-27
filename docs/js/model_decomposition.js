@@ -24,8 +24,8 @@ const DecomposeModel = {
 	imageToTensor(img) {
 		let canvas = document.createElement('canvas');
 		let context = canvas.getContext('2d');
-		canvas.width = img.width;
-		canvas.height = img.height;
+		canvas.width = img.width || img.naturalWidth;
+		canvas.height = img.height || img.naturalHeight;
 		context.drawImage(img.elt, 0, 0);
 		let imgdata = context.getImageData(0, 0, img.width, img.height);
 		let channels = imgdata.data.length / (imgdata.width * imgdata.height);
@@ -103,8 +103,6 @@ const DecomposeModel = {
 		else {
 			throw Error(destColorSpace.join(" is not a valid destination color space!"))
 		}
-
-		OUTER.l.push(output);
 
 		return output;
 	},
@@ -267,14 +265,14 @@ const DecomposeModel = {
 			y0 = 0; // Special value due to top boundary
 			y1 = radius + 1; // Special value due to top boundary
 
-			console.log('Begin initial bin fill with window', x0, x1, y0, y1);
+			// console.log('Begin initial bin fill with window', x0, x1, y0, y1);
 			for (ix = x0; ix < x1; ix++) {
 				for (iy = y0; iy < y1; iy++) {
 					addPixelBin(ix, iy, false);
 				}
 			}
 
-			console.log('Setup initial median indexing');
+			// console.log('Setup initial median indexing');
 
 			// Initialize and index medians
 			for (ch = 0; ch < channels; ch++) {
@@ -300,7 +298,7 @@ const DecomposeModel = {
 			writeMedian(output, x, y);
 			y++;
 
-			console.log('Begin median filter loop');
+			// console.log('Begin median filter loop');
 			
 			// At this point we don't subtract from our bins.
 			while (y < radius) {
@@ -367,9 +365,115 @@ const DecomposeModel = {
 	},
 
 	/*
+		Label connected components on ndarray
+	*/
+	labelComponents(arr) {
+		let x;
+		let y;
+
+		let labels = 1;
+		let scores = {0: 0};
+
+		// Enums
+		let UNVISITED = -1;
+		let EMPTY = 0;
+
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+
+		let outputArr = new Int16Array(width * height);
+		outputArr.fill(UNVISITED);
+		let output = ndarray(outputArr, [width, height]);
+
+		// Stack-Recursive component labelling
+		const labelOutput = function(target, input, x, y, label) {
+			let val = target.get(x, y);
+			let pix = input.get(x, y);
+			
+			let stack = [];
+
+			stack.push([x, y]);
+
+			const pushIfValid = function(target, input, ix, iy, stack) {
+				let labelled = input.get(ix, iy) != 0;
+				let unvisited = target.get(ix, iy) == UNVISITED;
+				if (labelled && unvisited) {
+					console.log('push', ix, iy);
+					stack.push([ix, iy]);
+				} else {
+					console.log(ix, iy, 'labelled', labelled, 'status', target.get(ix, iy));
+				}
+			}
+
+			// Allocate stack-assigned indices
+			let ix;
+			let iy;
+			let coord;
+			// UP RIGHT DOWN LEFT SELF
+			while (stack.length > 0) {
+				coord = stack.pop();
+				ix = coord[0];
+				iy = coord[1];
+
+				// In order to minimize call stack growth and
+				// Prevent issues due to closures,
+				// We must fully write out each part of this procedure
+				if (iy > 0) {
+					pushIfValid(target, input, ix, iy - 1, stack);
+				}
+				if (ix + 1 < width) {
+					pushIfValid(target, input, ix + 1, iy, stack);
+				}
+				if (iy + 1 < height) {
+					pushIfValid(target, input, ix, iy + 1, stack);
+				}
+				if (ix > 0) {
+					pushIfValid(target, input, ix - 1, iy, stack);
+				}
+				
+				// If it was pushed into this stack, it was definitely valid
+				target.set(x, y, label);
+				console.log(stack.length, ix, iy);
+			}
+			
+			// At this point we know it's unvisited and pix = 1.
+			console.log('Finished labelling from', x, y);
+		};
+
+		let val;
+		let pix;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				pix = arr.get(x, y);
+				val = output.get(x, y);
+				// If pix is 0 then we don't care
+				if (pix == 0) {
+					output.set(x, y, EMPTY);
+					scores[0]++;
+					continue;
+				}
+				// Otherwise, if pix was 1, check if new
+				if (val == UNVISITED) {
+					// New label
+					labelOutput(output, arr, x, y, labels);
+					labels += 1;
+				}
+				// Otherwise, don't bother
+			}
+		}
+
+		console.log("Finished component labelling.");
+
+		return {
+			"arr": output,
+			"labels": labels
+		};
+	},
+
+	/*
 		Determine largest connected component of the target color
 	*/
-	getBestScoredComponent(arr, color) {
+	calcScoredComponents(arr, color) {
 		let width = arr.shape[0];
 		let height = arr.shape[1];
 		// input channels = 3
@@ -441,15 +545,36 @@ const DecomposeModel = {
 			}
 		}
 
-		// TODO - use connected-component-labelling to also separate out all the subcomponents
+		let blobs = DecomposeModel.labelComponents(tol_img)
 
-		let component = {
-			'score': ndops.sum(tol_img),
-			'arr': tol_img
-		};
+		DecomposeModel.renderBin(tol_img);
+		DecomposeModel.renderBin(blobs.arr, 127);
 
-		return component;
+		return;
 
+		let components = [];
+		let label;
+		for (label = 1; label < blobs.labels; label++) {
+			let compArr = new Uint8ClampedArray(width * height);
+			let component = ndarray(compArr, [width, height]);
+
+			// Replace ndops.eqs(component, blobs.arr, label);
+			let i;
+			for (i = width * height; i >= 0; i--) {
+				if (blobs.arr.data[i] == label) {
+					component.data[i] = 1;
+				}
+			}
+			// DecomposeModel.renderBin(component);
+
+			components.push({
+				'score': ndops.sum(component),
+				'arr': component,
+				'color': color
+			});
+		}
+
+		return components;
 	},
 
 	/*
@@ -468,8 +593,8 @@ const DecomposeModel = {
 		// Sequentially decreasing median filter size to
 		// Mimic monotonically decreasing attention to detail
 		// TODO - k should start at 9 but median filter is broken for nontrivial case
-		let k = 1;
-		for (; k >= 1; k -= 2) {
+		let k = 3;
+		for (; k >= 3; k -= 2) {
 
 			// Run through median filter in YCoCg
 			let yco = DecomposeModel.convertColorSpace(arr, 'YCoCg');
@@ -484,29 +609,39 @@ const DecomposeModel = {
 
 			console.log(palette);
 
-			for (let i = 0; i < palette.length; i++) {
+			let i;
+			for (i = 0; i < palette.length; i++) {
 				let color = palette[i];
 
-				let scoredComponent = DecomposeModel.getBestScoredComponent(filtered, color);
+				let scoredComponents = DecomposeModel.calcScoredComponents(filtered, color);
 
 				// Color score
-				candidates.push(scoredComponent);
+				let j;
+				for (j = 0; j < scoredComponents.length; j++) {
+					candidates.push(scoredComponents[j]);
+				}
 			}
+
+
 		}
 
 		// Binary masks / candidates
 		OUTER.candidates = candidates;
 
 		// Easy trick to visualize
-		// p5_inst.createImg(imageData.src);
+		p5_inst.createImg(imageData.src);
 
 	},
 
 	// debug only - convert 1-channel binary array to b/w color array
-	binToColor(arr) {
+	binToColor(arr, multi) {
 		let width = arr.shape[0];
 		let height = arr.shape[1];
 		let output = ndarray(new Uint8ClampedArray(width * height * 4), [width, height, 4]);
+
+		if (multi === undefined) {
+			multi = 255;
+		}
 
 		let x;
 		let y;
@@ -514,11 +649,11 @@ const DecomposeModel = {
 		let val;
 		for (x = 0; x < width; x++) {
 			for (y = 0; y < height; y++) {
-				val = arr.get(x, y) * 255;
+				val = arr.get(x, y) * multi;
 				for (ch = 0; ch < 3; ch++) {
 					output.set(x, y, ch, val);
 				}
-				output.set(x, y, ch, 255);
+				output.set(x, y, 3, 255);
 			}
 		}
 
@@ -527,16 +662,15 @@ const DecomposeModel = {
 
 	// Debug only - render ndarray
 	render(arr) {
-		let cvs = document.getElementById('defaultCanvas0').getContext('2d');
-		let target = cvs.getImageData(0, 0, arr.shape[0], arr.shape[1]);
+		let url = DecomposeModel.toDataURL(arr);
+		p5_inst.createImg(url);
+	},
 
-		// render tensor back to canvas
-		let i = arr.shape[0] * arr.shape[1] * arr.shape[2];
-		while(--i >= 0) {
-			target[i] = arr.data[i];
-		}
-
-		cvs.putImageData(target, 0, 0);
+	// Debug only - render binary ndarray
+	renderBin(arr, multi) {
+		let arr3 = DecomposeModel.binToColor(arr, multi);
+		let url = DecomposeModel.toDataURL(arr3);
+		p5_inst.createImg(url);
 	}
 }
 
