@@ -420,9 +420,43 @@ function sketch_process(p)
       p.strokeWeight(lineSize);
       p.stroke(color);
       // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
-      p.rect(p.mouseX, p.mouseY, 55, 55);
+      p.line(p.mouseX, p.mouseY,  p.mouseX + 50, p.mouseY);
+      //console.log(p.mouseX, p.mouseY,  p.mouseX + 50, p.mouseY);
+      p.line(p.mouseX + 50, p.mouseY, p.mouseX + 50, p.mouseY - 50);
+      //console.log(p.mouseX + 50, p.mouseY, p.mouseX + 50, p.mouseY - 50);
+      p.line(p.mouseX + 50, p.mouseY - 50, p.mouseX, p.mouseY - 50);
+      //console.log(p.mouseX + 50, p.mouseY - 50, p.mouseX, p.mouseY - 50);
+      p.line(p.mouseX, p.mouseY - 50, p.mouseX, p.mouseY);
+      //console.log(p.mouseX, p.mouseY - 50, p.mouseX, p.mouseY);
+
+      MPState.addStroke(p.mouseX,
+                        p.mouseY,
+                        p.mouseX + 50,
+                        p.mouseY,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 50,
+                        p.mouseY,
+                        p.mouseX + 50,
+                        p.mouseY - 50,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 50,
+                        p.mouseY - 50,
+                        p.mouseX,
+                        p.mouseY - 50,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX,
+                        p.mouseY - 50,
+                        p.mouseX,
+                        p.mouseY,
+                        lineSize,
+                        color);
+      //p.rect(p.mouseX, p.mouseY, 55, 55);
     }
-    else if (MPState.getShapeOption() == 1) {
+    else if (MPState.getShapeOption() == 1)
+    { //circle
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -433,7 +467,8 @@ function sketch_process(p)
       // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
       p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
     }
-    else if (MPState.getShapeOption() == 2) {
+    else if (MPState.getShapeOption() == 2)
+    { //triangle
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -441,8 +476,36 @@ function sketch_process(p)
       color = p.color(red, green, blue, 255);
       p.strokeWeight(lineSize);
       p.stroke(color);
-      p.triangle()
-      p.triangle(p.mouseX - 35, p.mouseY + 50, p.mouseX, p.mouseY, p.mouseX + 35, p.mouseY + 50);
+
+      p.line(p.mouseX, p.mouseY,  p.mouseX + 35, p.mouseY + 35);
+      console.log(p.mouseX, p.mouseY,  p.mouseX + 35, p.mouseY - 35);
+
+      p.line(p.mouseX + 35, p.mouseY + 35, p.mouseX - 35, p.mouseY + 35);
+      console.log(p.mouseX + 35, p.mouseY - 35, p.mouseX - 35, p.mouseY + 35);
+
+      p.line(p.mouseX - 35, p.mouseY + 35, p.mouseX, p.mouseY);
+      console.log(p.mouseX - 35, p.mouseY, p.mouseX, p.mouseY);
+
+      MPState.addStroke(p.mouseX,
+                        p.mouseY,
+                        p.mouseX + 35,
+                        p.mouseY + 35,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 35,
+                        p.mouseY + 35,
+                        p.mouseX - 35,
+                        p.mouseY + 35,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX - 35,
+                        p.mouseY + 35,
+                        p.mouseX,
+                        p.mouseY,
+                        lineSize,
+                        color);
+
+      //p.triangle(p.mouseX - 35, p.mouseY + 50, p.mouseX, p.mouseY, p.mouseX + 35, p.mouseY + 50);
     }
   }
 
