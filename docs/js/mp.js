@@ -966,10 +966,6 @@ function warholMode()
         initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
         initalstrokes[i][2] = 160 +strokes[i][2];
         initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
-<<<<<<< HEAD
-
-=======
->>>>>>> ayush.eraser
       }
       else if((x % 4) == 2) // 321 to 480 width
       {
