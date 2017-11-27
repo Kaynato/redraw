@@ -1282,55 +1282,6 @@ function updateEraserToggle()
   MPState.setEraserMode(checkbox.checked);
 }
 
-// //TO DO BY ME
-// addEventListener("load", load);
-// function load(e) {
-//   document.getElementById("reset").addEventListener("click", load);
-//   var gameCanvas = document.getElementById("canvas-holder");
-//   //var gc = gameCanvas.getContext("2d");
-//   gameCanvas.addEventListener("mousemove", draw);
-// }
-// function draw(e)
-// {
-//     var x = e.offsetX;
-//     var y = e.offsetY;
-//     var prevX;
-//     var prevY;
-//     console.log(e);
-//     if(e.buttons == 1) {
-//       MPState.addStroke(prevX, prevY, x, y);
-//       MPState.addStroke(640 - prevX, 480 - prevY, 640 - x, 480 - y);
-//       MPState.addStroke(640 - prevX, prevY, 640 - x, y);
-//       MPState.addStroke(prevX, 480 - prevY, x, 480 - y);
-//       MPState.addStroke(prevY, prevX, y, x);
-//       MPState.addStroke(480 - prevY, 640 - prevX, 480 - y, 640 - x);
-//       MPState.addStroke(480 - prevY, prevX, 480 - y, x);
-//       MPState.addStroke(prevY, 640 - prevX, y, 640 - x);
-//     }
-//     prevX = x;
-//     prevY = y;
-// }
-
-// function mirrorCanvas()
-// {
-//   const strokes = MPState.getVisableStrokes();
-//   const sizes = MPState.getVisableSizes();
-//   const initialstrokes = strokes.slice();
-//
-//   for (let i = 0; i < strokes.length; i++) {
-//     strokes[i][0] = strokes[i][0]/4;
-//     strokes[i][1] = strokes[i][1]/4;
-//     strokes[i][2] = strokes[i][2]/4;
-//     strokes[i][3] = strokes[i][3]/4;
-//   }
-//   for (let x = 0; x < 16; x++) {
-//     for (let i = 0; i < strokes.length; i++) {
-//       if (())
-//     }
-//   }
-//
-// }
-
 
 function drawTriangle()
 {
@@ -1346,46 +1297,15 @@ function drawTriangle()
   }
 }
 
-// function drawSquare()
-// {
-//   var canvas = document.getElementById('canvas-holder');
-//   if (canvas.getContext) {
-//     var ctx = canvas.getContext('2d');
-//
-//     ctx.rect(20, 20, 100, 100);
-//     ctx.stroke();
-//
-//   }
-// }
 
 function shapeTool()
 {
   const shape = document.getElementById('shape').value;
   MPState.setShapeOption(shape);
-  // if (p5_inst.mousePressed() && shape == 1) {
-  //   p5_inst.rect(p5_inst.mouseX, p5_inst.mouseY, 55, 55);
-  // }
-  // else if (p5_inst.mousePressed() && shape == 2) {
-  //   p.triangle(30, 75, 58, 20, 86, 75);
-  // }
-  // else if (p5_inst.mousePressed() && shape == 3) {
-  //   p.arc(100, 75, 50, 0, 2*Math.PI);
-  // }
-  //MPState.mousePressed(rect);
+
 }
 
-function drawCircle()
-{
-  var canvas = document.getElementById('canvas-holder');
-  if (canvas.getContext) {
-    var ctx = canvas.getContext('2d');
 
-    ctx.beginPath();
-    ctx.arc(100,75,50,0,2*Math.PI);
-    ctx.stroke();
-
-  }
-}
 if (isNode) {
   module.exports =
   {
