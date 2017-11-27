@@ -8,150 +8,537 @@
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
+// DEBUG
+var OUTER = {
+	l: []
+};
+
 const DecomposeModel = {
 
-	/*
-		Load model from json dict files.
-	*/
-	loadModel() {
-		// Interim model.
-		console.log('Decomposition model loaded.');
-		// throw new Error("Not implemented!");
-	},
+	TOLERANCE: 0.01,
 
 	/*
 		Convert image into a tensor.
+		Uses a temporary canvas to store data.
 	*/
-	imageToTensor(imageElement) {
-		let cvs = document.getElementById('defaultCanvas0').getContext('2d');
-		let data = cvs.getImageData(0, 0, imageElement.width, imageElement.height);
-
-		// Something is broken about this.
-		// let buf = new jsfeat.data_t(data.length / 2, data.data)
-		// return new jsfeat.matrix_t(imageElement.width,
-									// imageElement.height,
-									// jsfeat.U8C3_t, buf);
-
-		// For now, we just sub in the grayscale matrix.
-		let buf = new jsfeat.matrix_t(imageElement.width, imageElement.height, jsfeat.U8C1_t);
-		jsfeat.imgproc.grayscale(data.data, imageElement.width, imageElement.height, buf);
-		return buf;
+	imageToTensor(img) {
+		let canvas = document.createElement('canvas');
+		let context = canvas.getContext('2d');
+		canvas.width = img.width;
+		canvas.height = img.height;
+		context.drawImage(img.elt, 0, 0);
+		let imgdata = context.getImageData(0, 0, img.width, img.height);
+		let channels = imgdata.data.length / (imgdata.width * imgdata.height);
+		let tensor = ndarray(imgdata.data, [imgdata.width, imgdata.height, channels]);
+		return tensor;
 	},
 
 	/*
-		Convert image tensor to descriptive strokes.
+		Convert from RGB color space into YCoCg color space or vice versa.
+		In-place operation.
+		Could use WebGL to speed up in future.
+
+		arr (ndarray): Image data to convert
+		destColorSpace(string): 'RGB' or 'YCoCg' describing destination color space.
+		outputArr (ndarray, optional): If present, write to this array
 	*/
-	imageToStrokes(tensor) {
-		// let temp_buf = new jsfeat.data_t
-		const width = tensor.cols;
-		const height = tensor.rows;
-		let temp = new jsfeat.matrix_t(width, height, jsfeat.U8C1_t);
-		// jsfeat.imgproc.grayscale(tensor, width, height, temp);
-		
-		let radius = 2;
-		let diameter = 2 * (radius + 1);
-		let sigma = 0;
-		jsfeat.imgproc.gaussian_blur(tensor, temp, diameter, sigma);
-		let low_thresh = 50;
-		let high_thresh = 300;
-		jsfeat.imgproc.canny(temp, temp, low_thresh, high_thresh);
-
-		let coeff = height < width ? width : height;
-		coeff *= 0.4;
-
-		let res_rho = 1;
-		let res_theta = (Math.PI / 540);
-		let hough_thresh = coeff;
-		var hough_out = jsfeat.imgproc.hough_transform(temp, res_rho, res_theta, hough_thresh)
-
-		let strokes = [];
-
-		for (var i = 0; i < hough_out.length; i++) {
-
-		    let rho = hough_out[i][0];
-		    let theta = hough_out[i][1];
-
-		    let a = Math.cos(theta);
-		    let b = Math.sin(theta);
-		    const x0 = a * rho;
-		    const y0 = b * rho;
-
-		    strokes.push([Math.round(x0 - 640 * b),    // sx
-		    			  Math.round(y0 + 640 * a),    // sy
-		    			  Math.round(x0 + 640 * b),    // fx
-		    			  Math.round(y0 - 640 * a)]); // fy
-
+	convertColorSpace(arr, destColorSpace, outputArr) {
+		var output;
+		// Allocate output array
+		if (outputArr === undefined) {
+			output = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+			output.data.fill(255);
+		}
+		else {
+			output = outputArr;
 		}
 
-		return strokes;
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		let x = 0;
+		let y = 0;
+
+		let r = 0;
+		let g = 0;
+		let b = 0;
+
+		let co = 0;
+		let tmp = 0;
+		let cg = 0;
+		let luma = 0;
+		
+		// Necessary duplication of inner loop for optimization
+		// One check on the outside vs checks at each inner loop
+		if (destColorSpace == 'YCoCg') {
+			for (x = 0; x < width; x++) {
+				for (y = 0; y < height; y++) {
+					r = arr.get(x, y, 0);
+					g = arr.get(x, y, 1);
+					b = arr.get(x, y, 2);
+					tmp = (r + b) >> 2;
+					luma = (g >> 1) + tmp;
+					co = 128 + ((r >> 1) - (b >> 1));
+					cg = 128 + (g >> 1) - tmp;
+					output.set(x, y, 0, luma);
+					output.set(x, y, 1, co);
+					output.set(x, y, 2, cg);
+				}
+			}
+		}
+		else if (destColorSpace == 'RGB') {
+			for (x = 0; x < width; x++) {
+				for (y = 0; y < height; y++) {
+					luma = arr.get(x, y, 0);
+					co = arr.get(x, y, 1) - 128;
+					cg = arr.get(x, y, 2) - 128;
+					r = luma - cg + co;
+					g = luma + cg;
+					b = luma - cg - co;
+					output.set(x, y, 0, r);
+					output.set(x, y, 1, g);
+					output.set(x, y, 2, b);
+				}
+			}
+		}
+		else {
+			throw Error(destColorSpace.join(" is not a valid destination color space!"))
+		}
+
+		OUTER.l.push(output);
+
+		return output;
+	},
+
+	/*
+		Apply a square median filter of dimension k * k to array.
+
+		Uses moving histogram binning to avoid k*k checks per instance.
+
+		arr (ndarray): Contains image info
+		k (int): Dimension of filter
+		forceChannels (int, optional): If present, force channels to this value
+		outputArr (ndarray, optional): If present, write to this array
+	*/
+	medianFilter(arr, k, forceChannels, outputArr) {
+		if (k == 1) {
+			return arr;
+		}
+
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		
+		let channels;
+		if (forceChannels !== undefined) {
+			channels = Math.min(arr.shape[2], forceChannels);
+		}
+		else {
+			channels = arr.shape[2];
+		}
+
+		const radius = k >> 1;
+
+		var output;
+		// Allocate output array
+		if (outputArr === undefined) {
+			output = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+			output.data.fill(255);
+		}
+		else {
+			output = outputArr;
+		}
+
+		if (k % 2 == 0 || k < 1) {
+			throw Error('Median filter must be of odd dimensions');
+		}
+
+		// Center of median filter window
+		let x = 0;
+		let y = 0;
+
+		// Construct counting bins for each channel
+		var bins = [];
+		var binCount = new Uint32Array(channels);
+		let ch = 0;
+		for (; ch < channels; ch++) {
+			bins.push(new Uint32Array(256));
+		}
+
+		// Median index trackers - must be initialized.
+
+		// Index of midpoint corresponds to median value
+		var binMedian = new Int32Array(channels);
+
+		// Index "within" midpoint bin
+		var binMedOffset = new Int32Array(channels);
+
+		// Window moves down, then right
+
+		// Allocation of window starting (=) / ending (<) coords
+		let x0 = 0;
+		let y0 = 0;
+		let x1 = 0;
+		let y1 = 0;
+
+		// Allocation of indexing offset variables for [X, Y, C] image tensor
+		let ix = 0;
+		let iy = 0;
+
+		// Mutating function - add pixel to bin
+		const addPixelBin = function(ix, iy, mediansIndexed) {
+			let ch = 0;
+			for (; ch < channels; ch++) {
+				// Increment value in target bin
+				let pix = arr.get(ix, iy, ch);
+				bins[ch][pix]++;
+				binCount[ch]++;
+				if (mediansIndexed) {
+					// Added value smaller than median, decr median
+					if (pix < binMedian[ch]) {
+						binMedOffset[ch]--;
+						// Dropped below floor of bin, go to prev
+						if (binMedOffset[ch] < 0) {
+							binMedian[ch]--;
+							while (bins[ch][binMedian[ch]] == 0) {
+								binMedian[ch]--;
+							}
+							// Reappear at top of nonempty bin
+							binMedOffset[ch] = bins[ch][binMedian[ch]] - 1;
+						}
+					}
+				}
+			}
+		}
+
+		// Mutating function - remove pixel from bin
+		const subPixelBin = function(ix, iy, mediansIndexed) {
+			let ch = 0;
+			for (; ch < channels; ch++) {
+				// Increment value in target bin
+				let pix = arr.get(ix, iy, ch);
+				bins[ch][pix]--;
+				binCount[ch]--;
+				if (mediansIndexed) {
+					// If removed value smaller, incr median
+					if (pix < binMedian[ch]) {
+						binMedOffset[ch]++;
+						// Exceeded bin, go to next bin
+						if (binMedOffset[ch] >= bins[ch]) {
+							binMedian[ch]++;
+							while (bins[ch][binMedian[ch]] == 0) {
+								binMedian[ch]++;
+							}
+							// Reappear at bottom of nonempty bin
+							binMedOffset[ch] = 0;
+						}
+					}
+				}
+			}
+		}
+
+		// Mutating function - write median to output
+		const writeMedian = function(output, ix, iy) {
+			let ch = 0;
+			let pix;
+			for (; ch < channels; ch++) {
+				pix = binMedian[ch];
+				output.set(ix, iy, ch, pix);
+			}
+		}
+
+		while (x < width) {
+			// Reset y-coordinate
+			y = 0;
+
+			// Reset counters
+			let ch = 0;
+			for (; ch < channels; ch++) {
+				bins[ch].fill(0);
+			}
+			binCount.fill(0);
+			binMedian.fill(0);
+			binMedOffset.fill(0);
+
+			// Initial y = 0 run to populate histogram bins
+			// Doesn't change during the x-loop
+			x0 = Math.max(0, x - radius);
+			x1 = Math.min(x + radius + 1, width);
+
+			// This changes during the x-loop
+			y0 = 0; // Special value due to top boundary
+			y1 = radius + 1; // Special value due to top boundary
+
+			console.log('Begin initial bin fill with window', x0, x1, y0, y1);
+			for (ix = x0; ix < x1; ix++) {
+				for (iy = y0; iy < y1; iy++) {
+					addPixelBin(ix, iy, false);
+				}
+			}
+
+			console.log('Setup initial median indexing');
+
+			// Initialize and index medians
+			for (ch = 0; ch < channels; ch++) {
+				// Target index is half of total (median)
+				let target = binCount[ch] >> 1;
+				// Accumulator
+				let acc = 0;
+				// Indexing variable
+				let medianI = 0;
+				// Find bin which takes us over target
+				let binVal = bins[ch][medianI];
+				while (acc + binVal < target) {
+					acc += bins[ch][medianI];
+					medianI++;
+				}
+				binMedian[ch] = medianI;
+				// Offset is remainder "inside" the bin
+				// Mathematical correctness from loop invariant ensures
+				// That we will never "exceed" the bin in question
+				binMedOffset[ch] = target - acc;
+			}
+
+			writeMedian(output, x, y);
+			y++;
+
+			console.log('Begin median filter loop');
+			
+			// At this point we don't subtract from our bins.
+			while (y < radius) {
+				y1 = y + radius;
+				// New pixels being introduced into bins
+				for (ix = x0; ix < x1; ix++) {
+					addPixelBin(ix, y1, true);
+				}
+				writeMedian(output, x, y);
+				y++;
+			}
+
+			// Add and subtract from bins with moving window over image
+			while (y < height - radius) {
+				y0 = y - radius;
+				y1 = y + radius;
+				// Drop / add pixels at back and front of window
+				for (ix = x0; ix < x1; ix++) {
+					subPixelBin(ix, y0, true);
+					addPixelBin(ix, y1, true);
+				}
+				writeMedian(output, x, y);
+				y++;
+			}
+
+			// Only remove pixels from bins
+			while (y < height) {
+				y0 = y - radius;
+				// Drop pixels at back of window
+				for (ix = x0; ix < x1; ix++) {
+					subPixelBin(ix, y0, true);
+				}
+				writeMedian(output, x, y);
+				y++;
+			}
+
+			x++;
+		}
+
+		return output;
+	},
+
+	/*
+		Convert [W * H * C] image array into data url.
+
+		arr
+	*/
+	toDataURL(arr) {
+		let canvas = document.createElement('canvas');
+		let context = canvas.getContext('2d');
+		canvas.width = arr.shape[0];
+		canvas.height = arr.shape[1];
+
+		// TODO - what about image larger than canvas?
+
+		let imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
+		let i = imgdata.data.length;
+		while(--i >= 0) {
+			imgdata.data[i] = arr.data[i];
+		}
+		context.putImageData(imgdata, 0, 0);
+
+		return canvas.toDataURL();
+	},
+
+	/*
+		Determine largest connected component of the target color
+	*/
+	getBestScoredComponent(arr, color) {
+		let width = arr.shape[0];
+		let height = arr.shape[1];
+		// input channels = 3
+
+		// Tolerance image (binary mask)
+		let tol_img = ndarray(new Float32Array(width * height), [width, height]);
+
+		let x;
+		let y;
+		let ch;
+		let val;
+		let tmp;
+		let pix;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = 0;
+				for (ch = 0; ch < 3; ch++) {
+					pix = arr.get(x, y, ch);
+					tmp = pix - color[ch];
+					tmp /= 255.0;
+					tmp *= tmp;
+					val += tmp;
+				}
+				if (val < DecomposeModel.TOLERANCE) {
+					tol_img.set(x, y, 1);
+				}
+			}
+		}
+
+		// Mimicked Gaussian Filter
+		// For averaging
+		let z;
+		for (x = 1; x < width; x++) {
+			for (y = 1; y < height; y++) {
+				tmp = 0;
+				tmp += 2 * tol_img.get(x - 1, y);
+				tmp += 2 * tol_img.get(x + 1, y);
+				tmp += 2 * tol_img.get(x, y - 1);
+				tmp += 2 * tol_img.get(x, y + 1);
+				tmp += tol_img.get(x - 1, y - 1);
+				tmp += tol_img.get(x + 1, y + 1);
+				tmp += tol_img.get(x + 1, y - 1);
+				tmp += tol_img.get(x - 1, y + 1);
+				z = 12;
+
+				if (x > 2) {
+					tmp += tol_img.get(x - 2, y);
+					z += 1;
+				}
+
+				if (x + 2 < width) {
+					tmp += tol_img.get(x + 2, y);
+					z += 1;
+				}
+
+				if (y > 2) {
+					tmp += tol_img.get(x, y - 2);
+					z += 1;
+				}
+
+				if (y + 2 < width) {
+					tmp += tol_img.get(x, y + 2);
+					z += 1;
+				}
+
+				if (tmp > (z >> 1)) {
+					tol_img.set(x, y, 1);
+				}
+			}
+		}
+
+		// TODO - use connected-component-labelling to also separate out all the subcomponents
+
+		let component = {
+			'score': ndops.sum(tol_img),
+			'arr': tol_img
+		};
+
+		return component;
 
 	},
 
 	/*
-		Convert image tensor to descriptive strokes. (Interim)
-		Thanks to https://inspirit.github.io/jsfeat/
+		Convert image array to descriptive strokes.
+
+		arr (ndarray) contains channeled image information
+		imageData (HTMLImageElement) contains hidden <img> for image
 	*/
-	interimModel(tensor) {
-		// let temp_buf = new jsfeat.data_t
-		const width = tensor.cols;
-		const height = tensor.rows;
-		let temp = new jsfeat.matrix_t(width, height, jsfeat.U8C1_t);
-		// jsfeat.imgproc.grayscale(tensor, width, height, temp);
-		
-		// Could iterate successively with different radii
+	imageToStrokes(arr, imageData) {
 
-		let radius = 2;
-		let diameter = 2 * (radius + 1);
-		let sigma = 0;
-		jsfeat.imgproc.box_blur_gray(tensor, temp, diameter);
+		// Stack of unscored candidate components
+		let candidatesUnscored = [];
+		// Stack of scored candidate components
+		let candidates = [];
 
-		let scharr = new jsfeat.matrix_t(width, height, jsfeat.S32C2_t);
-		jsfeat.imgproc.scharr_derivatives(temp, scharr);
+		// Sequentially decreasing median filter size to
+		// Mimic monotonically decreasing attention to detail
+		// TODO - k should start at 9 but median filter is broken for nontrivial case
+		let k = 1;
+		for (; k >= 1; k -= 2) {
 
-		return scharr;
+			// Run through median filter in YCoCg
+			let yco = DecomposeModel.convertColorSpace(arr, 'YCoCg');
+			let filteredYco = DecomposeModel.medianFilter(yco, k, 3);
+			let filtered = DecomposeModel.convertColorSpace(filteredYco, 'RGB');
+			let dataURL = DecomposeModel.toDataURL(filtered);
+			imageData.src = dataURL;
+
+			// Grab dominant colors
+			let colorThief = new ColorThief();
+			let palette = colorThief.getPalette(imageData);
+
+			console.log(palette);
+
+			for (let i = 0; i < palette.length; i++) {
+				let color = palette[i];
+
+				let scoredComponent = DecomposeModel.getBestScoredComponent(filtered, color);
+
+				// Color score
+				candidates.push(scoredComponent);
+			}
+		}
+
+		// Binary masks / candidates
+		OUTER.candidates = candidates;
+
+		// Easy trick to visualize
+		// p5_inst.createImg(imageData.src);
+
 	},
 
-	render2(tensor) {
-		// Debug only - render 2-channel tensor
-		let cvs = document.getElementById('defaultCanvas0').getContext('2d');
-		let target = cvs.getImageData(0, 0, tensor.cols, tensor.rows);
+	// debug only - convert 1-channel binary array to b/w color array
+	binToColor(arr) {
+		let width = arr.shape[0];
+		let height = arr.shape[1];
+		let output = ndarray(new Uint8ClampedArray(width * height * 4), [width, height, 4]);
 
-	    // render tensor back to canvas
-	    const alpha = (0xff << 24);
-	    let data_u32 = new Uint32Array(target.data.buffer);
-	    let i = tensor.cols*tensor.rows;
-	    let pix = 0;
-	    let gx = 0;
-	    let gy = 0;
-        while(--i >= 0) {
-            gx = Math.abs(tensor.data[ i<<1   ]>>2)&0xff;
-            gy = Math.abs(tensor.data[(i<<1)+1]>>2)&0xff;
-            pix = ((gx + gy)>>2)&0xff;
-            data_u32[i] = (pix << 24) | (gx << 16) | (0 << 8) | gy;
-        }
+		let x;
+		let y;
+		let ch;
+		let val;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = arr.get(x, y) * 255;
+				for (ch = 0; ch < 3; ch++) {
+					output.set(x, y, ch, val);
+				}
+				output.set(x, y, ch, 255);
+			}
+		}
 
-	    cvs.putImageData(target, 0, 0);
+		return output;
 	},
 
-	render(tensor) {
-		// Debug only
+	// Debug only - render ndarray
+	render(arr) {
 		let cvs = document.getElementById('defaultCanvas0').getContext('2d');
-		let target = cvs.getImageData(0, 0, tensor.cols, tensor.rows);
+		let target = cvs.getImageData(0, 0, arr.shape[0], arr.shape[1]);
 
-	    // render tensor back to canvas
-	    const alpha = (0xff << 24);
-	    let data_u32 = new Uint32Array(target.data.buffer);
-	    let i = tensor.cols*tensor.rows;
-	    let pix = 0;
-	    while(--i >= 0) {
-	        pix = tensor.data[i];
-	        data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
-	    }
+		// render tensor back to canvas
+		let i = arr.shape[0] * arr.shape[1] * arr.shape[2];
+		while(--i >= 0) {
+			target[i] = arr.data[i];
+		}
 
-	    cvs.putImageData(target, 0, 0);
+		cvs.putImageData(target, 0, 0);
 	}
 }
-
 
 if (isNode) {
 	module.exports = {

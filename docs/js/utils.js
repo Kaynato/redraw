@@ -16,8 +16,7 @@ ndshow = require('ndarray-show');
 ndops = require('ndarray-ops');
 zeros = require('zeros');
 
-dominant_color = require('dominant-color');
-imagemagick = require('imagemagick');
+dt = require('distance-transform');
 
 // Client-side jsfeat is newer.
 // jsfeat = require('jsfeat');
