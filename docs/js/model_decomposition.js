@@ -13,10 +13,37 @@ var OUTER = {
 	l: []
 };
 
+const Morphology = {
+	// Mutating operation
+	dilate(target, arr, radius) {
+		dt(arr, 2);
+		ndops.leqs(target, arr, radius);
+	},
+
+	// Mutating operation
+	erosion(target, arr, radius) {
+		ndops.not(target, arr);
+		Morphology.dilate(target, target, radius);
+		ndops.noteq(target);
+	}
+}
+
 const DecomposeModel = {
 
+	// Tolerance for color error when looking for binary masks
 	TOLERANCE: 0.01,
+
+	// Score cutoff for ignoring components
 	SCORE_CUTOFF_PERCENT: 0.02,
+
+	// How many components to draw each step
+	COMPONENTS_EACH_STEP: 5,
+
+	// Max width allowable for estimation
+	MAX_W: 21,
+
+	// Sensitivity to sudden drop in accuracy for width estimation
+	W_SENS: 0.3,
 
 	/*
 		Convert image into a tensor.
@@ -379,16 +406,32 @@ const DecomposeModel = {
 	toDataURL(arr) {
 		let canvas = document.createElement('canvas');
 		let context = canvas.getContext('2d');
-		canvas.width = arr.shape[0];
-		canvas.height = arr.shape[1];
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		const channels = arr.shape[2];
+		canvas.width = width;
+		canvas.height = height;
 
 		// TODO - what about image larger than canvas?
 
 		let imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
-		let i = imgdata.data.length;
+		let x;
+		let y;
+		let ch;
+		let i = width * height * channels;
+		for (x = width - 1; x >= 0; x--) {
+			for (y = height - 1; y >= 0; y--) {
+				for (ch = channels - 1; ch >= 0; ch--) {
+					--i;
+					imgdata.data[i] = arr.get(x, y, ch);
+				}
+			}
+		}
+
 		while(--i >= 0) {
 			imgdata.data[i] = arr.data[i];
 		}
+
 		context.putImageData(imgdata, 0, 0);
 
 		return canvas.toDataURL();
@@ -623,6 +666,91 @@ const DecomposeModel = {
 	},
 
 	/*
+		Estimate width of brush to best draw component
+		arr (ndarray): binary mask of component
+	*/
+	estimateWidth(arr) {
+
+		// TODO: Pad arr with MAX_W on all sides
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+
+		// TODO: More sensible magic number?
+		// Detects sudden dropoff of fidelity after opening
+		const threshold = ndops.sum(arr) * DecomposeModel.W_SENS;
+
+		// Allocate temporary array
+		const padding = DecomposeModel.MAX_W;
+		const padHeight = 2 * padding + height;
+		const padWidth = 2 * padding + width;
+
+		const centerOf = function(arr) {
+			return arr.lo(padding, padding).hi(width, height);
+		}
+
+		// TODO - move allocation outside. We only ever use one at a time
+		// So we can avoid piling up the garbage.
+
+		// Padded "framed" array to dilate from
+		let paddedArr = new Float32Array(padWidth * padHeight);
+		paddedArr.fill(1);
+		let padded = ndarray(paddedArr, [padWidth, padHeight]);
+		ndops.assign(centerOf(padded), arr);
+
+		// Will contain erosion(s)
+		let erodeArr = new Float32Array(padWidth * padHeight);
+		let erode = ndarray(erodeArr, [padWidth, padHeight]);
+
+		// Will contain opening(s)
+		let dilateArr = new Float32Array(padWidth * padHeight);
+		let dilate = ndarray(dilateArr, [padWidth, padHeight]);
+
+		// To mutate and transform, etc
+		let tempArr = new Float32Array(padWidth * padHeight);
+		let temp = ndarray(tempArr, [padWidth, padHeight]);
+
+		let error = 0;
+		// let diff = 0;
+		// let prev = 0;
+		// let accel = 0;
+		// let eavg = 0;
+
+		// TODO - there must exist a more efficient algorithm!
+
+		let w;
+
+		for (w = 2; w < DecomposeModel.MAX_W; w++) {
+			// Erode padded with radius w 
+			Morphology.erosion(erode, padded, w);
+			Morphology.dilate(dilate, erode, w);
+
+			// tmp contains closing (thus has fewer pixels)
+			ndops.sub(centerOf(temp), centerOf(padded), centerOf(dilate));
+			error = ndops.sum(centerOf(temp));
+
+			// diff = error - prev;
+			// prev = error;
+			// accel = diff - eavg;
+			// eavg = 0.9 * eavg + 0.1 * diff;
+			// console.log(error, diff, prev, -threshold);
+			// console.log(w, error, threshold)
+			if (error > threshold) {
+				break;
+				// We actually want the previous.
+			}
+		}
+
+		return {
+			'width': w, 
+			'erode': centerOf(erode),
+			'opened': centerOf(dilate)
+		}
+
+		// return the eroded image and the chosen width
+
+	},
+
+	/*
 		Convert image array to descriptive strokes.
 
 		arr (ndarray) contains channeled image information
@@ -670,12 +798,26 @@ const DecomposeModel = {
 
 			candidates.sort(DecomposeModel.componentSortingFunction);
 
-			
+			OUTER.candidates = candidates;
+			let estObject;
+			let candidate;
+			OUTER.drawns = [];
+			for (i = 0; i < DecomposeModel.COMPONENTS_EACH_STEP; i++) {
+				candidate = candidates.pop();
+				
+				// TODO - preliminary closing?
+
+				// Width, erosion (for polytrace), dilation (for subtraction)
+				estObject = DecomposeModel.estimateWidth(candidate.arr);
+				OUTER.drawns.push(estObject);
+				
+				// TODO?
+			}
+
 
 		}
 
 		// Binary masks / candidates
-		OUTER.candidates = candidates;
 
 	},
 
