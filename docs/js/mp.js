@@ -506,10 +506,10 @@ function sketch_process(p)
       color = p.color(red, green, blue, 255);
 
       const size = strokes.length;
-      for (let i=0; i<size/2; i = i +10) 
+      for (let i=0; i<size/2; i = i + 50) 
       {
           p.line(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2) - i][2], strokes[Math.floor(size/2) -i][3]);
-          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2)-i][2], strokes[Math.floor(size/2)-i][3],20,color);
+          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2)-i][2], strokes[Math.floor(size/2)-i][3],100,color);
       }
 
       // let upper_slice = index_of_interest;
