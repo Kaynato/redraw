@@ -456,15 +456,9 @@ function sketch_process(p)
                         color);
       //p.rect(p.mouseX, p.mouseY, 55, 55);
     }
-<<<<<<< Updated upstream
     // Circle
     else if (MPState.getShapeOption() == 1)
     {
-=======
-
-    else if (MPState.getShapeOption() == 1) //circle
-    { //circle
->>>>>>> Stashed changes
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -475,15 +469,9 @@ function sketch_process(p)
       // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
       p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
     }
-<<<<<<< Updated upstream
     // Triangle
     else if (MPState.getShapeOption() == 2)
     {
-=======
-
-    else if (MPState.getShapeOption() == 2) //triangle
-    { //triangle
->>>>>>> Stashed changes
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
