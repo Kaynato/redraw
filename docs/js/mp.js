@@ -867,10 +867,6 @@ function warholMode()
     let red = Math.random()*255;
     let green = Math.random()*255;
     let blue = Math.random()*255;
-    for (let j = 0; j < strokes.length; j++)
-    {
-      initalstrokes[j][5] = p5_inst.color(red, green, blue, 255);
-    }
     for (let i = 0; i < strokes.length; i++)
     {
       if((x % 4) == 0) // 0 to 160 width
@@ -886,7 +882,6 @@ function warholMode()
         initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
         initalstrokes[i][2] = 160 +strokes[i][2];
         initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
-        
       }
       else if((x % 4) == 2) // 321 to 480 width
       {
@@ -902,7 +897,9 @@ function warholMode()
        initalstrokes[i][2] = 480 + strokes[i][2];
        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];  
       }
-      p5_inst.drawStroke(initalstrokes[i], sizes[i]);
+      initalstrokes[i][5] = p5_inst.color(red, green, blue, 255);
+      p5_inst.drawStroke(initalstrokes[i], sizes[i]/4);
+
       //i'm amazed i can't think of a better way to do this that works.
       if((x % 4) == 0) // 0 to 160 width
       {
@@ -935,7 +932,6 @@ function warholMode()
       }
     }
   }
-
 }
 
 function generateBrushstrokes()
@@ -992,12 +988,12 @@ function addOption(idx) {
   const optionTextIdx = idx + 1;
 
   // Inject new html option based on index location
-  const x = document.getElementById('img-num');
+  const states = document.getElementById('img-num');
   const option = document.createElement('option');
   option.text = 'Image ' + optionTextIdx;
   option.value = idx;
   option.selected = true; // Select the option for the dropdown menu that was just saved
-  x.add(option);
+  states.add(option);
 }
 
 /**
