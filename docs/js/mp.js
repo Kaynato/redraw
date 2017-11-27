@@ -471,7 +471,6 @@ function sketch_process(p)
     }
     else if (MPState.inFillMode()) 
     {
-
       const strokes = MPState.getVisibleStrokes();
       const sizes = MPState.getVisibleSizes();
       const mouseX = p.mouseX;
@@ -494,7 +493,7 @@ function sketch_process(p)
           endof_closesty = strokes[i][3];
           console.log(current_closestx);
           lineSize = strokes[i][4];
-          const index_of_interest = i;
+          index_of_interest = i;
         }
       }
 
@@ -509,7 +508,7 @@ function sketch_process(p)
       for (let i=0; i<size/2; i = i + 50) 
       {
           p.line(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2) - i][2], strokes[Math.floor(size/2) -i][3]);
-          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2)-i][2], strokes[Math.floor(size/2)-i][3],100,color);
+          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2)-i][2], strokes[Math.floor(size/2)-i][3], lineSize ,color);
       }
 
       // let upper_slice = index_of_interest;
