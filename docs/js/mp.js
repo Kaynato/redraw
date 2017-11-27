@@ -456,9 +456,15 @@ function sketch_process(p)
                         color);
       //p.rect(p.mouseX, p.mouseY, 55, 55);
     }
+<<<<<<< Updated upstream
     // Circle
     else if (MPState.getShapeOption() == 1)
     {
+=======
+
+    else if (MPState.getShapeOption() == 1) //circle
+    { //circle
+>>>>>>> Stashed changes
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -469,9 +475,15 @@ function sketch_process(p)
       // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
       p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
     }
+<<<<<<< Updated upstream
     // Triangle
     else if (MPState.getShapeOption() == 2)
     {
+=======
+
+    else if (MPState.getShapeOption() == 2) //triangle
+    { //triangle
+>>>>>>> Stashed changes
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -510,6 +522,103 @@ function sketch_process(p)
 
       //p.triangle(p.mouseX - 35, p.mouseY + 50, p.mouseX, p.mouseY, p.mouseX + 35, p.mouseY + 50);
     }
+    else if (MPState.getShapeOption() == 3) //Rhombus
+    {
+      lineSize = sizeSlider.value();
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+      p.strokeWeight(lineSize);
+      p.stroke(color);
+      // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+      p.line(p.mouseX, p.mouseY,  p.mouseX + 100, p.mouseY);
+      //console.log(p.mouseX, p.mouseY,  p.mouseX + 50, p.mouseY);
+      p.line(p.mouseX + 100, p.mouseY, p.mouseX + 50, p.mouseY - 50);
+      //console.log(p.mouseX + 50, p.mouseY, p.mouseX + 50, p.mouseY - 50);
+      p.line(p.mouseX + 50, p.mouseY - 50, p.mouseX - 50, p.mouseY - 50);
+      //console.log(p.mouseX + 50, p.mouseY - 50, p.mouseX, p.mouseY - 50);
+      p.line(p.mouseX - 50, p.mouseY - 50, p.mouseX, p.mouseY);
+      //console.log(p.mouseX, p.mouseY - 50, p.mouseX, p.mouseY);
+
+      MPState.addStroke(p.mouseX,
+                        p.mouseY,
+                        p.mouseX + 100,
+                        p.mouseY,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 100,
+                        p.mouseY,
+                        p.mouseX + 50,
+                        p.mouseY - 50,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 50,
+                        p.mouseY - 50,
+                        p.mouseX - 50,
+                        p.mouseY - 50,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX - 50,
+                        p.mouseY - 50,
+                        p.mouseX,
+                        p.mouseY,
+                        lineSize,
+                        color);
+    }
+
+    else if (MPState.getShapeOption() == 4)
+    {
+      lineSize = sizeSlider.value();
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+      p.strokeWeight(lineSize);
+      p.stroke(color);
+      // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+      p.line(p.mouseX, p.mouseY,  p.mouseX + 20, p.mouseY + 60);
+      //console.log(p.mouseX, p.mouseY,  p.mouseX + 50, p.mouseY);
+      p.line(p.mouseX + 20, p.mouseY + 60, p.mouseX - 30, p.mouseY + 22);
+      //console.log(p.mouseX + 50, p.mouseY, p.mouseX + 50, p.mouseY - 50);
+      p.line(p.mouseX - 30, p.mouseY + 22, p.mouseX + 30, p.mouseY + 22);
+      //console.log(p.mouseX + 50, p.mouseY - 50, p.mouseX, p.mouseY - 50);
+      p.line(p.mouseX + 30, p.mouseY + 22, p.mouseX - 20, p.mouseY + 60);
+      //console.log(p.mouseX, p.mouseY - 50, p.mouseX, p.mouseY);
+      p.line(p.mouseX - 20, p.mouseY + 60, p.mouseX, p.mouseY);
+
+      MPState.addStroke(p.mouseX,
+                        p.mouseY,
+                        p.mouseX + 20,
+                        p.mouseY + 60,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 20,
+                        p.mouseY + 60,
+                        p.mouseX - 30,
+                        p.mouseY + 22,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX - 30 ,
+                        p.mouseY + 22,
+                        p.mouseX + 30,
+                        p.mouseY + 22,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 30,
+                        p.mouseY + 22,
+                        p.mouseX - 20,
+                        p.mouseY + 60,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX - 20,
+                        p.mouseY + 60,
+                        p.mouseX,
+                        p.mouseY,
+                        lineSize,
+                        color);
+    }
+
   }
 
   p.mouseDragged = function()
@@ -1325,7 +1434,9 @@ function shapeTool()
   MPState.setShapeOption(shape);
 }
 
+//begin new
 
+//begin end
 if (isNode) {
   module.exports =
   {
