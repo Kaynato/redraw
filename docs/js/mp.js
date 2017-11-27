@@ -492,40 +492,55 @@ function sketch_process(p)
           current_closesty = strokes[i][1];
           endof_closestx = strokes[i][2];
           endof_closesty = strokes[i][3];
+          console.log(current_closestx);
           lineSize = strokes[i][4];
-          index_of_interest = i;
+          const index_of_interest = i;
         }
       }
 
       let closed_shape = false;
-      let upper_slice = index_of_interest;
-      let lower_slice = index_of_interest;
 
-      for (let i=index_of_interest; i< strokes.length - 1; i++) 
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+
+      const size = strokes.length;
+      for (let i=0; i<size/2; i = i +10) 
       {
-        if ((strokes[i][2] == strokes[i + 1][0]) && (strokes[i][3] == strokes[i+1][1]))
-        {
-          console.log("hi");
-          upper_slice = i;
-        }
-
-        else
-        {
-          break;
-        }
+          p.line(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2) - i][2], strokes[Math.floor(size/2) -i][3]);
+          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2)-i][2], strokes[Math.floor(size/2)-i][3],20,color);
       }
 
-      for (let i=index_of_interest; i> 1; i--) 
-      {
-        if (strokes[i - 1][2] == strokes[i ][0] && strokes[i - 1][3] == strokes[i][1])
-        {
-          lower_slice = i;
-        }
-        else
-        {
-          break;
-        }
-      }
+      // let upper_slice = index_of_interest;
+      // let lower_slice = index_of_interest;
+
+      // for (let i=index_of_interest; i< strokes.length - 1; i++) 
+      // {
+      //   if ((strokes[i][2] == strokes[i + 1][0]) && (strokes[i][3] == strokes[i+1][1]))
+      //   {
+      //     upper_slice = i;
+      //     console.log(current_closestx);
+      //   }
+
+      //   else
+      //   {
+      //     break;
+      //   }
+      // }
+
+      // for (let i=index_of_interest; i> 1; i--) 
+      // {
+      //   if (strokes[i - 1][2] == strokes[i ][0] && strokes[i - 1][3] == strokes[i][1])
+      //   {
+
+      //     lower_slice = i;
+      //   }
+      //   else
+      //   {
+      //     break;
+      //   }
+      // }
       //console.log(lower_slice);
     
     }
