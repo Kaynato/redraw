@@ -15,9 +15,6 @@
  - Update local npm packages using `npm install`
  - `npm test`: Runs both the unit tests and coveralls code coverage tool
 
-### Github Pages
-View the site [here](https://redrawteam.github.io/redraw/)
-
 ### Code Coverage Tools
  - Test Logs: https://travis-ci.org/
  - Code Coverage: https://coveralls.io/
