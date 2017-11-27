@@ -1159,7 +1159,6 @@ function mirrorMode()
 
     }
   }
-
   else if(modeID == 2)
   {
     const strokes = MPState.getVisibleStrokes();
@@ -1263,7 +1262,6 @@ function shapeTool()
 {
   const shape = document.getElementById('shape').value;
   MPState.setShapeOption(shape);
-
 }
 
 
