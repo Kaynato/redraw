@@ -511,20 +511,18 @@ function sketch_process(p)
 
   p.mouseDragged = function()
   {
+    // Check if the 'draw strokes' state or the 'draw shape' mode. If in the 
+    // 'draw shape' state, then don't do anything when the mouse is dragged.
     if (MPState.getShapeOption() == null) {
-      // We have to change this so that it compares the mouseX and y over here and
-      // then adds a stroke of the same start and end coordinates as the closest stroke.
+      // If its in eraser mode, add white lines over the previously drawn strokes.
       if (MPState.inEraserMode())
       {
-        color = p.color(255, 255, 255, 255); // Make the line of white color
+        color = p.color(255, 255, 255, 255);
         p.stroke(color);
 
-        // Compare coordinates to closest stroke here
+        // Compare coordinates to closest stroke
         const strokes = MPState.getVisibleStrokes();
         const sizes = MPState.getVisibleSizes();
-        const mouseX = p.mouseX;
-        const mouseY = p.mouseY;
-        // console.log(p);
 
         let current_closestx = 10000;
         let current_closesty = 10000;
@@ -533,7 +531,7 @@ function sketch_process(p)
         let lineSize = 0;
         for (let i=0; i<strokes.length; i++)
         {
-          if ((Math.abs(mouseX - strokes[i][0]) + Math.abs(mouseY - strokes[i][1])) < (Math.abs(mouseX - current_closestx) + Math.abs(mouseY - current_closesty)))
+          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty)))
           {
             current_closestx = strokes[i][0];
             current_closesty = strokes[i][1];
@@ -541,7 +539,6 @@ function sketch_process(p)
             endof_closesty = strokes[i][3];
             lineSize = strokes[i][4];
           }
-          //
         }
         console.log(current_closestx);
         console.log(current_closesty);
@@ -549,7 +546,7 @@ function sketch_process(p)
         p.line(current_closestx,
               current_closesty,
               endof_closestx,
-              endof_closesty); // has to be the startX, startY, endX, endY of closest stroke, not the dragged mouse
+              endof_closesty); // add white line with coordinates of startX, startY, endX, endY of closest stroke
         MPState.addStroke(current_closestx,
                           current_closesty,
                           endof_closestx,
