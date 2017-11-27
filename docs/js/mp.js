@@ -411,7 +411,8 @@ function sketch_process(p)
 
   p.mousePressed = function()
   {
-    if (MPState.getShapeOption() == 0) { // square
+    // Square
+    if (MPState.getShapeOption() == 0) {
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -455,8 +456,9 @@ function sketch_process(p)
                         color);
       //p.rect(p.mouseX, p.mouseY, 55, 55);
     }
+    // Circle
     else if (MPState.getShapeOption() == 1)
-    { //circle
+    {
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -467,8 +469,9 @@ function sketch_process(p)
       // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
       p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
     }
+    // Triangle
     else if (MPState.getShapeOption() == 2)
-    { //triangle
+    {
       lineSize = sizeSlider.value();
       red = redSlider.value();
       green = greenSlider.value();
@@ -542,7 +545,7 @@ function sketch_process(p)
         }
         console.log(current_closestx);
         console.log(current_closesty);
-        p.strokeWeight(lineSize+10);
+        p.strokeWeight(lineSize+5);
         p.line(current_closestx,
               current_closesty,
               endof_closestx,
@@ -551,7 +554,7 @@ function sketch_process(p)
                           current_closesty,
                           endof_closestx,
                           endof_closesty,
-                          lineSize+10,
+                          lineSize+5,
                           color);
       }
       else
@@ -1044,7 +1047,7 @@ function warholMode()
        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       initalstrokes[i][5] = p5_inst.color(red, green, blue, 255);
-      p5_inst.drawStroke(initalstrokes[i], sizes[i]/4);
+      p5_inst.drawStroke(initalstrokes[i], sizes[i]);
 
       //i'm amazed i can't think of a better way to do this that works.
       if((x % 4) == 0) // 0 to 160 width
