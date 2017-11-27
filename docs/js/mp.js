@@ -1283,21 +1283,6 @@ function updateEraserToggle()
 }
 
 
-function drawTriangle()
-{
-  var canvas = document.getElementById('canvas-holder');
-  if (canvas.getContext) {
-    var ctx = canvas.getContext('2d');
-    ctx.beginPath();
-    ctx.moveTo(50, 50);
-    ctx.lineTo(75, 100);
-    ctx.lineTo(25, 100);
-    ctx.fill();
-
-  }
-}
-
-
 function shapeTool()
 {
   const shape = document.getElementById('shape').value;
