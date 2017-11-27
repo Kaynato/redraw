@@ -12,7 +12,7 @@ var isNode = (typeof global !== "undefined");
 /* DEFINE ARBITRARILY-DETERMINED GLOBAL VARIABLES */
 
 // Definition of data stored in MPState state (array)
-const DataIndices = 
+const DataIndices =
 {
   startX: 0,
   startY: 1,
@@ -24,7 +24,7 @@ const DataIndices =
   colorB: 7
 }
 
-let MPState = 
+let MPState =
 {
   WIDTH: 640,
   HEIGHT: 480,
@@ -44,6 +44,9 @@ let MPState =
   play: false,
   eraser: false,
 
+  // Shapes
+  shapeOption: null,
+
   // The index sits at the next-written position.
   // We display all vectors up to, but not including the position.
   strokeIndex: 0,
@@ -56,7 +59,7 @@ let MPState =
   // All saved images in this session.
   savedImages: [],
 
-  inBounds(startX, startY, endX, endY) 
+  inBounds(startX, startY, endX, endY)
   {
     return startX >= 0 && startX <= this.WIDTH &&
         startY >= 0 && startY <= this.HEIGHT &&
@@ -73,7 +76,7 @@ let MPState =
    * @param {Number} lineSize       describes width
    * @param {p5.Color} color        describes color
    */
-  addStroke(startX, startY, endX, endY, lineSize, color) 
+  addStroke(startX, startY, endX, endY, lineSize, color)
   {
     if (this.inBounds(startX, startY, endX, endY))
     {
@@ -86,7 +89,7 @@ let MPState =
       this.colorsB.push(color.levels[2]);
 
       // Overwrite
-      if (this.dataIndex > this.strokeIndex) 
+      if (this.dataIndex > this.strokeIndex)
       {
         this.state = this.state.slice(0, this.strokeIndex)
         this.sizes = this.sizes.slice(0, this.strokeIndex)
@@ -101,18 +104,18 @@ let MPState =
 
   },
 
-  setStrokeIndex(val) 
+  setStrokeIndex(val)
   {
-    if (val < 0) 
+    if (val < 0)
     {
       return null;
     }
     return this.strokeIndex = val;
   },
 
-  setDataIndex(val) 
+  setDataIndex(val)
   {
-    if (val < 0) 
+    if (val < 0)
     {
       return null;
     }
@@ -122,7 +125,7 @@ let MPState =
   /**
    * Gets the current stroke from the canvas
    */
-  getCurrentStroke() 
+  getCurrentStroke()
   {
     // console.log('Stroke Index: ' + this.strokeIndex);
     // console.log('Data Index: ' + this.dataIndex)
@@ -140,7 +143,7 @@ let MPState =
   /**
     Get size of current stroke from the canvas
   */
-  getCurrentSize() 
+  getCurrentSize()
   {
     if (this.strokeIndex > 0)
     {
@@ -153,28 +156,28 @@ let MPState =
   },
 
   /** Get all visible strokes. */
-  getVisibleStrokes() 
+  getVisibleStrokes()
   {
     return this.state.slice(0, this.strokeIndex);
   },
 
   /** Get sizes of all visible strokes. */
-  getVisibleSizes() 
+  getVisibleSizes()
   {
     return this.sizes.slice(0, this.strokeIndex)
   },
 
-  getVisibleReds() 
+  getVisibleReds()
   {
     return this.colorsR.slice(0, this.strokeIndex)
   },
 
-  getVisibleGreens() 
+  getVisibleGreens()
   {
     return this.colorsG.slice(0, this.strokeIndex)
   },
 
-  getVisibleBlues() 
+  getVisibleBlues()
   {
     return this.colorsB.slice(0, this.strokeIndex)
   },
@@ -216,9 +219,9 @@ let MPState =
    * Sets the visible strokes to specified ones.
    * @param {array} strokes   - strokes
    */
-  setVisibleStrokes(strokes) 
+  setVisibleStrokes(strokes)
   {
-    if (strokes.length == 0) 
+    if (strokes.length == 0)
     {
       return this.state = [];
     }
@@ -229,9 +232,9 @@ let MPState =
    * Sets the visible stroke sizes to the specified ones.
    * @param {array} strokeSizes   - line sizes of the visible strokes
    */
-  setVisibleSizes(strokeSizes) 
+  setVisibleSizes(strokeSizes)
   {
-    if (strokeSizes.length == 0) 
+    if (strokeSizes.length == 0)
     {
       return this.sizes = [];
     }
@@ -239,45 +242,44 @@ let MPState =
   },
 
   /** Getter for all saved images in this session */
-  getSavedImages() 
+  getSavedImages()
   {
     return this.savedImages;
   },
 
-  getState() 
+  getState()
   {
     return this.state;
   },
 
-  getSizes() 
+  getSizes()
   {
     return this.sizes;
   },
 
   /** Getter for "generating". */
-  isGenerating() 
+  isGenerating()
   {
     return this.generating;
   },
 
   /** Setter for "generating". */
-  setGenerating(val) 
+  setGenerating(val)
   {
     this.generating = val;
   },
 
   /** Getter for "play". */
-  isPlay() 
+  isPlay()
   {
     return this.play;
   },
 
   /** Setter for "play". */
-  setPlay(val) 
+  setPlay(val)
   {
     this.play = val;
   },
-
 
   inEraserMode() {
     return this.eraser;
@@ -287,18 +289,29 @@ let MPState =
     this.eraser = val;
   },
 
+  getShapeOption() {
+    return this.shapeOption;
+  },
+
+  setShapeOption(val) {
+    if (val < 0) {
+      return;
+    }
+    this.shapeOption = val;
+  },
+
   /**
     Step stroke index backward.
     Returns whether the operation was effective.
   */
-  back() 
+  back()
   {
-    if (this.strokeIndex > 0) 
+    if (this.strokeIndex > 0)
     {
       this.strokeIndex--;
       return true;
-    } 
-    else 
+    }
+    else
     {
       return false;
     }
@@ -310,17 +323,17 @@ let MPState =
   */
 
 
-  forward() 
+  forward()
   {
     // console.log('State Length: ' + this.state.length);
-    if (this.isGenerating()) 
+    if (this.isGenerating())
     {
       // predictVector / nextStroke - update SDD
       // stroke = GenerateModel.nextStroke(this.state)
 
       // Single stroke addition.
       const cur_stroke = this.getCurrentStroke();
-      const stroke = 
+      const stroke =
       {
         startX: cur_stroke[2], // start new endX value from endX value of previous vector
         startY: cur_stroke[3], // start new endY value from endY value of previous vector
@@ -345,15 +358,15 @@ let MPState =
                      stroke.width,
                      stroke.color);
       return true;
-    } 
-    else 
+    }
+    else
     {
-      if (this.strokeIndex < this.dataIndex) 
+      if (this.strokeIndex < this.dataIndex)
       {
         this.strokeIndex++;
         return true;
-      } 
-      else 
+      }
+      else
       {
         return false;
       }
@@ -366,7 +379,7 @@ let MPState =
 /**
   Function definition for p5 object.
 */
-function sketch_process(p) 
+function sketch_process(p)
 {
 
   let canvas = null;
@@ -380,7 +393,7 @@ function sketch_process(p)
   let blue = 0;
   let lineSize = 1;
 
-  p.setup = function() 
+  p.setup = function()
   {
     canvas = p.createCanvas(640, 480);
     lineSize = 5;
@@ -401,7 +414,7 @@ function sketch_process(p)
   }
 
   // Additional function for non-interfering setup
-  p.predraw = function() 
+  p.predraw = function()
   {
     p.strokeWeight(1);
     p.rect(1, 0, 638, 478);
@@ -409,15 +422,52 @@ function sketch_process(p)
     p.color(red, green, blue, 255)
   }
 
-  p.draw = function() 
+  p.draw = function()
   {
   }
 
-   p.mouseDragged = function() 
+  p.mousePressed = function()
   {
-    // We have to change this so that it compares the mouseX and y over here and 
+    if (MPState.getShapeOption() == 0) { // square
+      lineSize = sizeSlider.value();
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+      p.strokeWeight(lineSize);
+      p.stroke(color);
+      // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+      p.rect(p.mouseX, p.mouseY, 55, 55);
+    }
+    else if (MPState.getShapeOption() == 1) {
+      lineSize = sizeSlider.value();
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+      p.strokeWeight(lineSize);
+      p.stroke(color);
+      // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+      p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
+    }
+    else if (MPState.getShapeOption() == 2) {
+      lineSize = sizeSlider.value();
+      red = redSlider.value();
+      green = greenSlider.value();
+      blue = blueSlider.value();
+      color = p.color(red, green, blue, 255);
+      p.strokeWeight(lineSize);
+      p.stroke(color);
+      p.triangle()
+      p.triangle(p.mouseX - 35, p.mouseY + 50, p.mouseX, p.mouseY, p.mouseX + 35, p.mouseY + 50);
+    }
+  }
+
+  p.mouseDragged = function()
+  {
+    // We have to change this so that it compares the mouseX and y over here and
     // then adds a stroke of the same start and end coordinates as the closest stroke.
-    if (MPState.inEraserMode()) 
+    if (MPState.inEraserMode())
     {
       color = p.color(255, 255, 255, 255); // Make the line of white color
       p.stroke(color);
@@ -434,7 +484,7 @@ function sketch_process(p)
       let endof_closestx = 10000;
       let endof_closesty = 10000;
       let lineSize = 0;
-      for (let i=0; i<strokes.length; i++) 
+      for (let i=0; i<strokes.length; i++)
       {
         if ((Math.abs(mouseX - strokes[i][0]) + Math.abs(mouseY - strokes[i][1])) < (Math.abs(mouseX - current_closestx) + Math.abs(mouseY - current_closesty)))
         {
@@ -444,23 +494,23 @@ function sketch_process(p)
           endof_closesty = strokes[i][3];
           lineSize = strokes[i][4];
         }
-        // 
+        //
       }
       console.log(current_closestx);
       console.log(current_closesty);
       p.strokeWeight(lineSize+10);
-      p.line(current_closestx, 
-             current_closesty, 
-             endof_closestx, 
+      p.line(current_closestx,
+             current_closesty,
+             endof_closestx,
              endof_closesty); // has to be the startX, startY, endX, endY of closest stroke, not the dragged mouse
-      MPState.addStroke(current_closestx, 
+      MPState.addStroke(current_closestx,
                         current_closesty,
-                        endof_closestx, 
+                        endof_closestx,
                         endof_closesty,
-                        lineSize+10, 
+                        lineSize+10,
                         color);
     }
-    else 
+    else
     {
       lineSize = sizeSlider.value();
       red = redSlider.value();
@@ -476,15 +526,14 @@ function sketch_process(p)
     }
   }
 
-
-  p.resetCanvas = function() 
+  p.resetCanvas = function()
   {
     p.clear();
     p.predraw();
     // Don't call setup since we'll proliferate sliders, etc.
   }
 
-  p.getSize = function() 
+  p.getSize = function()
   {
     return lineSize;
   }
@@ -492,7 +541,7 @@ function sketch_process(p)
   /*
     Draw a stroke as described by in vector form.
   */
-  p.drawStroke = function(strokeVec, lineSize) 
+  p.drawStroke = function(strokeVec, lineSize)
   {
     p5_inst.strokeWeight(lineSize);
     p5_inst.stroke(strokeVec[DataIndices.colorR],
@@ -506,29 +555,29 @@ function sketch_process(p)
 }
 
 // Because of the inclusion issue from mp.test.js, we have to unfortunately define these here
-function MockDOMObject(obj) 
+function MockDOMObject(obj)
 {
   // Compose over
-  for (let property in Object.keys(obj)) 
+  for (let property in Object.keys(obj))
   {
     this[property] = obj[property];
   }
 
   this.parentDiv = "window";
 
-  this.parent = function(divId) 
+  this.parent = function(divId)
   {
     this.parentDiv = divId;
   }
 
-  this.value = function() 
+  this.value = function()
   {
     return 1;
   }
 
 }
 
-function MockP5(sketch_process) 
+function MockP5(sketch_process)
 {
   this.canvas = null;
   this.slider = null;
@@ -537,19 +586,19 @@ function MockP5(sketch_process)
   this.strokeColorProperty = {"levels": [0, 0, 0, 0]};
   this.strokeWidthProperty = 1;
 
-  this.createCanvas = function(width, height) 
+  this.createCanvas = function(width, height)
   {
     this.canvas = new MockDOMObject({"width": width, "height": height});
     return this.canvas;
   }
 
-  this.createSlider = function(min, max, step) 
+  this.createSlider = function(min, max, step)
   {
     this.slider = new MockDOMObject({
       "min": min,
       "max": max,
       "step": step,
-      value: function() 
+      value: function()
       {
         return 1;
       }
@@ -558,25 +607,25 @@ function MockP5(sketch_process)
   }
 
   // p5 functionality - no testing required
-  this.color = function(r, g, b, a) 
+  this.color = function(r, g, b, a)
   {
     return {"levels": [r, g, b, a]};
   }
 
-  this.clear = function() 
+  this.clear = function()
   {
     // p5 - do not test
     this.strokes = [];
     this.rectList = [];
   }
 
-  this.strokeWeight = function(weight) 
+  this.strokeWeight = function(weight)
   {
     // p5 - do not test
     this.strokeWidthProperty = weight;
   }
 
-  this.stroke = function() 
+  this.stroke = function()
   {
     const colorArgs = arguments;
     switch (colorArgs.length) {
@@ -592,12 +641,12 @@ function MockP5(sketch_process)
     }
   }
 
-  this.line = function(startX, startY, endX, endY) 
+  this.line = function(startX, startY, endX, endY)
   {
     this.strokes.push([startX, startY, endX, endY, this.strokeWidthProperty, this.strokeColorProperty]);
   }
 
-  this.rect = function(left, top, right, bottom) 
+  this.rect = function(left, top, right, bottom)
   {
     this.rectList.push([left, top, right, bottom]);
   }
@@ -607,7 +656,7 @@ function MockP5(sketch_process)
   this.mouseY = 0;
   this.pmouseX = 0;
   this.pmouseY = 0;
-  this.setMouse = function(newX, newY) 
+  this.setMouse = function(newX, newY)
   {
     this.pmouseX = this.mouseX;
     this.pmouseY = this.mouseY;
@@ -624,23 +673,23 @@ function MockP5(sketch_process)
 
 // MUST be var - persists across scripts
 var p5_inst;
-if (!isNode) 
+if (!isNode)
 {
   p5_inst = new p5(sketch_process);
-} 
-else 
+}
+else
 {
   p5_inst = new MockP5(sketch_process);
 }
 
 /* DEFINE BUTTON CALLBACKS */
-function seekBackward() 
+function seekBackward()
 {
   MPState.back();
   const strokes = MPState.getVisibleStrokes();
   const sizes = MPState.getVisibleSizes();
   p5_inst.resetCanvas();
-  for (let i = 0; i < strokes.length; i++) 
+  for (let i = 0; i < strokes.length; i++)
   {
     p5_inst.drawStroke(strokes[i], sizes[i]);
   }
@@ -660,9 +709,9 @@ function clears()
   p5_inst.resetCanvas();
 }
 
-function seekForward() 
+function seekForward()
 {
-  if (MPState.forward()) 
+  if (MPState.forward())
   {
     const lineSize = MPState.getCurrentSize();
     const stroke = MPState.getCurrentStroke();
@@ -670,32 +719,32 @@ function seekForward()
   }
 }
 
-function togglePlay() 
+function togglePlay()
 {
   // Unit testing
-  if (isNode) 
+  if (isNode)
   {
     seekForward();
-  } 
+  }
   // Functional testing, unfortunately cannot unit test...
-  else 
+  else
   {
   	let img = document.getElementById('play-pause-img');
 		MPState.setPlay(img.src.includes('play'));
 
   	// If its in the play state, show the pause button, and vice versa
-  	if (MPState.play) 
+  	if (MPState.play)
     {
   		img.src='./img/pause.png';
       console.log('Is in the "Play" state');
 
       // If its the generate mode, then simply seekForward
-      if (MPState.isGenerating()) 
+      if (MPState.isGenerating())
       {
-        setTimeout(seekForward, 500);      
+        setTimeout(seekForward, 500);
       }
       // otherwise draw all the previous strokes
-      else 
+      else
       {
         const state = MPState.getState();
         const sizes = MPState.getSizes();
@@ -704,14 +753,14 @@ function togglePlay()
         // console.log(sizes);
         // console.log('Visible Strokes Length: ' + visibleStrokes[2])
 
-        for (let i = visibleStrokes.length; i < state.length; i++) 
+        for (let i = visibleStrokes.length; i < state.length; i++)
         {
           // console.log("Current stroke: " + visibleStrokes[i-1]);
           p5_inst.drawStroke(state[i-1], sizes[i-1]);
         }
       }
-    } 
-    else 
+    }
+    else
     {
   		img.src='./img/play.png';
   		console.log('Is in the "Pause" state');
@@ -721,7 +770,7 @@ function togglePlay()
   // throw new Error("Not implemented!");
 }
 
-function updateGenerateToggle() 
+function updateGenerateToggle()
 {
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('generate-toggle-box');
@@ -731,7 +780,7 @@ function updateGenerateToggle()
 /**
  * Gaussian distribution. Note, this is just an approximation...probably not right
  */
-function gaussian() 
+function gaussian()
 {
   return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
 }
@@ -770,14 +819,14 @@ function exportData() {
   // Check if anything is drawn on the canvas
   if (strokes.length == 0) {
     alert('Cannot download empty canvas image!')
-  } 
+  }
   else {
     let img = null;
     // // If no image state is saved, simply get what is saved on the canvas.
     // if (savedImgs.length == 0) {
     //   img = { strokes, sizes };
     // }
-    // // // If the imageIndex is negative (aka 'none' is selected), don't download the image.  
+    // // // If the imageIndex is negative (aka 'none' is selected), don't download the image.
     // // else if (imageIdx < 0) {
     // //   alert('Please switch to an image state using the dropdown menu to download it!');
     // //   return;
@@ -794,7 +843,7 @@ function exportData() {
     else {
       if (strokes.length != savedImgs[imageIdx].strokes.length) {
         img = {strokes, sizes};
-      } 
+      }
       else {
         img = savedImgs[imageIdx];
       }
@@ -803,7 +852,7 @@ function exportData() {
     // else if (strokes.length == savedImgs[imageIdx].strokes.length) {
     //   img = savedImgs[imageIdx];
     // }
-    // // If there are saved images 
+    // // If there are saved images
     // else {
     //   img = { strokes, sizes };
     // }
@@ -813,7 +862,7 @@ function exportData() {
     for (let i = 0; i < img.strokes.length; i++) {
       p5_inst.drawStroke(img.strokes[i], img.sizes[i]);
     }
-    p5_inst.save('my_canvas.png');   
+    p5_inst.save('my_canvas.png');
   }
 }
 
@@ -822,19 +871,19 @@ function exportData() {
  */
 function jpMode()
 {
-  for (let i = 0; i < 1000; i++) 
+  for (let i = 0; i < 1000; i++)
   {
     const startX =  Math.random()*640;
     const startY =  Math.random()*480;
 
     const rand = Math.random();
     let endX = null;
-    if (rand < 0.5) 
+    if (rand < 0.5)
     {
       endX = startX + Math.random()*5;
-    } 
+    }
     // If it is a line segment, randomize the X direction
-    else 
+    else
     {
       const rand1 = Math.random();
       if(rand1 < .5)
@@ -848,12 +897,12 @@ function jpMode()
     }
 
     let endY = null;
-    if (rand < 0.5) 
+    if (rand < 0.5)
     {
       endY = startY + Math.random()*5;
-    } 
+    }
     // If it is a line segment, randomize the Y direction
-    else 
+    else
     {
       const rand1 = Math.random();
       if(rand1 < .5)
@@ -867,16 +916,16 @@ function jpMode()
     }
 
     let width = null;
-    if (rand < 0.5) 
+    if (rand < 0.5)
     {
       width = Math.random()*15;
-    } 
-    else 
+    }
+    else
     {
       width = Math.random()*5;
     }
 
-    const stroke = 
+    const stroke =
     {
       startX: startX, // start new endX value from endX value of previous vector
       startY: startY, // start new endY value from endY value of previous vector
@@ -945,21 +994,21 @@ function warholMode()
         initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
         initalstrokes[i][2] = 160 +strokes[i][2];
         initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
-        
+
       }
       else if((x % 4) == 2) // 321 to 480 width
       {
         initalstrokes[i][0] = 320 + strokes[i][0];
         initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
         initalstrokes[i][2] = 320 + strokes[i][2];
-        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3]; 
+        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       else if((x % 4) == 3) // 481 to 640 width
       {
        initalstrokes[i][0] = 480 + strokes[i][0];
        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
        initalstrokes[i][2] = 480 + strokes[i][2];
-       initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];  
+       initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       p5_inst.drawStroke(initalstrokes[i], sizes[i]);
       //i'm amazed i can't think of a better way to do this that works.
@@ -976,21 +1025,21 @@ function warholMode()
         initalstrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
         initalstrokes[i][2] = strokes[i][2] - 160;
         initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120;
-        
+
       }
       else if((x % 4) == 2) // 321 to 480 width
       {
         initalstrokes[i][0] = strokes[i][0] -320;
         initalstrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
         initalstrokes[i][2] = strokes[i][2] - 320;
-        initalstrokes[i][3] = strokes[i][3]- Math.floor(x/4)*120; 
+        initalstrokes[i][3] = strokes[i][3]- Math.floor(x/4)*120;
       }
       else if((x % 4) == 3) // 481 to 640 width
       {
        initalstrokes[i][0] = strokes[i][0] - 480;
        initalstrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120 ;
        initalstrokes[i][2] = strokes[i][2] - 480;
-       initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120 ;  
+       initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120 ;
       }
     }
   }
@@ -1040,13 +1089,13 @@ function generateBrushstrokes()
 
 
 /**
- * Adds the option to select a saved image state to choose from. Note the index 
+ * Adds the option to select a saved image state to choose from. Note the index
  * starts at 0.
- * 
+ *
  * @param {int} idx - The array location of the saved image state
  */
 function addOption(idx) {
-  // Define new option's text (which starts at idx=1 for human readability) 
+  // Define new option's text (which starts at idx=1 for human readability)
   // and value (which starts at idx=0 to retrieve the correct saved image)
   const optionTextIdx = idx + 1;
 
@@ -1062,13 +1111,13 @@ function addOption(idx) {
 /**
  * Saves the current state of the canvas.
  */
-function saveImage() 
+function saveImage()
 {
   if (MPState.getVisibleStrokes().length == 0 || MPState.getVisibleSizes().length == 0) {
     alert('Cannot save empty canvas. Please draw something first!')
   } else {
     // Create new image object to be saved
-    const new_img = 
+    const new_img =
     {
       strokes: MPState.getVisibleStrokes(),
       sizes: MPState.getVisibleSizes(),
@@ -1083,10 +1132,10 @@ function saveImage()
  * Loads the image (using the image index) from the list of saved images.
  * Gets the image index based on the html dropdown menu options.
  */
-function loadImage() 
+function loadImage()
 {
   const imageIdx = document.getElementById('img-num').value;
-  // If the imageIndex is negative (aka 'none' is selected), simply clear the canvas.  
+  // If the imageIndex is negative (aka 'none' is selected), simply clear the canvas.
   if (imageIdx < 0) {
     clears();
   } else {
@@ -1094,7 +1143,7 @@ function loadImage()
 
     // Draw image onto the canvas
     p5_inst.resetCanvas();
-    for (let i = 0; i < img.strokes.length; i++) 
+    for (let i = 0; i < img.strokes.length; i++)
     {
       p5_inst.drawStroke(img.strokes[i], img.sizes[i]);
     }
@@ -1226,16 +1275,119 @@ function mirrorMode()
 
 }
 
-function updateEraserToggle() 
+function updateEraserToggle()
 {
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('eraser-toggle-box');
   MPState.setEraserMode(checkbox.checked);
 }
 
-if (isNode) 
+// //TO DO BY ME
+// addEventListener("load", load);
+// function load(e) {
+//   document.getElementById("reset").addEventListener("click", load);
+//   var gameCanvas = document.getElementById("canvas-holder");
+//   //var gc = gameCanvas.getContext("2d");
+//   gameCanvas.addEventListener("mousemove", draw);
+// }
+// function draw(e)
+// {
+//     var x = e.offsetX;
+//     var y = e.offsetY;
+//     var prevX;
+//     var prevY;
+//     console.log(e);
+//     if(e.buttons == 1) {
+//       MPState.addStroke(prevX, prevY, x, y);
+//       MPState.addStroke(640 - prevX, 480 - prevY, 640 - x, 480 - y);
+//       MPState.addStroke(640 - prevX, prevY, 640 - x, y);
+//       MPState.addStroke(prevX, 480 - prevY, x, 480 - y);
+//       MPState.addStroke(prevY, prevX, y, x);
+//       MPState.addStroke(480 - prevY, 640 - prevX, 480 - y, 640 - x);
+//       MPState.addStroke(480 - prevY, prevX, 480 - y, x);
+//       MPState.addStroke(prevY, 640 - prevX, y, 640 - x);
+//     }
+//     prevX = x;
+//     prevY = y;
+// }
+
+// function mirrorCanvas()
+// {
+//   const strokes = MPState.getVisableStrokes();
+//   const sizes = MPState.getVisableSizes();
+//   const initialstrokes = strokes.slice();
+//
+//   for (let i = 0; i < strokes.length; i++) {
+//     strokes[i][0] = strokes[i][0]/4;
+//     strokes[i][1] = strokes[i][1]/4;
+//     strokes[i][2] = strokes[i][2]/4;
+//     strokes[i][3] = strokes[i][3]/4;
+//   }
+//   for (let x = 0; x < 16; x++) {
+//     for (let i = 0; i < strokes.length; i++) {
+//       if (())
+//     }
+//   }
+//
+// }
+
+
+function drawTriangle()
 {
-  module.exports = 
+  var canvas = document.getElementById('canvas-holder');
+  if (canvas.getContext) {
+    var ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(50, 50);
+    ctx.lineTo(75, 100);
+    ctx.lineTo(25, 100);
+    ctx.fill();
+
+  }
+}
+
+// function drawSquare()
+// {
+//   var canvas = document.getElementById('canvas-holder');
+//   if (canvas.getContext) {
+//     var ctx = canvas.getContext('2d');
+//
+//     ctx.rect(20, 20, 100, 100);
+//     ctx.stroke();
+//
+//   }
+// }
+
+function shapeTool()
+{
+  const shape = document.getElementById('shape').value;
+  MPState.setShapeOption(shape);
+  // if (p5_inst.mousePressed() && shape == 1) {
+  //   p5_inst.rect(p5_inst.mouseX, p5_inst.mouseY, 55, 55);
+  // }
+  // else if (p5_inst.mousePressed() && shape == 2) {
+  //   p.triangle(30, 75, 58, 20, 86, 75);
+  // }
+  // else if (p5_inst.mousePressed() && shape == 3) {
+  //   p.arc(100, 75, 50, 0, 2*Math.PI);
+  // }
+  //MPState.mousePressed(rect);
+}
+
+function drawCircle()
+{
+  var canvas = document.getElementById('canvas-holder');
+  if (canvas.getContext) {
+    var ctx = canvas.getContext('2d');
+
+    ctx.beginPath();
+    ctx.arc(100,75,50,0,2*Math.PI);
+    ctx.stroke();
+
+  }
+}
+if (isNode) {
+  module.exports =
   {
     p5_inst,
     MPState,
