@@ -43,6 +43,7 @@ let MPState =
   generating: false,
   play: false,
   eraser: false,
+  fill: false,
 
   // The index sits at the next-written position.
   // We display all vectors up to, but not including the position.
@@ -287,6 +288,14 @@ let MPState =
     this.eraser = val;
   },
 
+  inFillMode() {
+    return this.fill;
+  },
+
+  setFillMode(val) {
+    this.fill = val;
+  },
+
   /**
     Step stroke index backward.
     Returns whether the operation was effective.
@@ -459,6 +468,66 @@ function sketch_process(p)
                         endof_closesty,
                         lineSize+10, 
                         color);
+    }
+    else if (MPState.inFillMode()) 
+    {
+
+      const strokes = MPState.getVisibleStrokes();
+      const sizes = MPState.getVisibleSizes();
+      const mouseX = p.mouseX;
+      const mouseY = p.mouseY;
+      // console.log(p);
+
+      let current_closestx = 10000;
+      let current_closesty = 10000;
+      let endof_closestx = 10000;
+      let endof_closesty = 10000;
+      let lineSize = 0;
+      let index_of_interest = 0;
+      for (let i=0; i<strokes.length; i++) 
+      {
+        if ((Math.abs(mouseX - strokes[i][0]) + Math.abs(mouseY - strokes[i][1])) < (Math.abs(mouseX - current_closestx) + Math.abs(mouseY - current_closesty)))
+        {
+          current_closestx = strokes[i][0];
+          current_closesty = strokes[i][1];
+          endof_closestx = strokes[i][2];
+          endof_closesty = strokes[i][3];
+          lineSize = strokes[i][4];
+          index_of_interest = i;
+        }
+      }
+
+      let closed_shape = false;
+      let upper_slice = index_of_interest;
+      let lower_slice = index_of_interest;
+
+      for (let i=index_of_interest; i< strokes.length - 1; i++) 
+      {
+        if ((strokes[i][2] == strokes[i + 1][0]) && (strokes[i][3] == strokes[i+1][1]))
+        {
+          console.log("hi");
+          upper_slice = i;
+        }
+
+        else
+        {
+          break;
+        }
+      }
+
+      for (let i=index_of_interest; i> 1; i--) 
+      {
+        if (strokes[i - 1][2] == strokes[i ][0] && strokes[i - 1][3] == strokes[i][1])
+        {
+          lower_slice = i;
+        }
+        else
+        {
+          break;
+        }
+      }
+      //console.log(lower_slice);
+    
     }
     else 
     {
@@ -1231,6 +1300,13 @@ function updateEraserToggle()
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('eraser-toggle-box');
   MPState.setEraserMode(checkbox.checked);
+}
+
+function updateFillToggle() 
+{
+  // Cannot be auto-tested due to document interaction.
+  let checkbox = document.getElementById('fill-toggle-box');
+  MPState.setFillMode(checkbox.checked);
 }
 
 if (isNode) 
