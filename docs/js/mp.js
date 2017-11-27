@@ -477,29 +477,29 @@ function sketch_process(p)
       p.strokeWeight(lineSize);
       p.stroke(color);
 
-      p.line(p.mouseX, p.mouseY,  p.mouseX + 35, p.mouseY + 35);
-      console.log(p.mouseX, p.mouseY,  p.mouseX + 35, p.mouseY - 35);
+      p.line(p.mouseX, p.mouseY,  p.mouseX + 30, p.mouseY + 40);
+      //console.log(p.mouseX, p.mouseY,  p.mouseX + 30, p.mouseY - 40);
 
-      p.line(p.mouseX + 35, p.mouseY + 35, p.mouseX - 35, p.mouseY + 35);
-      console.log(p.mouseX + 35, p.mouseY - 35, p.mouseX - 35, p.mouseY + 35);
+      p.line(p.mouseX + 30, p.mouseY + 40, p.mouseX - 30, p.mouseY + 40);
+      //console.log(p.mouseX + 30, p.mouseY - 40, p.mouseX - 30, p.mouseY + 40);
 
-      p.line(p.mouseX - 35, p.mouseY + 35, p.mouseX, p.mouseY);
-      console.log(p.mouseX - 35, p.mouseY, p.mouseX, p.mouseY);
+      p.line(p.mouseX - 30, p.mouseY + 40, p.mouseX, p.mouseY);
+      //console.log(p.mouseX - 40, p.mouseY, p.mouseX, p.mouseY);
 
       MPState.addStroke(p.mouseX,
                         p.mouseY,
-                        p.mouseX + 35,
-                        p.mouseY + 35,
+                        p.mouseX + 30,
+                        p.mouseY + 40,
                         lineSize,
                         color);
-      MPState.addStroke(p.mouseX + 35,
-                        p.mouseY + 35,
-                        p.mouseX - 35,
-                        p.mouseY + 35,
+      MPState.addStroke(p.mouseX + 30,
+                        p.mouseY + 40,
+                        p.mouseX - 30,
+                        p.mouseY + 40,
                         lineSize,
                         color);
-      MPState.addStroke(p.mouseX - 35,
-                        p.mouseY + 35,
+      MPState.addStroke(p.mouseX - 30,
+                        p.mouseY + 40,
                         p.mouseX,
                         p.mouseY,
                         lineSize,
