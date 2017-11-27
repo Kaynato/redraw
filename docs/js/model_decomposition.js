@@ -16,6 +16,7 @@ var OUTER = {
 const DecomposeModel = {
 
 	TOLERANCE: 0.01,
+	SCORE_CUTOFF_PERCENT: 0.02,
 
 	/*
 		Convert image into a tensor.
@@ -28,8 +29,37 @@ const DecomposeModel = {
 		canvas.height = img.height || img.naturalHeight;
 		context.drawImage(img.elt, 0, 0);
 		let imgdata = context.getImageData(0, 0, img.width, img.height);
+
+		const width = imgdata.width;
+		const height = imgdata.height;
 		let channels = imgdata.data.length / (imgdata.width * imgdata.height);
+
 		let tensor = ndarray(imgdata.data, [imgdata.width, imgdata.height, channels]);
+
+		// Return immediately if no alpha channel
+		if (channels < 4) {
+			return tensor;
+		}
+
+		// If there is, use alpha blending to "blend with white"
+		let x;
+		let y;
+		let ch;
+		let alpha;
+		let val;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				alpha = tensor.get(x, y, 3);
+				alpha = Math.round(alpha / 255.0);
+				for (ch = 0; ch < 3; ch++) {
+					val = tensor.get(x, y, ch);
+					val = (1 - alpha) * 255 + alpha * val;
+					val = Math.round(val);
+					tensor.set(x, y, ch, val);
+				}
+			}
+		}
+
 		return tensor;
 	},
 
@@ -386,10 +416,9 @@ const DecomposeModel = {
 		let output = ndarray(outputArr, [width, height]);
 
 		// Stack-Recursive component labelling
-		const labelOutput = function(target, input, x, y, label) {
+		const labelOutput = function(target, input, x, y, label, scores) {
 			let val = target.get(x, y);
 			let pix = input.get(x, y);
-			
 			let stack = [];
 
 			stack.push([x, y]);
@@ -398,10 +427,7 @@ const DecomposeModel = {
 				let labelled = input.get(ix, iy) != 0;
 				let unvisited = target.get(ix, iy) == UNVISITED;
 				if (labelled && unvisited) {
-					console.log('push', ix, iy);
 					stack.push([ix, iy]);
-				} else {
-					console.log(ix, iy, 'labelled', labelled, 'status', target.get(ix, iy));
 				}
 			}
 
@@ -432,12 +458,12 @@ const DecomposeModel = {
 				}
 				
 				// If it was pushed into this stack, it was definitely valid
-				target.set(x, y, label);
-				console.log(stack.length, ix, iy);
+				target.set(ix, iy, label);
+				scores[label]++;
 			}
 			
 			// At this point we know it's unvisited and pix = 1.
-			console.log('Finished labelling from', x, y);
+			// console.log('Finished labelling from', x, y);
 		};
 
 		let val;
@@ -455,7 +481,8 @@ const DecomposeModel = {
 				// Otherwise, if pix was 1, check if new
 				if (val == UNVISITED) {
 					// New label
-					labelOutput(output, arr, x, y, labels);
+					scores[labels] = 0;
+					labelOutput(output, arr, x, y, labels, scores);
 					labels += 1;
 				}
 				// Otherwise, don't bother
@@ -466,7 +493,8 @@ const DecomposeModel = {
 
 		return {
 			"arr": output,
-			"labels": labels
+			"labels": labels,
+			"scores": scores
 		};
 	},
 
@@ -513,52 +541,65 @@ const DecomposeModel = {
 				tmp += 2 * tol_img.get(x + 1, y);
 				tmp += 2 * tol_img.get(x, y - 1);
 				tmp += 2 * tol_img.get(x, y + 1);
-				tmp += tol_img.get(x - 1, y - 1);
-				tmp += tol_img.get(x + 1, y + 1);
-				tmp += tol_img.get(x + 1, y - 1);
-				tmp += tol_img.get(x - 1, y + 1);
+				tmp += 0.7 * tol_img.get(x - 1, y - 1);
+				tmp += 0.7 * tol_img.get(x + 1, y + 1);
+				tmp += 0.7 * tol_img.get(x + 1, y - 1);
+				tmp += 0.7 * tol_img.get(x - 1, y + 1);
 				z = 12;
 
 				if (x > 2) {
-					tmp += tol_img.get(x - 2, y);
+					tmp += 0.7 * tol_img.get(x - 2, y);
 					z += 1;
 				}
 
 				if (x + 2 < width) {
-					tmp += tol_img.get(x + 2, y);
+					tmp += 0.7 * tol_img.get(x + 2, y);
 					z += 1;
 				}
 
 				if (y > 2) {
-					tmp += tol_img.get(x, y - 2);
+					tmp += 0.7 * tol_img.get(x, y - 2);
 					z += 1;
 				}
 
 				if (y + 2 < width) {
-					tmp += tol_img.get(x, y + 2);
+					tmp += 0.7 * tol_img.get(x, y + 2);
 					z += 1;
 				}
 
-				if (tmp > (z >> 1)) {
+				if (tmp > (z * 0.7)) {
 					tol_img.set(x, y, 1);
+				}
+				else if (tmp < (z * 0.3)) {
+					tol_img.set(x, y, 0);
 				}
 			}
 		}
 
-		let blobs = DecomposeModel.labelComponents(tol_img)
+		let blobs = DecomposeModel.labelComponents(tol_img);
 
-		DecomposeModel.renderBin(tol_img);
-		DecomposeModel.renderBin(blobs.arr, 127);
+		// DEBUG ONLY
+		// p5_inst.createDiv(color);
+		// DecomposeModel.renderBin(tol_img);
 
-		return;
+		OUTER.blobs = blobs;
 
+		const threshold = DecomposeModel.SCORE_CUTOFF_PERCENT * width * height;
 		let components = [];
 		let label;
 		for (label = 1; label < blobs.labels; label++) {
+			let score = blobs.scores[label];
+
+			// Don't even bother if it's not big enough
+			if (score < threshold) {
+				continue;
+			}
+
+			// Replaces ndops.eqs(component, blobs.arr, label);
+			// If we allow labelComponents to generate arrays,
+			// This allocation could be avoided
 			let compArr = new Uint8ClampedArray(width * height);
 			let component = ndarray(compArr, [width, height]);
-
-			// Replace ndops.eqs(component, blobs.arr, label);
 			let i;
 			for (i = width * height; i >= 0; i--) {
 				if (blobs.arr.data[i] == label) {
@@ -568,13 +609,17 @@ const DecomposeModel = {
 			// DecomposeModel.renderBin(component);
 
 			components.push({
-				'score': ndops.sum(component),
+				'score': score,
 				'arr': component,
 				'color': color
 			});
 		}
 
 		return components;
+	},
+
+	componentSortingFunction(a, b) {
+		return a.score - b.score;
 	},
 
 	/*
@@ -593,8 +638,8 @@ const DecomposeModel = {
 		// Sequentially decreasing median filter size to
 		// Mimic monotonically decreasing attention to detail
 		// TODO - k should start at 9 but median filter is broken for nontrivial case
-		let k = 3;
-		for (; k >= 3; k -= 2) {
+		let k = 1;
+		for (; k >= 1; k -= 2) {
 
 			// Run through median filter in YCoCg
 			let yco = DecomposeModel.convertColorSpace(arr, 'YCoCg');
@@ -620,16 +665,17 @@ const DecomposeModel = {
 				for (j = 0; j < scoredComponents.length; j++) {
 					candidates.push(scoredComponents[j]);
 				}
+
 			}
 
+			candidates.sort(DecomposeModel.componentSortingFunction);
+
+			
 
 		}
 
 		// Binary masks / candidates
 		OUTER.candidates = candidates;
-
-		// Easy trick to visualize
-		p5_inst.createImg(imageData.src);
 
 	},
 
