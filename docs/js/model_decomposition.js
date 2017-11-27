@@ -28,6 +28,33 @@ const Morphology = {
 	}
 }
 
+const Kernels = {
+	// 5 by 5 sobel kernel
+	SOBEL_5_X: (function() {
+		const arr = [1,  2, 0,  -2,  -1,
+					 4,  8, 0,  -8,  -4,
+					 6, 12, 0, -12,  -6,
+					 4,  8, 0,  -8,  -4,
+					 1,  2, 0,  -2,  -1];
+		const typedArr = new Int8Array(arr);
+		let ker = ndarray(typedArr, [5, 5]);
+		ker = ker.transpose(1, 0);
+		return ker;
+	})(),
+
+	SOBEL_5_Y: (function() {
+		const arr = [-1, -4,  -6, -4, -1,
+					 -2, -8, -12, -8, -2,
+					  0,  0,   0,  0,  0,
+					  2,  8,  12,  8,  2,
+					  1,  4,   6,  4,  1];
+		const typedArr = new Int8Array(arr);
+		let ker = ndarray(typedArr, [5, 5]);
+		ker = ker.transpose(1, 0);
+		return ker;
+	})()
+}
+
 const DecomposeModel = {
 
 	// Tolerance for color error when looking for binary masks
@@ -42,8 +69,14 @@ const DecomposeModel = {
 	// Max width allowable for estimation
 	MAX_W: 21,
 
-	// Sensitivity to sudden drop in accuracy for width estimation
-	W_SENS: 0.3,
+	// Percentage loss which is unacceptable (lower = more accurate)
+	W_SENS: 0.04,
+
+	// For smoothing in lieu of median filter
+	CLOSING_RADIUS: 5,
+
+	// Harris corner detector free variable
+	HARRIS_VAR: 0.08,
 
 	/*
 		Convert image into a tensor.
@@ -668,8 +701,10 @@ const DecomposeModel = {
 	/*
 		Estimate width of brush to best draw component
 		arr (ndarray): binary mask of component
+		temp (ndarray, opt): temporary array for calculation.
+			is allocated if none is passed in.
 	*/
-	estimateWidth(arr) {
+	estimateWidth(arr, temp) {
 
 		// TODO: Pad arr with MAX_W on all sides
 		const width = arr.shape[0];
@@ -691,63 +726,142 @@ const DecomposeModel = {
 		// TODO - move allocation outside. We only ever use one at a time
 		// So we can avoid piling up the garbage.
 
+		const paddedSize = padWidth * padHeight;
+		const paddedShape = [padWidth, padHeight];
+		
 		// Padded "framed" array to dilate from
-		let paddedArr = new Float32Array(padWidth * padHeight);
+		let paddedArr = new Float32Array(paddedSize);
+
+		// Stretch pad.
 		paddedArr.fill(1);
-		let padded = ndarray(paddedArr, [padWidth, padHeight]);
+
+		let padded = ndarray(paddedArr, paddedShape);
 		ndops.assign(centerOf(padded), arr);
 
 		// Will contain erosion(s)
-		let erodeArr = new Float32Array(padWidth * padHeight);
-		let erode = ndarray(erodeArr, [padWidth, padHeight]);
+		let erodeArr = new Float32Array(paddedSize);
+		let erode = ndarray(erodeArr, paddedShape);
 
 		// Will contain opening(s)
-		let dilateArr = new Float32Array(padWidth * padHeight);
-		let dilate = ndarray(dilateArr, [padWidth, padHeight]);
+		let openedArr = new Float32Array(paddedSize);
+		let opened = ndarray(openedArr, paddedShape);
 
 		// To mutate and transform, etc
-		let tempArr = new Float32Array(padWidth * padHeight);
-		let temp = ndarray(tempArr, [padWidth, padHeight]);
+		const allocateTemp = !(temp !== undefined);
+		if (allocateTemp) {
+			let tempArr = new Float32Array(paddedSize);
+			let temp_ = ndarray(tempArr, paddedShape);
+			temp = temp_;
+		}
 
 		let error = 0;
-		// let diff = 0;
-		// let prev = 0;
-		// let accel = 0;
-		// let eavg = 0;
-
 		// TODO - there must exist a more efficient algorithm!
 
-		let w;
+		// Preliminary closing
+		const closingRadius = DecomposeModel.CLOSING_RADIUS;
+		ndops.assign(temp, padded);
+		Morphology.dilate(temp, temp, closingRadius);
+		Morphology.erosion(padded, temp, closingRadius);
 
+		let w;
 		for (w = 2; w < DecomposeModel.MAX_W; w++) {
 			// Erode padded with radius w 
-			Morphology.erosion(erode, padded, w);
-			Morphology.dilate(dilate, erode, w);
+			ndops.assign(temp, padded);
+			Morphology.erosion(erode, temp, w);
+			ndops.assign(temp, erode);
+			Morphology.dilate(opened, temp, w);
 
 			// tmp contains closing (thus has fewer pixels)
-			ndops.sub(centerOf(temp), centerOf(padded), centerOf(dilate));
+			ndops.sub(centerOf(temp), centerOf(padded), centerOf(opened));
 			error = ndops.sum(centerOf(temp));
 
-			// diff = error - prev;
-			// prev = error;
-			// accel = diff - eavg;
-			// eavg = 0.9 * eavg + 0.1 * diff;
-			// console.log(error, diff, prev, -threshold);
-			// console.log(w, error, threshold)
 			if (error > threshold) {
 				break;
-				// We actually want the previous.
+				// We actually want the previous...
 			}
 		}
 
-		return {
+		let ret = {
 			'width': w, 
 			'erode': centerOf(erode),
-			'opened': centerOf(dilate)
+			'opened': centerOf(opened),
+			'orig': centerOf(padded),
+		};
+
+		if (allocateTemp) {
+			ret.temp = temp;
 		}
 
 		// return the eroded image and the chosen width
+		return ret;
 
+	},
+
+	/*
+		Take in a binary mask array and return harris corners.
+		Uses 5 by 5 filter.
+	
+		arr (ndarray) contains binary component mask
+	*/
+	identifyCorners(arr) {
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		const radius = 2; // for 5 x 5
+
+		// Eigenvalues
+		let eigen;
+
+		// Actual output
+		let corners;
+
+		// Cast to float
+		let srcArray = new Float32Array(width * height);
+		let src = ndarray(srcArray, [width, height]);
+
+		// Apply sobel filter via convolution, with zero-padding
+
+		let dxArray = new Float32Array(width * height);
+		let dx = ndarray(dxArray, [width, height]);
+		// TODO convolve src with Kernels.SOBEL_5_X into dx
+
+		let dyArray = new Float32Array(width * height);
+		let dy = ndarray(dyArray, [width, height]);
+		// TODO convolve src with Kernels.SOBEL_5_Y into dy
+
+		// Calculate covariance
+		let covArray = new Float32Array(width * height * 3);
+		let cov = ndarray(covArray, [width, height]);
+		let x;
+		let y;
+		let dxVal;
+		let dyVal;
+		let dxx;
+		let dxy;
+		let dyy;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				dxVal = dx.get(x, y);
+				dyVal = dy.get(x, y);
+				dxx = dxVal * dxVal;
+				dxy = dxVal * dyVal;
+				dyy = dyVal * dyVal;
+				cov.set(x, y, 0, dxx);
+				cov.set(x, y, 1, dxy);
+				cov.set(x, y, 2, dyy);
+			}
+		}
+
+		// TODO Apply simple box blur
+
+		// TODO Apply harris filter
+
+		// TODO Use eigenvalues to focus on peaks
+
+		// TODO threshold peaks
+
+		// TODO Identify peaks and push to corners
+
+		return corners;
 	},
 
 	/*
@@ -798,20 +912,29 @@ const DecomposeModel = {
 
 			candidates.sort(DecomposeModel.componentSortingFunction);
 
-			OUTER.candidates = candidates;
 			let estObject;
 			let candidate;
+			let temp;
+			let corners;
 			OUTER.drawns = [];
+			OUTER.corners = [];
 			for (i = 0; i < DecomposeModel.COMPONENTS_EACH_STEP; i++) {
 				candidate = candidates.pop();
 				
 				// TODO - preliminary closing?
 
 				// Width, erosion (for polytrace), dilation (for subtraction)
-				estObject = DecomposeModel.estimateWidth(candidate.arr);
+				estObject = DecomposeModel.estimateWidth(candidate.arr, temp);
+
 				OUTER.drawns.push(estObject);
+
+				// Pass back to avoid excessive allocation
+				temp = estObject.temp;
 				
+				corners = DecomposeModel.identifyCorners(estObject.erode);
 				// TODO?
+				OUTER.corners.push(corners);
+
 			}
 
 
@@ -825,7 +948,8 @@ const DecomposeModel = {
 	binToColor(arr, multi) {
 		let width = arr.shape[0];
 		let height = arr.shape[1];
-		let output = ndarray(new Uint8ClampedArray(width * height * 4), [width, height, 4]);
+		let outputArr = new Uint8ClampedArray(width * height * 4);
+		let output = ndarray(outputArr, [width, height, 4]);
 
 		if (multi === undefined) {
 			multi = 255;
