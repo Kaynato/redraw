@@ -295,7 +295,7 @@ let MPState =
 
   setShapeOption(val) {
     if (val < 0) {
-      return;
+      return this.shapeOption = null;
     }
     this.shapeOption = val;
   },
