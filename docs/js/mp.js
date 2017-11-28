@@ -491,12 +491,36 @@ function sketch_process(p)
           current_closesty = strokes[i][1];
           endof_closestx = strokes[i][2];
           endof_closesty = strokes[i][3];
-          console.log(current_closestx);
           lineSize = strokes[i][4];
           index_of_interest = i;
         }
       }
 
+      let upper_limit = index_of_interest;
+      let lower_limit = index_of_interest;
+      for (let i = index_of_interest + 1; i < strokes.length; i++)
+      {
+        if((Math.abs(strokes[i-1][2] - strokes[i][0]) < 50) && Math.abs((strokes[i-1][1] - strokes[i][3]) < 50))
+        {
+          upper_limit = i;
+        }
+        else
+        {
+          break;
+        }
+      }
+
+      for (let i = index_of_interest; i > 0; i--)
+      {
+        if(Math.abs((strokes[i+1][0] - strokes[i][2]) < 50) && Math.abs((strokes[i+1][1] - strokes[i][3]) <50))
+        {
+          lower_limit = i;
+        }
+        else
+        {
+          break;
+        }
+      }
       let closed_shape = false;
 
       red = redSlider.value();
@@ -505,10 +529,13 @@ function sketch_process(p)
       color = p.color(red, green, blue, 255);
 
       const size = strokes.length;
-      for (let i=0; i<size/2; i = i + 50) 
+      console.log(lower_limit);
+      console.log(upper_limit);
+
+      for (let i=lower_limit; i<upper_limit; i++) 
       {
-          p.line(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2) - i][2], strokes[Math.floor(size/2) -i][3]);
-          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[Math.floor(size/2)-i][2], strokes[Math.floor(size/2)-i][3], lineSize ,color);
+          p.line(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3]);
+          MPState.addStroke(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3], lineSize ,color);
       }
 
       // let upper_slice = index_of_interest;
