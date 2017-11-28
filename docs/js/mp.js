@@ -43,6 +43,12 @@ let MPState =
   generating: false,
   play: false,
   eraser: false,
+  color: false,
+
+  //droper colors
+  rdrop: -1,
+  gdrop: -1,
+  bdrop: -1,
 
   // Shapes
   shapeOption: null,
@@ -288,6 +294,42 @@ let MPState =
   setEraserMode(val) {
     this.eraser = val;
   },
+
+
+  setColorMode(val) {
+    this.color = val;
+  },
+
+  getColorMode(val) {
+    return this.color;
+  },
+
+  setRedDropperMode(val) {
+    this.rdrop = val;
+  },
+
+  getRedDropperMode(val) {
+    return this.rdrop;
+  },
+
+  setGreenDropperMode(val) {
+    this.gdrop = val;
+  },
+
+  getGreenDropperMode(val) {
+    return this.gdrop;
+  },
+
+  setBlueDropperMode(val) {
+    this.bdrop = val;
+  },
+
+  getBlueDropperMode(val) {
+    return this.bdrop;
+  },
+
+
+
 
   getShapeOption() {
     return this.shapeOption;
@@ -613,7 +655,8 @@ function sketch_process(p)
   {
     // Check if the 'draw strokes' state or the 'draw shape' mode. If in the
     // 'draw shape' state, then don't do anything when the mouse is dragged.
-    if (MPState.getShapeOption() == null) {
+    if (MPState.getShapeOption() == null) 
+    {
       // If its in eraser mode, add white lines over the previously drawn strokes.
       if (MPState.inEraserMode())
       {
@@ -654,12 +697,45 @@ function sketch_process(p)
                           lineSize+5,
                           color);
       }
+
+      if(MPState.getColorMode())
+      {
+        const strokes = MPState.getVisibleStrokes();
+
+        let current_closestx = 10000;
+        let current_closesty = 10000;
+        let line_of_interest = 0;
+        for (let i=0; i<strokes.length; i++)
+        {
+          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty)))
+          {
+            current_closestx = strokes[i][0];
+            current_closesty = strokes[i][1];
+            line_of_interest = i;
+          }
+        }
+        MPState.setRedDropperMode(strokes[line_of_interest][5][0]);
+        MPState.setGreenDropperMode(strokes[line_of_interest][5][1]);
+        MPState.setBlueDropperMode(strokes[line_of_interest][5][2]);
+        MPState.setColorMode(false);
+
+      }
+
       else
       {
         lineSize = sizeSlider.value();
-        red = redSlider.value();
-        green = greenSlider.value();
-        blue = blueSlider.value();
+        if(MPState.getRedDropperMode() != -1)
+        {
+          red = MPState.getRedDropperMode();
+          green = MPState.getGreenDropperMode();
+          blue = MPState.getBlueDropperMode();
+        }
+        else
+        {
+          red = redSlider.value();
+          green = greenSlider.value();
+          blue = blueSlider.value();
+        }
         color = p.color(red, green, blue, 255);
         p.strokeWeight(lineSize);
         p.stroke(color);
@@ -1414,6 +1490,22 @@ function updateEraserToggle()
   let checkbox = document.getElementById('eraser-toggle-box');
   MPState.setEraserMode(checkbox.checked);
 }
+
+function color_picker()
+{
+  // Cannot be auto-tested due to document interaction.
+  if(MPState.getColorMode())
+  {
+    MPState.setRedDropperMode(-1);
+    MPState.setColorMode(false);
+
+  }
+  else
+  {
+    MPState.setColorMode(true);
+  }
+}
+
 
 
 function shapeTool()
