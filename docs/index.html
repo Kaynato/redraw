@@ -29,6 +29,66 @@
     <!-- Canvas will be injected here by p5js -->
   </div>
 
+  <div id="vertical-controls" class="right">
+    <div class="">
+      <button type="button" onclick="clears()">
+        <img src="img/del.png" width="50" height="50">
+      </button>
+    </div>
+
+    <button type="button" id="rotate" onclick="rotate()">
+      <img src="img/rotate.png" width="50" height="50">
+    </button>
+
+    <div class="">
+      <button type="button" onclick="jpMode()">
+        <img src="img/jp.png" width="50" height="50">
+      </button>
+    </div>
+
+    <div class="">
+      <button type="button" onclick="warholMode()">
+        <img src="img/soupcan.jpg" width="50" height="50">
+      </button>
+    </div>
+
+    <div class="">
+      <button type="button" onclick="color_picker()">
+        <img src="img/dropper.png" width="50" height="50">
+      </button>
+    </div>
+
+    <div class="">
+       <select id="mode" onchange="mirrorMode()">
+         <option value="-1" disabled selected>None</option>
+         <option value="1">Vertical</option>
+         <option value="2">Horizontal</option>
+         <option value="3">Both</option>
+       </select>
+    </div>
+
+   <div class="">
+      <select id="shape" onchange="shapeTool()">
+        <option value="-1" selected>None</option>
+        <option value="0">Square</option>
+        <option value="1">Circle</option>
+        <option value="2">Triangle</option>
+        <option value="3">Rhombus</option>
+        <option value="4">Star</option>
+      </select>
+    </div>
+
+    <div class="">
+      <button class="btn btn-primary" type="button" value="Save Image" onclick="saveImage()">Save image</button>
+      <div>
+        <!-- Allows us to switch between image states. `None` option allows us to switch to other saved image states. -->
+        <select id="img-num" onchange="loadImage()">
+          <option value="-1" disabled selected>Saved images...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
   <div class="center">
 
     <!-- Input controls (Drawing) -->
@@ -73,9 +133,7 @@
         <img src="img/forward.png" width="50" height="50">
       </button>
 
-      <button type="button" id="rotate" onclick="rotate()">
-        <img src="img/rotate.png" width="50" height="50">
-      </button>
+
 
       <button type="button" id="brushstroke" onclick="generateBrushstrokes()">
         <img src="img/brush.png" width="50" height="50">
@@ -84,20 +142,6 @@
       <!-- <div class="mp-control inline" id="state-slider"> -->
         <!-- Inject state slider here through p5js -->
       <!-- </div> -->
-
-
-      <div class="image-upload mp-control inline">
-      <label for="file-input">
-          <img src="img/import.png" width="50" height="50">
-      </label>
-      <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="uploadImage(this);"/>
-      </div>
-
-      <div class="inline">
-      <button type="button" onclick="exportData();">
-        <img src="img/export.png" width="50" height="50">
-      </button>
-      </div>
 
       <div class="inline">
         Generate<br>
@@ -115,59 +159,18 @@
         </label>
       </div>
 
-      <div class="inline">
-        <button type="button" onclick="jpMode()">
-          <img src="img/jp.png" width="50" height="50">
-        </button>
+      <div class="image-upload mp-control inline">
+      <label for="file-input">
+          <img src="img/import.png" width="50" height="50">
+      </label>
+      <input id="file-input" type="file" accept="image/gif, image/jpeg, image/png" onchange="uploadImage(this);"/>
       </div>
 
       <div class="inline">
-        <button type="button" onclick="warholMode()">
-          <img src="img/soupcan.jpg" width="50" height="50">
-        </button>
+      <button type="button" onclick="exportData();">
+        <img src="img/export.png" width="50" height="50">
+      </button>
       </div>
-
-      <div class="inline">
-        <button type="button" onclick="clears()">
-          <img src="img/del.png" width="50" height="50">
-        </button>
-      </div>
-
-      <div class="inline">
-        <button type="button" onclick="color_picker()">
-          <img src="img/dropper.png" width="50" height="50">
-        </button>
-      </div>
-
-       <div class="inline">
-          <select id="mode" onchange="mirrorMode()">
-            <option value="-1" disabled selected>None</option>
-            <option value="1">Vertical</option>
-            <option value="2">Horizontal</option>
-            <option value="3">Both</option>
-          </select>
-        </div>
-
-      <div class="inline">
-        <button class="btn btn-primary" type="button" value="Save Image" onclick="saveImage()">Save image</button>
-        <div>
-          <!-- Allows us to switch between image states. `None` option allows us to switch to other saved image states. -->
-          <select id="img-num" onchange="loadImage()">
-            <option value="-1" disabled selected>Saved images...</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="inline">
-         <select id="shape" onchange="shapeTool()">
-           <option value="-1" selected>None</option>
-           <option value="0">Square</option>
-           <option value="1">Circle</option>
-           <option value="2">Triangle</option>
-           <option value="3">Rhombus</option>
-           <option value="4">Star</option>
-         </select>
-       </div>
 
   </div>
 
