@@ -1499,6 +1499,7 @@ function color_picker()
     MPState.setRedDropperMode(null);
     MPState.setGreenDropperMode(null);
     MPState.setBlueDropperMode(null);
+    MPState.getColorMode(false);
 
   }
   else
