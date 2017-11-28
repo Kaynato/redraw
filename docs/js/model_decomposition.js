@@ -256,46 +256,6 @@ const DecomposeModel = {
 
 	},
 
-	/**
-	 * Takes a binary mask and strips it.
-	 * @param {ndarray} binaryMask the binary component mask
-	 */
-	stripMask(binaryMask) {
-		// TODO: NONE OF THIS IS RIGHT...PLS FIX
-		// Find the bbox, this is definately not right.....
-		const width = binaryMask.shape[0];
-		const height = binaryMask.shape[1];
-		const radius = 2; // for 5 x 5
-		let x;
-		let y;
-
-		// Determine which axis of bbox is longer
-		if (width < height) {
-			// Set all coords from ([x-r ... x+r-1],y) to 0
-			for (x = x - radius; x < x + radius - 1; x++) {
-				binaryMask.set(x, y, 0); 
-			}
-		} 
-		else {
-			// Set all coords from (x,[y-r ... y+r-1]) to 0
-			for (y = y - radius; y < y + radius - 1; y++) {
-				binaryMask.set(x, y, 0); 
-			}
-		}
-
-		// Move back to pixel that was last equal to a val of 1, again not right...
-		let pix = null;
-		while (pix != 1) { 
-			for (x = 0; x < width; x++) { // width is not what t shoudl iterate thourgh
-				for (y = 0; y < length; y++) { // similarly should not be length either
-					pix = binaryMask.get(x,y);
-				}
-			}
-		}
-		// console.log(pix);
-		return binaryMask;
-	},
-
 	/*
 		Convert image array to descriptive strokes.
 
@@ -404,7 +364,7 @@ const DecomposeModel = {
 				DecomposeModel.renderPath(outerPath);
 
 				// Mock-draw outer loop and grab thing or whatever
-				let innerPath = maskUtil.fillIn(widthObject.erode,
+				let innerPath = maskUtil.fillInMut(widthObject.erode,
 											innerEdges,
 											widthObject.width);
 

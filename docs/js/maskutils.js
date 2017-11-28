@@ -353,6 +353,7 @@ var MaskUtils = function(width, height, maxPadding) {
 
 		arr (ndarray): edge image
 
+		Return array of arrays.
 	*/
 	this.loopTrace = function(arr) {
 		let paths = [];
@@ -370,27 +371,141 @@ var MaskUtils = function(width, height, maxPadding) {
 		return paths;
 	};
 
+	/**
+	 * Takes a binary mask and writes stripes across it with specified brush width.
+	 * @param {ndarray} binaryMask the binary component mask
+	 */
+	this.stripMaskMut = function(arr, width) {
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		const radius = (width >> 1) + 1;
+
+		let x;
+		let y;
+
+		// Find bbox
+		let yMin = height;
+		let yMax = 0;
+		let xMin = width;
+		let xMax = 0;
+		let val;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = arr.get(x, y);
+				if (val > 0) {
+					// Write out instead of using Math.min for optimization?
+					if (y < yMin) {
+						yMin = y;
+					}
+					if (y > yMax) {
+						yMax = y;
+					}
+					if (x < xMin) {
+						xMin = x;
+					}
+					if (x > xMax) {
+						xMax = x;
+					}
+				}
+			}
+		}
+
+		const boxWidth = xMax - xMin;
+		const boxHeight = yMax - yMin;
+
+		let paths = [];
+		let path = [];
+		let writeTo = arr;
+		let ix;
+		let iy;
+		// Scanning order matters!
+		if (boxHeight <= boxWidth) {
+			// X-axis is major
+			for (y = 0; y < height; y++) {
+				for (x = 0; x < width; x++) {
+					val = arr.get(x, y);
+					if (val > 0) {
+						// Append startpoint
+						path = [[x, y]];
+						
+						while (val > 0) {
+							// Underestimate neighbor culling
+							for (iy = x - radius, iy < x + radius; iy++) {
+								arr.set(x, iy, 0);
+							}
+							// Exceed condition prevents obtaining val
+							// Must check before arr.get
+							x++;
+							if (x >= height) {
+								break;
+							}
+							val = arr.get(x, y);
+						}
+						// Want last valid x
+						x--;
+
+						// Append endpoint
+						path.append([x, y]);
+						paths.append(path);
+					}
+				}
+			}
+		}
+		else {
+			// Y-axis is major
+			for (x = 0; x < width; x++) {
+				for (y = 0; y < height; y++) {
+					val = arr.get(x, y);
+					if (val > 0) {
+						// Append startpoint
+						path = [[x, y]];
+						
+						while (val > 0) {
+							// Underestimate neighbor culling
+							for (ix = x - radius, ix < x + radius; ix++) {
+								arr.set(ix, y, 0);
+							}
+							// Exceed condition prevents obtaining val
+							// Must check before arr.get
+							y++;
+							if (y >= height) {
+								break;
+							}
+							val = arr.get(x, y);
+						}
+						// Want last valid y
+						y--;
+
+						// Append endpoint
+						path.append([x, y]);
+						paths.append(path);
+					}
+				}
+			}
+		}
+
+		return paths;
+	},
+
 	/*
 		Finish the job!
 
-		arr is the pre-looptrace brush guide mask.
+		leftovers is the pre-looptrace brush guide mask.
 		erode it with width and then do striping.
-
+	
+		Return array of arrays.
 	*/
-	this.fillIn = function(arr, innerEdges, width) {
-		let paths = [];
+	this.fillInMut = function(leftovers, innerEdges, width) {
 		let temp = this.tempUint8;
 
 		// Erode with width first
 		Morphology.dilate(temp, innerEdges, width);
 		ndops.noteq(temp);
-		ndops.andeq(arr, temp);
+		
 		// Array gets "cut down" by simulated brush
+		ndops.andeq(leftovers, temp);
 
-		// Rename for syntactic familiarity
-		let leftovers = arr;
-
-		// TODO - striping on leftovers to obtain paths
+		let paths = this.stripMaskMut(leftovers, width);
 
 		return paths;
 	};
