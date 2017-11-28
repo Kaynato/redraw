@@ -44,6 +44,12 @@ const DecomposeModel = {
 	// A color that either color thief ignores or we prohibit from the palette
 	IGNORED_COLOR: [255, 255, 255],
 
+	// When % of image finished > this percent, stop decomposition
+	GOOD_ENOUGH_PERCENT: 0.90,
+
+	// Maximum iterations for decomposition
+	MAX_ITERS: 50,
+
 	/*
 		Convert image into a tensor.
 		Uses a temporary canvas to store data.
@@ -140,33 +146,9 @@ const DecomposeModel = {
 		let height = arr.shape[1];
 		// input channels = 3
 
-		// Tolerance image (binary mask)
-		let maskArr = new Float32Array(width * height);
-		let mask = ndarray(maskArr, [width, height]);
-
-		let x;
-		let y;
-		let ch;
-
 		// All values in arr which have RGB MSE < Tolerance
-		let val;
-		let tmp;
-		let pix;
-		for (x = 0; x < width; x++) {
-			for (y = 0; y < height; y++) {
-				val = 0;
-				for (ch = 0; ch < 3; ch++) {
-					pix = arr.get(x, y, ch);
-					tmp = pix - color[ch];
-					tmp /= 255.0;
-					tmp *= tmp;
-					val += tmp;
-				}
-				if (val < DecomposeModel.TOLERANCE) {
-					mask.set(x, y, 1);
-				}
-			}
-		}
+		const tol = DecomposeModel.TOLERANCE;
+		let mask = maskUtil.withinDiff(arr, color, tol);
 
 		// Smooth things out
 		maskUtil.fakeGaussianMut(mask);
@@ -238,20 +220,26 @@ const DecomposeModel = {
 		};
 
 		let i;
-		let startX = path[0][0];
-		let startY = path[0][1];
+		let startX = path[0][1];
+		let startY = path[0][0];
 		let endX;
 		let endY;
 		let coord;
-		for (i = 1; i < pathLength - 1; i++) {
-			endX = path[i][0];
-			endY = path[i][1];
-			MPState.addStroke(startX, startY, endX, endY, width, color);
+		for (i = 1; i < pathLength; i++) {
+			endX = path[i][1];
+			endY = path[i][0];
+			MPState.addStroke(startX, startY, endX, endY, width, colorObj);
 			const new_stroke = MPState.getCurrentStroke();
 			const lineSize = MPState.getCurrentSize();
 			p5_inst.drawStroke(new_stroke, lineSize);
 			startX = endX;
 			startY = endY;
+
+			// DEBUG
+			// console.log('stroke', startX, startY, endX, endY, width, color);
+		}
+		if (i == 1) {
+			console.log('Something went wrong. Path drawing did not initiate.');
 		}
 
 	},
@@ -282,104 +270,148 @@ const DecomposeModel = {
 
 		// Stack of scored candidate components
 		let candidates;
-		let imagestate;
+		let imagestate = arr;
 
-		// Sequentially decreasing median filter size to
-		// Mimic monotonically decreasing attention to detail
-		// TODO - k should start at 9 but median filter is broken for nontrivial case
-		// (IGNORE TODO?) - Median filter takes too long anyway
-		// 					and we might not need it
-		let k = DecomposeModel.MAX_FILT;
-		for (; k >= DecomposeModel.MIN_FILT; k -= 2) {
+		// Use to indicate finished components in image
+		let toWhiten = maskUtil.getArr(Uint8Array);
 
-			candidates = [];
+		// Error threshold
+		const threshold = width * height * DecomposeModel.GOOD_ENOUGH_PERCENT;
+		let candidatesThisTime = 1000;
+		let error = maskUtil.withoutDiffCount(imagestate,
+										     DecomposeModel.IGNORED_COLOR,
+										     DecomposeModel.TOLERANCE);
+		let iters = 0;
 
-			// Run through median filter in YCoCg
-			let yco = ImageUtils.convertColorSpace(arr, 'YCoCg');
-			let filteredYco = ImageUtils.medianFilter(yco, k, 3);
-			let filtered = ImageUtils.convertColorSpace(filteredYco, 'RGB');
-			let dataURL = DecomposeModel.toDataURL(filtered);
-			imageData.src = dataURL;
+		while (error > threshold &&
+			   candidatesThisTime > 1 &&
+			   iters < DecomposeModel.MAX_ITERS) {
 
-			// DEBUG
-			OUTER.filtered = filtered;
-			DecomposeModel.render(filtered);
+			// Sequentially decreasing median filter size to
+			// Mimic monotonically decreasing attention to detail
+			// TODO - k should start at 9 but median filter is broken for nontrivial case
+			// (IGNORE TODO?) - Median filter takes too long anyway
+			// 					and we might not need it
+			let k = DecomposeModel.MAX_FILT;
+			for (; k >= DecomposeModel.MIN_FILT; k -= 2) {
 
-			imagestate = filtered;
+				candidates = [];
 
-			// Grab dominant colors
-			// Evaluate components for dominant colors
-			let i;
-			let colorThief = new ColorThief();
-			let palette = colorThief.getPalette(imageData);
-			for (i = 0; i < palette.length; i++) {
-				let color = palette[i];
-
-				let scoredComponents = DecomposeModel.scoreComponents(filtered, color, maskUtil);
-
-				// Color score
-				let j;
-				for (j = 0; j < scoredComponents.length; j++) {
-					candidates.push(scoredComponents[j]);
-				}
-
-			}
-
-			candidates.sort(componentSortingFunction);
-
-			// DEBUG
-			OUTER.drawns = [];
-			OUTER.loopPaths = [];
-
-			let toWhiten = maskUtil.getArr(Uint8Array);
-
-			const sens = DecomposeModel.W_SENS;
-			for (i = 0; i < DecomposeModel.COMPONENTS_EACH_STEP; i++) {
-				let candidate = candidates.pop();
-				
-				// TODO - Check if this is even necessary
-				let filled = maskUtil.fillHolesMut(candidate.arr);
-
-				// Width, erosion (for polytrace), dilation (for subtraction)
-				let widthObject = maskUtil.estimateWidth(filled, sens);
-				OUTER.drawns.push(widthObject);
-
-				// TODO - orig or opened? Which gives better results?
-				ndops.oreq(toWhiten, widthObject.orig);
+				// Run through median filter in YCoCg
+				let yco = ImageUtils.convertColorSpace(imagestate, 'YCoCg');
+				let filteredYco = ImageUtils.medianFilter(yco, k, 3);
+				let filtered = ImageUtils.convertColorSpace(filteredYco, 'RGB');
+				let dataURL = DecomposeModel.toDataURL(filtered);
+				imageData.src = dataURL;
 
 				// DEBUG
-				p5_inst.createDiv(widthObject.width);
-				DecomposeModel.renderBin(widthObject.orig);
-				DecomposeModel.renderBin(widthObject.erode);
-				DecomposeModel.renderBin(widthObject.opened);
+				OUTER.filtered = filtered;
+				DecomposeModel.render(filtered);
 
-				// Cannibalize candidate.arr / orig for inner edges
-				let innerEdges = candidate.arr;
-				maskUtil.innerEdges(innerEdges, widthObject.erode);
+				imagestate = filtered;
 
-				// Outer loop
-				let outerPath = maskUtil.loopTrace(innerEdges);
-				// OUTER.loopPaths.push(outerPath);
+				// Grab dominant colors
+				// Evaluate components for dominant colors
+				let i;
+				let colorThief = new ColorThief();
+				let palette = colorThief.getPalette(imageData);
+				for (i = 0; i < palette.length; i++) {
+					let color = palette[i];
 
-				DecomposeModel.renderPath(outerPath);
+					let scoredComponents = DecomposeModel.scoreComponents(filtered,
+																		  color,
+																		  maskUtil);
 
-				// Mock-draw outer loop and grab thing or whatever
-				let innerPath = maskUtil.fillInMut(widthObject.erode,
-											innerEdges,
-											widthObject.width);
+					// Color score
+					let j;
+					for (j = 0; j < scoredComponents.length; j++) {
+						candidates.push(scoredComponents[j]);
+					}
 
-				DecomposeModel.renderPath(innerPath);
+				}
 
-				// Mock-draw component
-				ImageUtils.setImgColByMaskMut(imagestate,
-											  DecomposeModel.IGNORED_COLOR,
-											  toWhiten);
+				candidates.sort(componentSortingFunction);
+				candidatesThisTime = Math.min(candidates.length,
+											  DecomposeModel.COMPONENTS_EACH_STEP);
+
+				// DEBUG
+				OUTER.drawns = [];
+				OUTER.loopPaths = [];
+
+				let j;
+				const sens = DecomposeModel.W_SENS;
+				for (i = 0; i < DecomposeModel.COMPONENTS_EACH_STEP; i++) {
+					let candidate = candidates.pop();
+					
+					// TODO - Check if this is even necessary
+					let filled = maskUtil.fillHolesMut(candidate.arr);
+
+					// Width, erosion (for polytrace), dilation (for subtraction)
+					let widthObject = maskUtil.estimateWidth(filled, sens);
+					OUTER.drawns.push(widthObject);
+
+					// TODO - orig or opened? Which gives better results?
+					ndops.oreq(toWhiten, widthObject.orig);
+
+					// DEBUG
+					p5_inst.createDiv(widthObject.width);
+					DecomposeModel.renderBin(widthObject.orig);
+					DecomposeModel.renderBin(widthObject.erode);
+					DecomposeModel.renderBin(widthObject.opened);
+
+					// Cannibalize candidate.arr / orig for inner edges
+					let innerEdges = candidate.arr;
+					maskUtil.innerEdges(innerEdges, widthObject.erode);
+
+					// Outer loop
+					let outerPath = maskUtil.loopTrace(innerEdges);
+					// OUTER.loopPaths.push(outerPath);
+
+					for (j = 0; j < outerPath.length; j++) {
+						DecomposeModel.renderPath(outerPath[j],
+												  candidate.color,
+												  widthObject.width);
+					}
+
+					// Mock-draw outer loop and grab thing or whatever
+					let innerPath = maskUtil.fillInMut(widthObject.erode,
+												innerEdges,
+												widthObject.width);
+
+					// DEBUG
+					// console.log(innerPath);
+
+					for (j = 0; j < innerPath.length; j++) {
+						DecomposeModel.renderPath(innerPath[j],
+												  candidate.color,
+												  widthObject.width);
+					}
+
+					// Mock-draw component
+					ImageUtils.setImgColByMaskMut(imagestate,
+												  DecomposeModel.IGNORED_COLOR,
+												  toWhiten);
+				}
+
+				error = maskUtil.withoutDiffCount(imagestate,
+												 DecomposeModel.IGNORED_COLOR,
+												 DecomposeModel.TOLERANCE);
 			}
 
-
+			console.log('Completed iteration', iters, 'of decomposition.');
+			iters++;
 		}
 
-		// Binary masks / candidates
+		console.log('Finished!');
+		if (error <= threshold) {
+			console.log('Error went beneath threshold:', error, "<=", threshold);
+		}
+		if (candidatesThisTime <= 1) {
+			console.log('Ran out of candidates');
+		}
+		if (iters > DecomposeModel.MAX_ITERS) {
+			console.log('Exceeded maximum iterations');
+		}
 
 	},
 

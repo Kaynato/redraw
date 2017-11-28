@@ -92,6 +92,69 @@ var MaskUtils = function(width, height, maxPadding) {
 		}
 	};
 
+	this.withinDiff = function(arr, color, tolerance) {
+		// Tolerance image (binary mask)
+		let maskArr = new Float32Array(width * height);
+		let mask = ndarray(maskArr, [width, height]);
+		let val;
+		let tmp;
+		let pix;
+		let x;
+		let y;
+		let ch;
+		for (x = 0; x < this.width; x++) {
+			for (y = 0; y < height; y++) {
+				val = 0;
+				for (ch = 0; ch < 3; ch++) {
+					pix = arr.get(x, y, ch);
+					tmp = pix - color[ch];
+					tmp /= 255.0;
+					tmp *= tmp;
+					val += tmp;
+				}
+				if (val < tolerance) {
+					mask.set(x, y, 1);
+				}
+			}
+		}
+
+		return mask;
+	};
+
+	/*
+		Minor variation that differs enough to warrant separate implementation
+		for optimization
+
+		Counts pixels not within tolerance MSE of color.
+	*/
+	this.withoutDiffCount = function(arr, color, tolerance) {
+		// Tolerance image (binary mask)
+		let count = 0;
+		let val;
+		let tmp;
+		let pix;
+		let x;
+		let y;
+		let ch;
+		for (x = 0; x < this.width; x++) {
+			for (y = 0; y < height; y++) {
+				val = 0;
+				for (ch = 0; ch < 3; ch++) {
+					pix = arr.get(x, y, ch);
+					tmp = pix - color[ch];
+					tmp /= 255.0;
+					tmp *= tmp;
+					val += tmp;
+				}
+				if (val >= tolerance) {
+					count++;
+				}
+			}
+		}
+
+		return count;
+	};
+
 	/*
 		Push coords [ix, iy] to stack if labelling is valid.
 		That is, if arr is nonzero and labelArr is unvisited
@@ -336,12 +399,59 @@ var MaskUtils = function(width, height, maxPadding) {
 
 	/*
 		Convert arr to inner edge image.
+		4-connectivity.
 		Write to output.
 	*/
 	this.innerEdges = function(output, arr) {
+		ndops.assigns(output, 0);
 
-		// TODO! Should be easy, though.
+		// Self is 1 && Any 4-connected neighbor is 0
+		//   -> set output to 1
+		let val;
+		let hasN;
+		let hasE;
+		let hasS;
+		let hasW;
+		for (x = 0; x < this.width; x++) {
+			for (y = 0; y < this.height; y++) {
+				val = arr.get(x, y);
+				if (val > 0) {
+					hasN = y > 0;
+					hasE = x + 1 < this.width;
+					hasS = y + 1 < this.height;
+					hasW = x > 0;
 
+					if (hasN) {
+						val = arr.get(x, y-1);
+						if (val == 0) {
+							output.set(x, y, 1);
+							continue;
+						}
+					}
+					if (hasE) {
+						val = arr.get(x+1, y);
+						if (val == 0) {
+							output.set(x, y, 1);
+							continue;
+						}
+					}
+					if (hasS) {
+						val = arr.get(x, y+1);
+						if (val == 0) {
+							output.set(x, y, 1);
+							continue;
+						}
+					}
+					if (hasW) {
+						val = arr.get(x-1, y);
+						if (val == 0) {
+							output.set(x, y, 1);
+							continue;
+						}
+					}
+				}
+			}
+		}
 		return arr;
 	}
 
@@ -375,22 +485,20 @@ var MaskUtils = function(width, height, maxPadding) {
 	 * Takes a binary mask and writes stripes across it with specified brush width.
 	 * @param {ndarray} binaryMask the binary component mask
 	 */
-	this.stripMaskMut = function(arr, width) {
-		const width = arr.shape[0];
-		const height = arr.shape[1];
-		const radius = (width >> 1) + 1;
+	this.stripMaskMut = function(arr, brushWidth) {
+		const radius = (brushWidth >> 1) + 1;
+
+		// Find bbox
+		let yMin = this.height;
+		let yMax = 0;
+		let xMin = this.width;
+		let xMax = 0;
 
 		let x;
 		let y;
-
-		// Find bbox
-		let yMin = height;
-		let yMax = 0;
-		let xMin = width;
-		let xMax = 0;
 		let val;
-		for (x = 0; x < width; x++) {
-			for (y = 0; y < height; y++) {
+		for (x = 0; x < this.width; x++) {
+			for (y = 0; y < this.height; y++) {
 				val = arr.get(x, y);
 				if (val > 0) {
 					// Write out instead of using Math.min for optimization?
@@ -421,8 +529,8 @@ var MaskUtils = function(width, height, maxPadding) {
 		// Scanning order matters!
 		if (boxHeight <= boxWidth) {
 			// X-axis is major
-			for (y = 0; y < height; y++) {
-				for (x = 0; x < width; x++) {
+			for (y = 0; y < this.height; y++) {
+				for (x = 0; x < this.width; x++) {
 					val = arr.get(x, y);
 					if (val > 0) {
 						// Append startpoint
@@ -430,13 +538,13 @@ var MaskUtils = function(width, height, maxPadding) {
 						
 						while (val > 0) {
 							// Underestimate neighbor culling
-							for (iy = x - radius, iy < x + radius; iy++) {
+							for (iy = x - radius; iy < x + radius; iy++) {
 								arr.set(x, iy, 0);
 							}
 							// Exceed condition prevents obtaining val
 							// Must check before arr.get
 							x++;
-							if (x >= height) {
+							if (x >= this.width) {
 								break;
 							}
 							val = arr.get(x, y);
@@ -445,16 +553,16 @@ var MaskUtils = function(width, height, maxPadding) {
 						x--;
 
 						// Append endpoint
-						path.append([x, y]);
-						paths.append(path);
+						path.push([x, y]);
+						paths.push(path);
 					}
 				}
 			}
 		}
 		else {
 			// Y-axis is major
-			for (x = 0; x < width; x++) {
-				for (y = 0; y < height; y++) {
+			for (x = 0; x < this.width; x++) {
+				for (y = 0; y < this.height; y++) {
 					val = arr.get(x, y);
 					if (val > 0) {
 						// Append startpoint
@@ -462,13 +570,13 @@ var MaskUtils = function(width, height, maxPadding) {
 						
 						while (val > 0) {
 							// Underestimate neighbor culling
-							for (ix = x - radius, ix < x + radius; ix++) {
+							for (ix = x - radius; ix < x + radius; ix++) {
 								arr.set(ix, y, 0);
 							}
 							// Exceed condition prevents obtaining val
 							// Must check before arr.get
 							y++;
-							if (y >= height) {
+							if (y >= this.height) {
 								break;
 							}
 							val = arr.get(x, y);
@@ -477,15 +585,15 @@ var MaskUtils = function(width, height, maxPadding) {
 						y--;
 
 						// Append endpoint
-						path.append([x, y]);
-						paths.append(path);
+						path.push([x, y]);
+						paths.push(path);
 					}
 				}
 			}
 		}
 
 		return paths;
-	},
+	};
 
 	/*
 		Finish the job!
@@ -495,19 +603,17 @@ var MaskUtils = function(width, height, maxPadding) {
 	
 		Return array of arrays.
 	*/
-	this.fillInMut = function(leftovers, innerEdges, width) {
+	this.fillInMut = function(leftovers, innerEdges, brushWidth) {
 		let temp = this.tempUint8;
 
 		// Erode with width first
-		Morphology.dilate(temp, innerEdges, width);
+		Morphology.dilate(temp, innerEdges, brushWidth);
 		ndops.noteq(temp);
-		
+
 		// Array gets "cut down" by simulated brush
 		ndops.andeq(leftovers, temp);
 
-		let paths = this.stripMaskMut(leftovers, width);
-
-		return paths;
+		return this.stripMaskMut(leftovers, brushWidth);
 	};
 
 }
