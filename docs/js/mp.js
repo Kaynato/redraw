@@ -44,8 +44,9 @@ let MPState =
   play: false,
   eraser: false,
   color: false,
+  fill: false,  
 
-  //droper colors
+  // Droper colors
   rdrop: -1,
   gdrop: -1,
   bdrop: -1,
@@ -295,6 +296,13 @@ let MPState =
     this.eraser = val;
   },
 
+  inFillMode() {
+    return this.fill;
+  },
+
+  setFillMode(val) {
+    this.fill = val;
+  },
 
   setColorMode(val) {
     this.color = val;
@@ -327,9 +335,6 @@ let MPState =
   getBlueDropperMode(val) {
     return this.bdrop;
   },
-
-
-
 
   getShapeOption() {
     return this.shapeOption;
@@ -655,11 +660,9 @@ function sketch_process(p)
   {
     // Check if the 'draw strokes' state or the 'draw shape' mode. If in the
     // 'draw shape' state, then don't do anything when the mouse is dragged.
-    if (MPState.getShapeOption() == null) 
-    {
+    if (MPState.getShapeOption() == null) {
       // If its in eraser mode, add white lines over the previously drawn strokes.
-      if (MPState.inEraserMode())
-      {
+      if (MPState.inEraserMode()) {
         color = p.color(255, 255, 255, 255);
         p.stroke(color);
 
@@ -672,10 +675,8 @@ function sketch_process(p)
         let endof_closestx = 10000;
         let endof_closesty = 10000;
         let lineSize = 0;
-        for (let i=0; i<strokes.length; i++)
-        {
-          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty)))
-          {
+        for (let i=0; i<strokes.length; i++) {
+          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty))) {
             current_closestx = strokes[i][0];
             current_closesty = strokes[i][1];
             endof_closestx = strokes[i][2];
@@ -697,18 +698,108 @@ function sketch_process(p)
                           lineSize+5,
                           color);
       }
+      // Fill mode
+      else if (MPState.inFillMode()) {
+        const strokes = MPState.getVisibleStrokes();
+        const sizes = MPState.getVisibleSizes();
+        const mouseX = p.mouseX;
+        const mouseY = p.mouseY;
+        // console.log(p);
+  
+        let current_closestx = 10000;
+        let current_closesty = 10000;
+        let endof_closestx = 10000;
+        let endof_closesty = 10000;
+        let lineSize = 0;
+        let index_of_interest = 0;
+        for (let i=0; i<strokes.length; i++) {
+          if ((Math.abs(mouseX - strokes[i][0]) + Math.abs(mouseY - strokes[i][1])) < (Math.abs(mouseX - current_closestx) + Math.abs(mouseY - current_closesty))) {
+            current_closestx = strokes[i][0];
+            current_closesty = strokes[i][1];
+            endof_closestx = strokes[i][2];
+            endof_closesty = strokes[i][3];
+            lineSize = strokes[i][4];
+            index_of_interest = i;
+          }
+        }
+  
+        let upper_limit = index_of_interest;
+        let lower_limit = index_of_interest;
+        for (let i = index_of_interest + 1; i < strokes.length; i++) {
+          if((Math.abs(strokes[i-1][2] - strokes[i][0]) < 50) && Math.abs((strokes[i-1][1] - strokes[i][3]) < 50)) {
+            upper_limit = i;
+          }
+          else {
+            break;
+          }
+        }
+  
+        for (let i = index_of_interest; i > 0; i--) {
+          if(Math.abs((strokes[i+1][0] - strokes[i][2]) < 50) && Math.abs((strokes[i+1][1] - strokes[i][3]) <50)) {
+            lower_limit = i;
+          }
+          else{
+            break;
+          }
+        }
 
-      if(MPState.getColorMode())
-      {
+        let closed_shape = false;
+  
+        red = redSlider.value();
+        green = greenSlider.value();
+        blue = blueSlider.value();
+        color = p.color(red, green, blue, 255);
+  
+        const size = strokes.length;
+        console.log(lower_limit);
+        console.log(upper_limit);
+  
+        for (let i=lower_limit; i<upper_limit; i++) {
+            p.line(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3]);
+            MPState.addStroke(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3], lineSize ,color);
+        }
+  
+        // let upper_slice = index_of_interest;
+        // let lower_slice = index_of_interest;
+  
+        // for (let i=index_of_interest; i< strokes.length - 1; i++) 
+        // {
+        //   if ((strokes[i][2] == strokes[i + 1][0]) && (strokes[i][3] == strokes[i+1][1]))
+        //   {
+        //     upper_slice = i;
+        //     console.log(current_closestx);
+        //   }
+  
+        //   else
+        //   {
+        //     break;
+        //   }
+        // }
+  
+        // for (let i=index_of_interest; i> 1; i--) 
+        // {
+        //   if (strokes[i - 1][2] == strokes[i ][0] && strokes[i - 1][3] == strokes[i][1])
+        //   {
+  
+        //     lower_slice = i;
+        //   }
+        //   else
+        //   {
+        //     break;
+        //   }
+        // }
+        //console.log(lower_slice);
+      
+      }
+      // Color picker (aka dropper)
+      else if(MPState.getColorMode()) {
         const strokes = MPState.getVisibleStrokes();
 
         let current_closestx = 10000;
         let current_closesty = 10000;
         let line_of_interest = 0;
-        for (let i=0; i<strokes.length; i++)
-        {
-          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty)))
-          {
+        for (let i=0; i<strokes.length; i++) {
+          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty))) {
             current_closestx = strokes[i][0];
             current_closesty = strokes[i][1];
             line_of_interest = i;
@@ -718,20 +809,16 @@ function sketch_process(p)
         MPState.setGreenDropperMode(strokes[line_of_interest][5][1]);
         MPState.setBlueDropperMode(strokes[line_of_interest][5][2]);
         MPState.setColorMode(false);
-
       }
-
-      else
-      {
+      // Regular draw lines mode
+      else {
         lineSize = sizeSlider.value();
-        if(MPState.getRedDropperMode() != -1)
-        {
+        if(MPState.getRedDropperMode() != -1) {
           red = MPState.getRedDropperMode();
           green = MPState.getGreenDropperMode();
           blue = MPState.getBlueDropperMode();
         }
-        else
-        {
+        else {
           red = redSlider.value();
           green = greenSlider.value();
           blue = blueSlider.value();
@@ -1506,10 +1593,14 @@ function color_picker()
   }
 }
 
-
-
-function shapeTool()
+function updateFillToggle() 
 {
+  // Cannot be auto-tested due to document interaction.
+  let checkbox = document.getElementById('fill-toggle-box');
+  MPState.setFillMode(checkbox.checked);
+}
+
+function shapeTool() {
   const shape = document.getElementById('shape').value;
   MPState.setShapeOption(shape);
 }
