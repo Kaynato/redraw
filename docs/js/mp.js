@@ -46,9 +46,9 @@ let MPState =
   color: false,
 
   //droper colors
-  rdrop: null,
-  gdrop: null,
-  bdrop: null,
+  rdrop: -1,
+  gdrop: -1,
+  bdrop: -1,
 
   // Shapes
   shapeOption: null,
@@ -724,7 +724,7 @@ function sketch_process(p)
       else
       {
         lineSize = sizeSlider.value();
-        if(MPState.getRedDropperMode() != null)
+        if(MPState.getRedDropperMode() != -1)
         {
           red = MPState.getRedDropperMode();
           green = MPState.getGreenDropperMode();
@@ -1494,11 +1494,9 @@ function updateEraserToggle()
 function color_picker()
 {
   // Cannot be auto-tested due to document interaction.
-  if(MPState.getColorMode(true))
+  if(MPState.getColorMode())
   {
-    MPState.setRedDropperMode(null);
-    MPState.setGreenDropperMode(null);
-    MPState.setBlueDropperMode(null);
+    MPState.setRedDropperMode(-1);
     MPState.setColorMode(false);
 
   }
