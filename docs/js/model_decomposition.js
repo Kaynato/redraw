@@ -1,55 +1,478 @@
 "use strict";
 /**
  * @module model_decompostion.js
- * Decomposition network. Loaded with TensorFire.
- * Neural network currently held off due to ongoing training and TensorFire wrangling.
+ * 
+ * Redraw raster image with vector line segments of width and color.
  */
 
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
+// CHANGE AND GET RID OF MENTIONS OF "DEBUG" BEFORE MERGE WITH MASTER
+
+// DEBUG
+var OUTER = {
+	l: []
+};
+
 const DecomposeModel = {
 
+	// Tolerance for color error when looking for binary masks
+	// Try higher values...? Might make a painterly feel.
+	TOLERANCE: 0.05,
+
+	// Score cutoff for ignoring components
+	SCORE_CUTOFF_PERCENT: 0.02,
+
+	// How many components to draw each step
+	COMPONENTS_EACH_STEP: 5,
+
+	// Max width allowable for estimation
+	MAX_W: 21,
+
+	// Percentage loss which is unacceptable (lower = more accurate)
+	W_SENS: 0.05,
+
+	// MUST BE INITIALIZED PER IMAGE.
+	maskUtils: undefined,
+
+	// max / min for median filter. greater maxfilt is the greater descent
+	// in order of increasing detail from large inpainting
+	MAX_FILT: 1,
+	MIN_FILT: 1,
+
+	// A color that either color thief ignores or we prohibit from the palette
+	IGNORED_COLOR: [255, 255, 255],
+
+	// When (image error %) < this, stop decomposition
+	GOOD_ENOUGH_ERROR: 0.03,
+
+	// Maximum iterations for decomposition
+	MAX_ITERS: 50,
+
+	// Multiple to decrease tolerance per iteration
+	TOL_DECR: 0.9,
+
 	/*
-		Load model from json dict files.
+		Process image tensor into correct format.
+
+		For some reason, ndimagetoarr transposes the image.
 	*/
-	loadModel() {
-		// Interim model.
-		// console.log('Decomposition model loaded.');
-		throw new Error("Not implemented!");
+	imageToTensor(img) {
+		const width = img.shape[1];
+		const height = img.shape[0];
+		const channels = img.shape[2];
+
+		let tensorArr = new Uint8ClampedArray(img.data.length);
+		let tensor = ndarray(tensorArr, [img.shape[1], img.shape[0], channels]);
+
+		ndops.assign(tensor, img.transpose(1, 0));
+
+		// Return immediately if no alpha channel
+		if (channels < 4) {
+			return tensor;
+		}
+
+		// If there is, use alpha blending to "blend with white"
+		let x;
+		let y;
+		let ch;
+		let alpha;
+		let val;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				alpha = tensor.get(x, y, 3);
+				alpha = Math.round(alpha / 255.0);
+				for (ch = 0; ch < 3; ch++) {
+					val = tensor.get(x, y, ch);
+					val = (1 - alpha) * 255 + alpha * val;
+					val = Math.round(val);
+					tensor.set(x, y, ch, val);
+				}
+			}
+		}
+
+		return tensor;
 	},
 
 	/*
-		Convert image into a tensor.
+		Convert [W * H * C] image array into data url.
+
+		arr (ndarray)
 	*/
-	imageToTensor(imageElement) {
-		throw new Error("Not implemented!");
+	toDataURL(arr) {
+		let canvas = document.createElement('canvas');
+		let context = canvas.getContext('2d');
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		const channels = arr.shape[2];
+		canvas.width = width;
+		canvas.height = height;
+
+		// TODO - what about image larger than canvas?
+
+		let imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
+		let x;
+		let y;
+		let ch;
+		let i = width * height * channels;
+		for (x = width - 1; x >= 0; x--) {
+			for (y = height - 1; y >= 0; y--) {
+				for (ch = channels - 1; ch >= 0; ch--) {
+					--i;
+					imgdata.data[i] = arr.get(x, y, ch);
+				}
+			}
+		}
+
+		while(--i >= 0) {
+			imgdata.data[i] = arr.data[i];
+		}
+
+		context.putImageData(imgdata, 0, 0);
+
+		return canvas.toDataURL();
 	},
 
 	/*
-		Convert image tensor to descriptive strokes.
+		Determine largest connected component of the target color
+
+		arr (ndarray) [H, W, C >= 3] image
+		color (array(3)) RGB color to obtain components of
+		maskUtil - maskutil object, which is needed for algorithms
+		tol - tolerance for color mse
+		leftover - count of pixels that should be addressed
+		addressed - pixels already addressed
 	*/
+	scoreComponents(arr, color, maskUtil, tol, err, addressed) {
+		let width = arr.shape[0];
+		let height = arr.shape[1];
+		// input channels = 3
+
+		// All values in arr which have RGB MSE < Tolerance
+		let mask = maskUtil.withinDiff(arr, color, tol);
+
+		// Smooth things out
+		maskUtil.fakeGaussianMut(mask);
+
+		// Ignore parts already covered
+		let x;
+		let y;
+		let val;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = addressed.get(x, y);
+				if (val == 1) {
+					mask.set(x, y, 0);
+				}
+			}
+		}
+
+		// This allocates a new array
+		let blobs = maskUtil.labelComponents(mask);
+
+
+		const threshold = DecomposeModel.SCORE_CUTOFF_PERCENT * err;
+		let components = [];
+		let label;
+		for (label = 1; label < blobs.labels; label++) {
+			let score = blobs.scores[label];
+
+			// Don't even bother if it's not big enough
+			if (score < threshold) {
+				continue;
+			}
+
+			// Replaces ndops.eqs(component, blobs.arr, label);
+			// If we allow labelComponents to generate arrays,
+			// This allocation could be avoided
+			let compArr = new Uint8ClampedArray(width * height);
+			let component = ndarray(compArr, [width, height]);
+			let i;
+			for (i = width * height; i >= 0; i--) {
+				if (blobs.arr.data[i] == label) {
+					component.data[i] = 1;
+				}
+			}
+			// DecomposeModel.renderBin(component);
+
+			components.push({
+				'score': score,
+				'arr': component,
+				'color': color
+			});
+		}
+
+		return components;
+	},
+
+	/*
+		RENDER THE PATH IN THE P5 CANVAS
+		AND ADD IT TO THE MPSTATE.
+
+		This allows us continuous play. I guess.
+		It makes the wait more interesting. I guess.
+
+		TODO: Get to work with entire mousedrawn components.
+	*/
+	renderPath(path, color, width) {
+		// width = Math.pow(width, 1.1);
+		width *= 2;
+		const pathLength = path.length;
+		if (pathLength < 2) {
+			console.log("Attempted to render a path with length < 2! " +
+						"Was this intentional?");
+			return;
+		}
+
+		// Rest of the colorObj doesn't matter.
+		const colorObj = {
+			levels: [color[0], color[1], color[2], 255],
+		};
+
+		let i;
+		let startX = path[0][1];
+		let startY = path[0][0];
+		let endX;
+		let endY;
+		let coord;
+		for (i = 1; i < pathLength; i++) {
+			endX = path[i][1];
+			endY = path[i][0];
+			MPState.addStroke(startX, startY, endX, endY, width, colorObj);
+			const new_stroke = MPState.getCurrentStroke();
+			const lineSize = MPState.getCurrentSize();
+			p5_inst.drawStroke(new_stroke, lineSize);
+			startX = endX;
+			startY = endY;
+		}
+		if (i == 1) {
+			console.log('Something went wrong. Path drawing did not initiate.');
+		}
+
 	imageToStrokes(tensor) {
 		throw new Error("Not implemented!");
 	},
 
 	/*
-		Convert image tensor to descriptive strokes. (Interim)
-		Thanks to https://inspirit.github.io/jsfeat/
+		Convert image array to descriptive strokes.
+
+		arr (ndarray) contains channeled image information
+		imageData (HTMLImageElement) contains hidden <img> for image
 	*/
-	interimModel(tensor) {
-		throw new Error("Not implemented!");
+	imageToStrokes(arr, imageData) {
+
+		// Strokes are actually rendered by a function. Shhh.
+
+		// Stack of unscored candidate components
+		let candidatesUnscored = [];
+
+		let colorThief = new ColorThief();
+
+		// Initialize a mask util object
+		const width = arr.shape[0];
+		const height = arr.shape[1];
+		const maskUtil = new MaskUtils(width, height, DecomposeModel.MAX_W);
+
+		const componentSortingFunction = function(a, b) {
+			return a.score - b.score;
+		};
+
+		// Stack of scored candidate components
+		let candidates;
+		let imagestate = arr;
+
+		// Use to indicate finished components in image
+		let doneMask = maskUtil.getArr(Uint8Array);
+
+		// Error threshold
+		const totalPixels = width * height;
+		const threshold = totalPixels * DecomposeModel.GOOD_ENOUGH_ERROR;
+		let candidatesThisTime = 1000;
+		let error = maskUtil.withoutDiffCount(imagestate,
+										     DecomposeModel.IGNORED_COLOR,
+										     DecomposeModel.TOLERANCE);
+		let iters = 0;
+
+		// Component tolerance - increase per iteration
+		let compoTol = DecomposeModel.TOLERANCE;
+
+		while (error > threshold &&
+			   candidatesThisTime > 1 &&
+			   iters < DecomposeModel.MAX_ITERS) {
+
+			// Sequentially decreasing median filter size to
+			// Mimic monotonically decreasing attention to detail
+			// TODO - k should start at 9 but median filter is broken for nontrivial case
+			// (IGNORE TODO?) - Median filter takes too long anyway
+			// 					and we might not need it
+			let k = DecomposeModel.MAX_FILT;
+			for (; k >= DecomposeModel.MIN_FILT; k -= 2) {
+
+				candidates = [];
+
+				// Run through median filter in YCoCg
+				let yco = ImageUtils.convertColorSpace(imagestate, 'YCoCg');
+				let filteredYco = ImageUtils.medianFilter(yco, k, 3);
+				let filtered = ImageUtils.convertColorSpace(filteredYco, 'RGB');
+				imagestate = filtered;
+
+				// DEBUG
+				// DecomposeModel.render(imagestate);
+
+				// Grab dominant colors
+				// Evaluate components for dominant colors
+				let palette = colorThief.getPalette(imagestate);
+
+				let i;
+				for (i = 0; i < palette.length; i++) {
+					let color = palette[i];
+
+					let scored = DecomposeModel.scoreComponents(imagestate,
+																color,
+																maskUtil,
+																compoTol,
+																error,
+																doneMask);
+
+					// Color score
+					let j;
+					for (j = 0; j < scored.length; j++) {
+						candidates.push(scored[j]);
+					}
+
+				}
+
+				candidates.sort(componentSortingFunction);
+				candidatesThisTime = Math.min(candidates.length,
+								DecomposeModel.COMPONENTS_EACH_STEP);
+
+				let j;
+				const sens = DecomposeModel.W_SENS;
+				const compos = DecomposeModel.COMPONENTS_EACH_STEP;
+				const numToPop = Math.min(compos, candidates.length);
+				for (i = 0; i < numToPop; i++) {
+					let candidate = candidates.pop();
+					
+					// TODO - Check if this is even necessary
+					let filled = maskUtil.fillHolesMut(candidate.arr);
+
+					// Width, erosion (for polytrace), dilation (for subtraction)
+					let widthObject = maskUtil.estimateWidth(filled, sens);
+
+					// DEBUG
+					// p5_inst.createDiv(widthObject.width);
+					// DecomposeModel.renderBin(widthObject.orig);
+					// DecomposeModel.renderBin(widthObject.erode);
+					// DecomposeModel.renderBin(widthObject.opened);
+
+					ndops.oreq(doneMask, widthObject.opened);
+
+					// Cannibalize candidate.arr / orig for inner edges
+					let innerEdges = candidate.arr;
+					maskUtil.innerEdges(innerEdges, widthObject.erode);
+
+					// Outer loop
+					let outerPath = maskUtil.loopTrace(innerEdges);
+
+					for (j = 0; j < outerPath.length; j++) {
+						DecomposeModel.renderPath(outerPath[j],
+												  candidate.color,
+												  widthObject.width);
+					}
+
+					// Mock-draw outer loop and grab thing or whatever
+					let innerPath = maskUtil.fillInMut(widthObject.erode,
+												innerEdges,
+												widthObject.width);
+
+					for (j = 0; j < innerPath.length; j++) {
+						DecomposeModel.renderPath(innerPath[j],
+												  candidate.color,
+												  widthObject.width);
+					}
+
+					// Mock-draw component
+					ImageUtils.mockDrawMut(imagestate,
+										   DecomposeModel.IGNORED_COLOR,
+										   doneMask);
+				}
+
+			}
+
+			// Decrease tolerance (desperation) per iteration
+			compoTol *= DecomposeModel.TOL_DECR;
+
+			error = maskUtil.withoutDiffCount(imagestate,
+											  DecomposeModel.IGNORED_COLOR,
+											  DecomposeModel.TOLERANCE);
+
+			iters++;
+
+			// DEBUG
+			// doneMask = maskUtil.withinDiff(imagestate,
+									// DecomposeModel.IGNORED_COLOR,
+									// DecomposeModel.TOLERANCE);
+			// p5_inst.createDiv("Imagestate, finishedMask at step " + iters);
+			// DecomposeModel.render(imagestate);
+			// DecomposeModel.renderBin(doneMask);
+			console.log('Completed iteration', iters, 'of decomposition.');
+		}
+
+		console.log('Finished!');
+		if (error <= threshold) {
+			console.log('Error went beneath threshold:', error, "<=", threshold);
+		}
+		if (candidatesThisTime <= 1) {
+			console.log('Ran out of candidates');
+		}
+		if (iters > DecomposeModel.MAX_ITERS) {
+			console.log('Exceeded maximum iterations');
+		}
+
 	},
 
-	render2(tensor) {
-		throw new Error("Not implemented!");
+	// debug only - convert 1-channel binary array to b/w color array
+	binToColor(arr, multi) {
+		let width = arr.shape[0];
+		let height = arr.shape[1];
+		let outputArr = new Uint8ClampedArray(width * height * 4);
+		let output = ndarray(outputArr, [width, height, 4]);
+
+		if (multi === undefined) {
+			multi = 255;
+		}
+
+		let x;
+		let y;
+		let ch;
+		let val;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = arr.get(x, y) * multi;
+				for (ch = 0; ch < 3; ch++) {
+					output.set(x, y, ch, val);
+				}
+				output.set(x, y, 3, 255);
+			}
+		}
+
+		return output;
 	},
 
-	render(tensor) {
-		throw new Error("Not implemented!");
-	}
-}
+	// Debug only - render ndarray
+	render(arr) {
+		let url = DecomposeModel.toDataURL(arr);
+		p5_inst.createImg(url);
+	},
 
+	// Debug only - render binary ndarray
+	renderBin(arr, multi) {
+		let arr3 = DecomposeModel.binToColor(arr, multi);
+		let url = DecomposeModel.toDataURL(arr3);
+		p5_inst.createImg(url);
+  },
+};
 
 if (isNode) {
 	module.exports = {

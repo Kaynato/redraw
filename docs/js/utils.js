@@ -14,10 +14,11 @@ ndpack = require('ndarray-pack');
 ndunpack = require('ndarray-unpack');
 ndshow = require('ndarray-show');
 ndops = require('ndarray-ops');
+ndimgtoarr = require('get-pixels');
+
 zeros = require('zeros');
 
-dominant_color = require('dominant-color');
-imagemagick = require('imagemagick');
+dt = require('distance-transform');
 
 // Client-side jsfeat is newer.
 // jsfeat = require('jsfeat');

@@ -5,7 +5,6 @@
  * Handles image upload.
  */
 
-
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
@@ -32,7 +31,6 @@ if (!isNode) {
 
 imageLoader.addEventListener('change', uploadImage, false);
 
-var debugvariable = undefined;
 /**
  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive.
  * 
@@ -43,7 +41,6 @@ var debugvariable = undefined;
  */
 function uploadImage(e){
   // A FileList
-  console.log(e.target);
   if (typeof e.target === "undefined") {
     return;
   }
@@ -52,9 +49,39 @@ function uploadImage(e){
   let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = function(e) {
-    debugvariable = e;
-    let img = p5_inst.createImg(e.target.result).hide();
-    p5_inst.image(img, 2, 2);
+    // Might want to take care of oversize images here: TODO?
+
+    // Turn to 
+    ndimgtoarr(e.target.result, function(err, img) {
+      if (err) {
+        if (isNode) {
+          alert("Bad image data!");
+        }
+        throw Error("Unrecognized image data!");
+      }
+
+      // Strokes are appended from within DecomposeModel
+      // This prevents long wait times during which nothing perceptible happens
+      let tensor = DecomposeModel.imageToTensor(img);
+      DecomposeModel.imageToStrokes(tensor, img.elt);
+
+    });
+
+    // // TODO - edit later. Maybe use point to sample from image.
+    // // Should probably even be inside the returned strokes.
+    // let temp_color = {levels: [0, 0, 0]};
+
+    // for (var i = 0; i < strokes.length; i++) {
+    //   let stroke = strokes[i];
+    //   console.log(stroke);
+    //   MPState.addStroke(stroke[0], stroke[1], stroke[2], stroke[3], 5.0, temp_color);
+
+    //   // Very, very buggy
+    //   // Esp. stroke outside of MP...
+    //   p5_inst.line(stroke[0], stroke[1], stroke[2], stroke[3]);
+    // }
+
+    // DecomposeModel.render2(DecomposeModel.interimModel(tensor));
   }
 };
 
