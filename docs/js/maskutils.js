@@ -183,6 +183,7 @@ var MaskUtils = function(width, height, maxPadding) {
 		scores (Object): Accumulator for label(s).
 		callback (function, optional): Callback taking in popped coord.
 			If undefined, don't use.
+			Takes (coord, label).
 	*/
 	this.labelComponentMut = function(labelArr, arr, x, y, label, scores, callback) {
 		let stack = [[x, y]];
@@ -201,7 +202,7 @@ var MaskUtils = function(width, height, maxPadding) {
 		while (stack.length > 0) {
 			coord = stack.pop();
 			if (hasCallback) {
-				callback(coord);
+				callback(coord, label);
 			}
 			ix = coord[0];
 			iy = coord[1];
@@ -408,52 +409,57 @@ var MaskUtils = function(width, height, maxPadding) {
 		// Self is 1 && Any 4-connected neighbor is 0
 		//   -> set output to 1
 		let val;
-		let hasN;
-		let hasE;
-		let hasS;
-		let hasW;
 		for (x = 0; x < this.width; x++) {
 			for (y = 0; y < this.height; y++) {
 				val = arr.get(x, y);
 				if (val > 0) {
-					hasN = y > 0;
-					hasE = x + 1 < this.width;
-					hasS = y + 1 < this.height;
-					hasW = x > 0;
 
-					if (hasN) {
-						val = arr.get(x, y-1);
-						if (val == 0) {
-							output.set(x, y, 1);
-							continue;
-						}
+					// TODO - might want to clean up later
+
+					// Any boundary element is edge
+					if (!(y > 0)) {
+						output.set(x, y, 1);
+						continue;
+					};
+					if (!(x + 1 < this.width)) {
+						output.set(x, y, 1);
+						continue;
+					};
+					if (!(y + 1 < this.height)) {
+						output.set(x, y, 1);
+						continue;
+					};
+					if (!(x > 0)) {
+						output.set(x, y, 1);
+						continue;
+					};
+
+					// Definitely not boundary
+					val = arr.get(x, y-1);
+					if (val == 0) {
+						output.set(x, y, 1);
+						continue;
 					}
-					if (hasE) {
-						val = arr.get(x+1, y);
-						if (val == 0) {
-							output.set(x, y, 1);
-							continue;
-						}
+					val = arr.get(x+1, y);
+					if (val == 0) {
+						output.set(x, y, 1);
+						continue;
 					}
-					if (hasS) {
-						val = arr.get(x, y+1);
-						if (val == 0) {
-							output.set(x, y, 1);
-							continue;
-						}
+					val = arr.get(x, y+1);
+					if (val == 0) {
+						output.set(x, y, 1);
+						continue;
 					}
-					if (hasW) {
-						val = arr.get(x-1, y);
-						if (val == 0) {
-							output.set(x, y, 1);
-							continue;
-						}
+					val = arr.get(x-1, y);
+					if (val == 0) {
+						output.set(x, y, 1);
+						continue;
 					}
 				}
 			}
 		}
 		return arr;
-	}
+	};
 
 	/*
 		Trace loops, returning closed path around loop
@@ -466,17 +472,98 @@ var MaskUtils = function(width, height, maxPadding) {
 		Return array of arrays.
 	*/
 	this.loopTrace = function(arr) {
+
+		// Use the temp array for labels, since we won't output it.
+		let temp = this.tempUint8;
+		ndops.assigns(temp, 0);
+		
+		// We use a weird traversal rule so we can't use labelComponentMut.
 		let paths = [];
 
-		// TODO!
-		
-		// needs a temp array for labels
+		// Tracer object for loopTrace
+		// One at a time! So, one ever, with non-concurrent usage
+		const tracer = {
+			prevCoord: undefined,
+			segAngle: undefined,
+			path: [],
 
-		// For each new loop:
+			// Stack to push traversal coords to
+			// Doesn't have to do immediately with prevCoord
+			stack: [],
 
-		// Define a callback that appends to a path
-		// labelComponentMut(labels, arr, x, y, label, scores, callback);
-		// Also be sure to keep track of line segment direction and waver
+			// TODO - nice indexing for relative traversal push rule
+			// Basically a const
+			traversal: undefined,
+
+			// Resets tracer with this [x, y]
+			init: function(coord) {
+				this.prevCoord = coord;
+				this.path = [coord];
+				this.segAngle = undefined;
+				this.stack = [coord];
+				// up
+				this.direction = 0;
+			},
+
+			// Update with new coord
+			// Might write to paths (array)
+			update: function(next) {
+				// If NEXT is not adjacent to this.prevCoord
+				// break off segment and start new segment (TODO)
+				// return
+
+				// Otherwise, we know we are adjacent
+
+				// If angle not set, set angle
+				// TODO
+
+				// Our cone is the current direction we're going
+				// A cautionary example is [...---''']
+				// How to tell that moving NE is ok?
+				// Raycasting??????
+
+				// Start of cone is actually this.path[0]
+				// If we are "getting out" of our "cone" (TODO)
+				// break off seg and start new seg (TODO)
+				// return
+
+				// Otherwise, just set prev to next
+			}
+		};
+
+		let x;
+		let y;
+		let val;
+		let lbl;
+		let loopLabel = 0;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = arr.get(x, y);
+				lbl = temp.get(x, y);
+
+				// Newly encountered loop
+				if (val == 1 && lbl == 0) {
+					loopLabel++;
+					tracer.init([x, y]);
+
+					// TODO
+					// Begin path creation!
+					// Depth Traversal with Relative Direction rule
+					// For going up, push order (backwards traversal) is
+					// S SW SE W E NW NE N
+					// There should be a way of using indices to make offsets.
+
+					// while tracer.stack has stuff {
+						// coord = tracer.stack.pop();
+						// tracer.update(coord);
+						// tracer.traverse(); // pushes valid neighbours
+						// temp.set(coord[0], coord[1], loopLabel);
+					// }
+
+
+				}
+			}
+		}
 
 		return paths;
 	};
