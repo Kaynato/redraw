@@ -611,7 +611,7 @@ function sketch_process(p)
 
   p.mouseDragged = function()
   {
-    // Check if the 'draw strokes' state or the 'draw shape' mode. If in the 
+    // Check if the 'draw strokes' state or the 'draw shape' mode. If in the
     // 'draw shape' state, then don't do anything when the mouse is dragged.
     if (MPState.getShapeOption() == null) {
       // If its in eraser mode, add white lines over the previously drawn strokes.
@@ -926,10 +926,10 @@ function updateGenerateToggle()
 // TODO update
 function rotate()
 {
-  const strokes = MPState.getVisibleStrokes();
-  const sizes = MPState.getVisibleSizes();
+  const strokes = MPState.getState();
+  const sizes = MPState.getSizes();
   p5_inst.resetCanvas();
-  for (let i = 0; i < strokes.length; i++)
+  for (let i = 0; i < MPState.strokeIndex; i++)
   {
     const sX = strokes[i][0] - 320;
     const sY = strokes[i][1] - 240;
@@ -940,6 +940,18 @@ function rotate()
     strokes[i][2] = eY + 320;
     strokes[i][3] = -1.0 * eX + 240;
     p5_inst.drawStroke(strokes[i], sizes[i]);
+  }
+
+  for (let i =  MPState.strokeIndex; i < strokes.length; i++)
+  {
+    const sX = strokes[i][0] - 320;
+    const sY = strokes[i][1] - 240;
+    const eX = strokes[i][2] - 320;
+    const eY = strokes[i][3] - 240;
+    MPState.state[i][0] = sY + 320;
+    MPState.state[i][1] = -1.0 * sX + 240;
+    MPState.state[i][2] = eY + 320;
+    MPState.state[i][3] = -1.0 * eX + 240;
   }
 }
 
