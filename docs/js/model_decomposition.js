@@ -248,7 +248,8 @@ const DecomposeModel = {
 		}
 		if (i == 1) {
 			console.log('Something went wrong. Path drawing did not initiate.');
-		}
+    }
+  },
 
 	imageToStrokes(tensor) {
 		throw new Error("Not implemented!");
