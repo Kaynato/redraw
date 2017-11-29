@@ -81,7 +81,7 @@ const GenerateModel = {
 			width: cur_stroke[4],
 			color: {
 				_array: [0,0,0,1],
-				levels: [0,0,0,255],
+				levels: [cur_stroke[5][0], cur_stroke[5][1], cur_stroke[5][2], 255],
 				maxes: {
 					hsb: [360, 100, 100, 1],
 					hsl: [360, 100, 100, 1],

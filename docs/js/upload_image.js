@@ -32,14 +32,14 @@ if (!isNode) {
 
 imageLoader.addEventListener('change', uploadImage, false);
 
-var debugvariable = [];
+var debugvariable = undefined;
 /**
  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive.
  * 
  * When uploading an image, actually click the button to import the image, 
  * otherwise the import will not work properly.
  * 
- * @param {*} e
+ * @param {*} e - the file object
  */
 function uploadImage(e){
   // A FileList
@@ -52,31 +52,9 @@ function uploadImage(e){
   let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = function(e) {
-    // TODO - we'll need to not allocate for each new submission
-    let img = p5_inst.createImg(e.target.result);
-    img.hide();
-
-    // TODO - call into model decomp
-    // let p5img = p5_inst.image(img, 0, 0);
-
-    // ProcessImage
-    let tensor = DecomposeModel.imageToTensor(img);
-    let strokes = DecomposeModel.imageToStrokes(tensor);
-    // TODO - edit later. Maybe use point to sample from image.
-    // Should probably even be inside the returned strokes.
-    let temp_color = {levels: [0, 0, 0]};
-
-    for (var i = 0; i < strokes.length; i++) {
-      let stroke = strokes[i];
-      console.log(stroke);
-      MPState.addStroke(stroke[0], stroke[1], stroke[2], stroke[3], 5.0, temp_color);
-
-      // Very, very buggy
-      // Esp. stroke outside of MP...
-      p5_inst.line(stroke[0], stroke[1], stroke[2], stroke[3]);
-    }
-
-    // DecomposeModel.render2(DecomposeModel.interimModel(tensor));
+    debugvariable = e;
+    let img = p5_inst.createImg(e.target.result).hide();
+    p5_inst.image(img, 2, 2);
   }
 };
 
