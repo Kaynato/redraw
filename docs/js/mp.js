@@ -1399,47 +1399,6 @@ function warholMode()
   }
 }
 
-function generateBrushstrokes()
-{
-  const strokes = MPState.getVisibleStrokes();
-  const sizes = MPState.getVisibleSizes();
-  p5_inst.resetCanvas();
-  const stroke_len = strokes.length;
-  var new_strokes = [];
-  var new_sizes = [];
-  for (let i = 0; i < stroke_len; i++)
-  {
-    var index = Math.floor(Math.random() * (strokes.length));
-    var cur_stroke = strokes[index];
-    var cur_size = sizes[index];
-    new_strokes.push(cur_stroke);
-    new_sizes.push(cur_size);
-    sizes.splice(index,1);
-    strokes.splice(index,1);
-    var min = 1000;
-    var min_id = -1;
-    for (let j = 0; j<sizes.length;j++)
-    {
-      const x_dist = Math.abs(cur_stroke[2] - strokes[j][0]);
-      const y_dist = Math.abs(cur_stroke[3] - strokes[j][1]);
-      const dist = Math.pow(Math.pow(x_dist,2) + Math.pow(y_dist,2),0.5);
-      if (dist < min)
-      {
-        min = dist;
-        min_id = j;
-      }
-    }
-    console.log(min);
-    new_strokes.push(strokes[min_id]);
-    new_sizes.push(sizes[min_id]);
-    sizes.splice(min_id,1);
-    strokes.splice(min_id,1);
-  }
-  MPState.state = new_strokes;
-  MPState.sizes = new_sizes;
-  MPState.strokeIndex = 0;
-}
-
 
 /**
  * Adds the option to select a saved image state to choose from. Note the index
