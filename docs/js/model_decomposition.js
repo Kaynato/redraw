@@ -43,7 +43,7 @@ const DecomposeModel = {
 	MIN_FILT: 1,
 
 	// A color that either color thief ignores or we prohibit from the palette
-	IGNORED_COLOR: [255, 255, 255],
+	WHITE: [255, 255, 255],
 
 	// When (image error %) < this, stop decomposition
 	GOOD_ENOUGH_ERROR: 0.01,
@@ -366,7 +366,7 @@ const DecomposeModel = {
 		const threshold = totalPixels * DecomposeModel.GOOD_ENOUGH_ERROR;
 		let candidatesThisTime = 1000;
 		let error = maskUtil.withoutDiffCount(imagestate,
-										     DecomposeModel.IGNORED_COLOR,
+										     DecomposeModel.WHITE,
 										     DecomposeModel.TOLERANCE);
 		let iters = 0;
 
@@ -484,7 +484,7 @@ const DecomposeModel = {
 
 					// Mock-draw component
 					ImageUtils.mockDrawMut(imagestate,
-										   DecomposeModel.IGNORED_COLOR,
+										   DecomposeModel.WHITE,
 										   doneMask);
 
 				}
@@ -499,14 +499,14 @@ const DecomposeModel = {
 			compoTol *= DecomposeModel.TOL_DECR;
 
 			error = maskUtil.withoutDiffCount(imagestate,
-											  DecomposeModel.IGNORED_COLOR,
+											  DecomposeModel.WHITE,
 											  DecomposeModel.TOLERANCE);
 
 			iters++;
 
 			// DEBUG
 			// doneMask = maskUtil.withinDiff(imagestate,
-									// DecomposeModel.IGNORED_COLOR,
+									// DecomposeModel.WHITE,
 									// DecomposeModel.TOLERANCE);
 			// p5_inst.createDiv("Imagestate, finishedMask at step " + iters);
 			// DecomposeModel.render(imagestate);
