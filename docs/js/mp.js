@@ -497,8 +497,6 @@ function sketch_process(p)
     MPState.strokeIndices.push(MPState.strokeIndex);
   }
 
-
-
   p.mousePressed = function()
   {
     // Square
@@ -1197,12 +1195,7 @@ function exportData() {
       img = {strokes, sizes};
     }
     else {
-      if (strokes.length != savedImgs[imageIdx].strokes.length) {
-        img = {strokes, sizes};
-      }
-      else {
-        img = savedImgs[imageIdx];
-      }
+      img = savedImgs[imageIdx];
     }
     // // Get the specified image from the saved state if the visible strokes and saved image state strokes are the same.
     // else if (strokes.length == savedImgs[imageIdx].strokes.length) {
