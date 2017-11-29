@@ -17,7 +17,7 @@ canvas {
 
 button {
   padding: 0;
-  border: 1px solid grey;
+  border: 2px solid grey;
   background: none;
   /* height: 50px;
   width: 50px; */
@@ -54,7 +54,7 @@ button {
 
 /* Workaround for non-button */
 .image-upload {
-  border: 1px solid grey;
+  border: 2px solid grey;
   background: none;
   width: 50px;
   height: 53px;
@@ -64,14 +64,14 @@ button {
   margin: 0 auto;
   width: 700px;
   background-color: #efefef;
-  border: 1px solid grey;
+  border: 2px solid grey;
   border-radius: 10px;
 }
 
 #vertical-controls {
   height: auto;
   background-color: #efefef;
-  border: 1px solid grey;
+  border: 2px solid grey;
   border-radius: 10px;
   padding: 5px;
   margin: 10px; /* Same as canvas padding */
