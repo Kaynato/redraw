@@ -8,12 +8,13 @@
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
-// CHANGE AND GET RID OF MENTIONS OF "DEBUG" BEFORE MERGE WITH MASTER
+const CanvasWidth = 640;
+const CanvasHeight = 480;
 
 // DEBUG
-var OUTER = {
-	l: []
-};
+// var OUTER = {
+	// l: []
+// };
 
 const DecomposeModel = {
 
@@ -174,12 +175,26 @@ const DecomposeModel = {
 
 		const threshold = DecomposeModel.SCORE_CUTOFF_PERCENT * err;
 		let components = [];
+		let best5 = [0, 0, 0, 0, 0];
 		let label;
 		for (label = 1; label < blobs.labels; label++) {
 			let score = blobs.scores[label];
 
 			// Don't even bother if it's not big enough
 			if (score < threshold) {
+				continue;
+			}
+
+			let w;
+			for (w = 0; w < best5.length; w++) {
+				// If we are better
+				if (score > best5[w]) {
+					best5[w] = score;
+					break;
+				}
+			}
+			// Not better than any
+			if (w == best5.length) {
 				continue;
 			}
 
@@ -215,9 +230,9 @@ const DecomposeModel = {
 
 		TODO: Get to work with entire mousedrawn components.
 	*/
-	renderPath(path, color, width) {
-		// width = Math.pow(width, 1.1);
-		width *= 2;
+	renderPath(path, color, width, scale, offX, offY) {
+
+		width *= 2.0;
 		const pathLength = path.length;
 		if (pathLength < 2) {
 			console.log("Attempted to render a path with length < 2! " +
@@ -229,30 +244,29 @@ const DecomposeModel = {
 		const colorObj = {
 			levels: [color[0], color[1], color[2], 255],
 		};
-
 		let i;
-		let startX = path[0][1];
-		let startY = path[0][0];
+		let startX = path[0][1] * scale + offX;
+		let startY = path[0][0] * scale + offY;
 		let endX;
 		let endY;
 		let coord;
 		for (i = 1; i < pathLength; i++) {
-			endX = path[i][1];
-			endY = path[i][0];
-			MPState.addStroke(startX, startY, endX, endY, width, colorObj);
-			const new_stroke = MPState.getCurrentStroke();
-			const lineSize = MPState.getCurrentSize();
-			p5_inst.drawStroke(new_stroke, lineSize);
+			endX = path[i][1] * scale + offX;
+			endY = path[i][0] * scale + offY;
+			MPState.addStroke(startX, startY,
+							  endX  , endY,
+							  width * scale,
+							  colorObj);
+			let newStroke = [startX, startY, endX, endY, width * scale,
+						 color[0], color[1], color[2]];
+			p5_inst.drawStroke(newStroke, width * scale);
 			startX = endX;
 			startY = endY;
 		}
 		if (i == 1) {
 			console.log('Something went wrong. Path drawing did not initiate.');
-    }
-  },
+		}
 
-	imageToStrokes(tensor) {
-		throw new Error("Not implemented!");
 	},
 
 	/*
@@ -265,6 +279,7 @@ const DecomposeModel = {
 
 		// Strokes are actually rendered by a function. Shhh.
 
+
 		// Stack of unscored candidate components
 		let candidatesUnscored = [];
 
@@ -274,6 +289,26 @@ const DecomposeModel = {
 		const width = arr.shape[0];
 		const height = arr.shape[1];
 		const maskUtil = new MaskUtils(width, height, DecomposeModel.MAX_W);
+
+		// Compute ratio and offset
+		let ratioX = CanvasWidth / width;
+		let ratioY = CanvasHeight / height;
+		var offsetX;
+		var offsetY;
+		const scale = Math.min(ratioX, ratioY);
+		// If scaled by X
+		if (ratioX <= ratioY) {
+			offsetX = CanvasWidth - (width * scale);
+			offsetX /= 2.0;
+			offsetY = 0;
+		}
+		else {
+			offsetX = 0;	
+			offsetY = CanvasHeight - (height * scale);
+			offsetY /= 2.0;
+		}
+		console.log(ratioX, ratioY);
+		console.log(width, height, scale, offsetX, offsetY);
 
 		const componentSortingFunction = function(a, b) {
 			return a.score - b.score;
@@ -379,7 +414,8 @@ const DecomposeModel = {
 					for (j = 0; j < outerPath.length; j++) {
 						DecomposeModel.renderPath(outerPath[j],
 												  candidate.color,
-												  widthObject.width);
+												  widthObject.width,
+												  scale, offsetX, offsetY);
 					}
 
 					// Mock-draw outer loop and grab thing or whatever
@@ -390,7 +426,8 @@ const DecomposeModel = {
 					for (j = 0; j < innerPath.length; j++) {
 						DecomposeModel.renderPath(innerPath[j],
 												  candidate.color,
-												  widthObject.width);
+												  widthObject.width,
+												  scale, offsetX, offsetY);
 					}
 
 					// Mock-draw component
@@ -472,8 +509,8 @@ const DecomposeModel = {
 		let arr3 = DecomposeModel.binToColor(arr, multi);
 		let url = DecomposeModel.toDataURL(arr3);
 		p5_inst.createImg(url);
-  },
-};
+	}
+}
 
 if (isNode) {
 	module.exports = {
