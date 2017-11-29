@@ -70,12 +70,11 @@ button {
 
 #vertical-controls {
   margin: 0 auto;
-  /*width: 80%;*/
   height: auto;
   background-color: #efefef;
   border: 1px solid grey;
   border-radius: 10px;
-  padding: 10px;
+  padding: 0px 5px;
 }
 
 .mp-control {
@@ -85,12 +84,12 @@ button {
 }
 
 .image-upload > input {
-    display: none;
+  display: none;
 }
 
 .center {
   margin: 0 auto;
-  width: 35%;
+  width: 80%;
   display: block;
   text-align: center;
   /*padding: 10px;*/
