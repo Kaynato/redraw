@@ -38,6 +38,7 @@ let MPState =
   colorsR: [],
   colorsG: [],
   colorsB: [],
+  strokeIndices: [0],
 
   // Determines toggle mode.
   generating: false,
@@ -306,15 +307,27 @@ let MPState =
   */
   back()
   {
-    if (this.strokeIndex > 0)
+    this.strokeIndices.splice(this.strokeIndices.length-1, 1);
+    for (let i = 0; i < this.strokeIndices.length;i++)
     {
-      this.strokeIndex--;
-      return true;
+      console.log(i);
+      if (this.strokeIndex <= this.strokeIndices[i])
+        {
+          console.log("HI");
+          this.strokeIndex = this.strokeIndices[i-1];
+          i = this.strokeIndices.length + 1;
+
+        }
     }
-    else
-    {
-      return false;
-    }
+    // if (this.strokeIndex > 0)
+    // {
+    //   this.strokeIndex--;
+    //   return true;
+    // }
+    // else
+    // {
+    //   return false;
+    // }
   },
 
   /**
@@ -408,6 +421,13 @@ function sketch_process(p)
   p.draw = function()
   {
   }
+
+  p.mouseReleased = function()
+  {
+    MPState.strokeIndices.push(MPState.strokeIndex);
+  }
+
+
 
   p.mousePressed = function()
   {
