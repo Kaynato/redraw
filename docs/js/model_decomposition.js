@@ -194,6 +194,8 @@ const DecomposeModel = {
 
 		This allows us continuous play. I guess.
 		It makes the wait more interesting. I guess.
+
+		TODO: Get to work with entire mousedrawn components.
 	*/
 	renderPath(path, color, width) {
 		const pathLength = path.length;
@@ -203,16 +205,9 @@ const DecomposeModel = {
 			return;
 		}
 
+		// Rest of the colorObj doesn't matter.
 		const colorObj = {
-			_array: [0,0,0,1],
 			levels: [color[0], color[1], color[2], 255],
-			maxes: {
-				hsb: [360, 100, 100, 1],
-				hsl: [360, 100, 100, 1],
-				rgb: [255,255,255,255]
-			},
-			mode: "rgb",
-			name: "p5.Color"
 		};
 
 		let i;
@@ -358,7 +353,7 @@ const DecomposeModel = {
 
 					// Outer loop
 					let outerPath = maskUtil.loopTrace(innerEdges);
-					// OUTER.loopPaths.push(outerPath);
+					OUTER.loopPaths.push(outerPath);
 
 					for (j = 0; j < outerPath.length; j++) {
 						DecomposeModel.renderPath(outerPath[j],

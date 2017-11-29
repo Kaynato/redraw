@@ -16,8 +16,8 @@ var MaskUtils = function(width, height, maxPadding) {
 	this.height = height;
 	this.size = width * height;
 	this.shape = [width, height];
-	this.tempUint8 = (function(obj) {
-		let arr = new Uint8Array(obj.size);
+	this.tempInt8 = (function(obj) {
+		let arr = new Int8Array(obj.size);
 		return ndarray(arr, obj.shape);
 	})(this);
 
@@ -151,7 +151,7 @@ var MaskUtils = function(width, height, maxPadding) {
 				}
 			}
 		}
-
+		
 		return count;
 	};
 
@@ -461,6 +461,157 @@ var MaskUtils = function(width, height, maxPadding) {
 		return arr;
 	};
 
+	// Tracer object for loopTrace
+	// One at a time! So, one ever, with non-concurrent usage
+	const _Tracer = {
+		prevCoord: undefined,
+		path: [],
+
+		// REFERENCE to paths array this should write to
+		paths: undefined,
+
+		// Stack to push traversal coords to
+		// Doesn't have to do immediately with prevCoord.
+		// Contains [coord, direction taken to get there]
+		// Only gets updated by this.traverse()
+		stack: [],
+
+		// Basically a const.
+		// Nice offsets for relative traversal push rule
+		traversalIdx: [
+			[ 0,-1], // N
+			[+1,-1], // NE
+			[+1, 0], //  E
+			[+1,+1], // SE
+			[ 0,+1], // S
+			[-1,+1], // SW
+			[-1, 0], //  W
+			[-1,-1]  // NW
+		],
+
+		// Nice indexing for relative traversal offsets' push rule
+		traversalOrder: [
+			// Pushed coords are accessed backwards
+			4,    // Opposite
+			3, 5, // Far
+			2, 6, // Middle
+			1, 7, // Close
+			0,    // Original
+		],
+
+		// Returns 8-adjacency of two (x, y) coords.
+		isAdjacent: function(coordA, coordB) {
+			let dx = coordA[0] - coordB[0];
+			let dy = coordA[1] - coordB[1];
+			let theSame = dx == 0 && dy == 0;
+			if (!theSame) {
+				let xAdj = Math.abs(dx) <= 1;
+				let yAdj = Math.abs(dy) <= 1;
+				return xAdj && yAdj;
+			}
+			return false;
+		},
+
+		// Bind paths to tracer object
+		bindPaths: function(paths) {
+			this.paths = paths;
+		},
+
+		// Resets _Tracer with this [x, y]
+		init: function(coord) {
+			this.prevCoord = coord;
+			this.path = [coord];
+			// First try is up
+			this.direction = 0;
+			this.stack = [[coord, this.direction]];
+		},
+
+		/*
+			Mutates paths.
+
+			End path with coord.
+			Coord might be undefined.
+		*/
+		endPath: function(coord) {
+			// Only one thing in path
+			if (this.path.length < 2) {
+				this.path.push(this.prevCoord);
+			}
+			// If last is adjacent to our our start, close the loop
+			// But endpath from here is only called when we aren't adjacent
+			this.paths.push(this.path);
+			if (coord !== undefined) {
+				this.path = [coord];
+				this.prevCoord = coord;
+			}
+		},
+
+		// Update with new coord.
+		// Might write to paths (array)
+		// Only does path separation.
+		updatePath: function(next) {
+
+			// If NEXT is not adjacent to PREV
+			// break off segment with previous and start new segment (TODO)
+			if (!this.isAdjacent(next, this.prevCoord)) {
+				this.endPath(next);
+				return;
+			}
+
+			// Otherwise, we know we are adjacent, so we can add to path.
+			this.path.push(next);
+			this.prevCoord = next;
+		},
+
+		/*
+			Is the pixel valid?
+			labels indicates visitedness.
+		*/
+		isValid: function(labels, arr, x, y) {
+			if (x < 0 || y < 0) {
+				return false;
+			}
+			if (x >= width || y >= height) {
+				return false;
+			}
+			let pix = arr.get(x, y);
+			let lbl = labels.get(x, y);
+			let nonzero = pix != 0;
+			let unvisited = lbl == this.UNVISITED;
+			return nonzero && unvisited;
+		},
+
+		/*
+			Push valid neighbors of coord using relative traversal rule
+			Assuming that dir was the direction that brought us to coord.
+			Use labels to indicate visitedness.
+			Reads from arr.
+			Mutates labels to indicate coord as visited.
+		*/
+		traverseMut: function(labels, arr, coord, dir) {
+			// Direction taken to reach pushed pixel
+			let nextDir;
+			// Coords of pushed pixel
+			let ix;
+			let iy;
+			// Offset to next pixel
+			let offsetCoords;
+			// For each offset in traversalOrder
+			let off;
+			for (off = 0; off < this.traversalOrder.length; off++) {
+				nextDir = (dir + off) % this.traversalIdx.length;
+				offsetCoords = this.traversalIdx[nextDir];
+				ix = offsetCoords[0];
+				iy = offsetCoords[1];
+				// Push the pixel at this offset if valid
+				if (this.isValid(labels, arr, ix, iy)) {
+					this.stack.push([[ix, iy], nextDir]);
+				}
+				labels.set(x, y, 1);
+			}
+		}
+	};
+
 	/*
 		Trace loops, returning closed path around loop
 		Inbuilt segment simplifier.
@@ -474,62 +625,12 @@ var MaskUtils = function(width, height, maxPadding) {
 	this.loopTrace = function(arr) {
 
 		// Use the temp array for labels, since we won't output it.
-		let temp = this.tempUint8;
-		ndops.assigns(temp, 0);
+		let temp = this.tempInt8;
+		ndops.assigns(temp, this.UNVISITED);
 		
 		// We use a weird traversal rule so we can't use labelComponentMut.
 		let paths = [];
-
-		// Tracer object for loopTrace
-		// One at a time! So, one ever, with non-concurrent usage
-		const tracer = {
-			prevCoord: undefined,
-			segAngle: undefined,
-			path: [],
-
-			// Stack to push traversal coords to
-			// Doesn't have to do immediately with prevCoord
-			stack: [],
-
-			// TODO - nice indexing for relative traversal push rule
-			// Basically a const
-			traversal: undefined,
-
-			// Resets tracer with this [x, y]
-			init: function(coord) {
-				this.prevCoord = coord;
-				this.path = [coord];
-				this.segAngle = undefined;
-				this.stack = [coord];
-				// up
-				this.direction = 0;
-			},
-
-			// Update with new coord
-			// Might write to paths (array)
-			update: function(next) {
-				// If NEXT is not adjacent to this.prevCoord
-				// break off segment and start new segment (TODO)
-				// return
-
-				// Otherwise, we know we are adjacent
-
-				// If angle not set, set angle
-				// TODO
-
-				// Our cone is the current direction we're going
-				// A cautionary example is [...---''']
-				// How to tell that moving NE is ok?
-				// Raycasting??????
-
-				// Start of cone is actually this.path[0]
-				// If we are "getting out" of our "cone" (TODO)
-				// break off seg and start new seg (TODO)
-				// return
-
-				// Otherwise, just set prev to next
-			}
-		};
+		_Tracer.bindPaths(paths);
 
 		let x;
 		let y;
@@ -542,25 +643,23 @@ var MaskUtils = function(width, height, maxPadding) {
 				lbl = temp.get(x, y);
 
 				// Newly encountered loop
-				if (val == 1 && lbl == 0) {
+				if (val == 1 && lbl == this.UNVISITED) {
 					loopLabel++;
-					tracer.init([x, y]);
+					_Tracer.init([x, y]);
 
-					// TODO
-					// Begin path creation!
-					// Depth Traversal with Relative Direction rule
-					// For going up, push order (backwards traversal) is
-					// S SW SE W E NW NE N
-					// There should be a way of using indices to make offsets.
+					while (_Tracer.stack.length > 0) {
+						let coordDir = _Tracer.stack.pop();
+						let coord = coordDir[0];
+						let dir = coordDir[1];
 
-					// while tracer.stack has stuff {
-						// coord = tracer.stack.pop();
-						// tracer.update(coord);
-						// tracer.traverse(); // pushes valid neighbours
-						// temp.set(coord[0], coord[1], loopLabel);
-					// }
+						_Tracer.updatePath(coord);
 
+						// Pushes valid neighbours in correct order
+						// And marks coord as visited
+						_Tracer.traverseMut(temp, arr, coord, dir);
+					}
 
+					_Tracer.endPath();
 				}
 			}
 		}
@@ -691,7 +790,7 @@ var MaskUtils = function(width, height, maxPadding) {
 		Return array of arrays.
 	*/
 	this.fillInMut = function(leftovers, innerEdges, brushWidth) {
-		let temp = this.tempUint8;
+		let temp = this.tempInt8;
 
 		// Erode with width first
 		Morphology.dilate(temp, innerEdges, brushWidth);
