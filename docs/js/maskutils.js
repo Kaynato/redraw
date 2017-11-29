@@ -37,6 +37,13 @@ var MaskUtils = function(width, height, maxPadding) {
 		return ndarray(arr, obj.paddedShape);
 	})(this);
 
+	// Easy array allocation of image type
+	this.getImgArr = function() {
+		let arr = new Uint8ClampedArray(this.size * 4);
+		arr.fill(255);
+		return ndarray(arr, [this.width, this.height, 4]);
+	}
+
 	// Easy array allocation of mask size
 	this.getArr = function(arrType) {
 		let arr = new arrType(this.size);
@@ -793,7 +800,7 @@ var MaskUtils = function(width, height, maxPadding) {
 		let temp = this.tempInt8;
 
 		// Erode with width first
-		Morphology.dilate(temp, innerEdges, brushWidth);
+		Morphology.dilate(temp, innerEdges, brushWidth - 1.5);
 		ndops.noteq(temp);
 
 		// Array gets "cut down" by simulated brush

@@ -7,6 +7,7 @@
 */
 
 const ImageUtils = {
+
 	/*
 		Convert from RGB color space into YCoCg color space or vice versa.
 		In-place operation.
@@ -263,7 +264,7 @@ const ImageUtils = {
 		mask: [H, W]
 		color: [3]
 	*/
-	setImgColByMaskMut(img, color, mask) {
+	mockDrawMut(img, color, mask) {
 		const width = img.shape[0];
 		const height = img.shape[1];
 		const channel = img.shape[1];
@@ -284,6 +285,33 @@ const ImageUtils = {
 				}
 			}
 		}
+	},
+
+	// Reduce RGB channels by sum square
+	sumSquaredChMask: function(tgt, src, tol) {
+		let val;
+		let tmp;
+		let x;
+		let y;
+		let ch;
+		for (x = 0; x < this.width; x++) {
+			for (y = 0; y < height; y++) {
+				val = 0;
+				for (ch = 0; ch < 3; ch++) {
+					tmp = src.get(x, y, ch);
+					tmp *= tmp;
+					val += tmp;
+				}
+				if (val < tolerance) {
+					tgt.set(x, y, 1);
+				}
+				else {
+					tgt.set(x, y, 0);
+				}
+			}
+		}
+
+		return tgt;
 	},
 
 }
