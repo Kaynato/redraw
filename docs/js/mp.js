@@ -45,7 +45,7 @@ let MPState =
   play: false,
   eraser: false,
   color: false,
-  fill: false,  
+  fill: false,
 
   // Droper colors
   rdrop: -1,
@@ -431,13 +431,34 @@ function sketch_process(p)
   let redSlider = null;
   let greenSlider = null;
   let blueSlider = null;
+  let stateSlider = null;
   let red = 0;
   let green = 0;
   let blue = 0;
   let lineSize = 1;
+  let stateIndex = 0;
+
+
+  p.slideState = function()
+  {
+    // stateSlider = p.createSlider(0, 1, 1, 0.001);
+    // stateSlider.parent("state-slider");
+    const strokes = MPState.getVisibleStrokes();
+    const sizes = MPState.getVisibleSizes();
+
+    // Calculate percentage of state
+    
+    p5_inst.resetCanvas();
+    for (let i = 0; i < stateSlider.value; i++)
+    {
+      p.drawStroke(strokes[i], sizes[i]);
+    }
+
+  }
 
   p.setup = function()
   {
+
     canvas = p.createCanvas(640, 480);
     lineSize = 5;
 
@@ -447,12 +468,17 @@ function sketch_process(p)
     redSlider = p.createSlider(0, 255, red);
     greenSlider = p.createSlider(0, 255, green);
     blueSlider = p.createSlider(0, 255, blue);
+    stateSlider = p.createSlider(0, 1, 0, 0.01);
 
     canvas.parent("canvas-holder");
     sizeSlider.parent("size-slider");
     redSlider.parent("red-slider");
     greenSlider.parent("green-slider");
     blueSlider.parent("blue-slider");
+    stateSlider.parent("state-slider");
+
+    stateSlider.changed(p.slideState);
+
     p.predraw();
   }
 
@@ -725,7 +751,7 @@ function sketch_process(p)
         const mouseX = p.mouseX;
         const mouseY = p.mouseY;
         // console.log(p);
-  
+
         let current_closestx = 10000;
         let current_closesty = 10000;
         let endof_closestx = 10000;
@@ -742,7 +768,7 @@ function sketch_process(p)
             index_of_interest = i;
           }
         }
-  
+
         let upper_limit = index_of_interest;
         let lower_limit = index_of_interest;
         for (let i = index_of_interest + 1; i < strokes.length; i++) {
@@ -753,7 +779,7 @@ function sketch_process(p)
             break;
           }
         }
-  
+
         for (let i = index_of_interest; i > 0; i--) {
           if(Math.abs((strokes[i+1][0] - strokes[i][2]) < 50) && Math.abs((strokes[i+1][1] - strokes[i][3]) <50)) {
             lower_limit = i;
@@ -764,43 +790,43 @@ function sketch_process(p)
         }
 
         let closed_shape = false;
-  
+
         red = redSlider.value();
         green = greenSlider.value();
         blue = blueSlider.value();
         color = p.color(red, green, blue, 255);
-  
+
         const size = strokes.length;
         console.log(lower_limit);
         console.log(upper_limit);
-  
+
         for (let i=lower_limit; i<upper_limit; i++) {
             p.line(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3]);
             MPState.addStroke(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3], lineSize ,color);
         }
-  
+
         // let upper_slice = index_of_interest;
         // let lower_slice = index_of_interest;
-  
-        // for (let i=index_of_interest; i< strokes.length - 1; i++) 
+
+        // for (let i=index_of_interest; i< strokes.length - 1; i++)
         // {
         //   if ((strokes[i][2] == strokes[i + 1][0]) && (strokes[i][3] == strokes[i+1][1]))
         //   {
         //     upper_slice = i;
         //     console.log(current_closestx);
         //   }
-  
+
         //   else
         //   {
         //     break;
         //   }
         // }
-  
-        // for (let i=index_of_interest; i> 1; i--) 
+
+        // for (let i=index_of_interest; i> 1; i--)
         // {
         //   if (strokes[i - 1][2] == strokes[i ][0] && strokes[i - 1][3] == strokes[i][1])
         //   {
-  
+
         //     lower_slice = i;
         //   }
         //   else
@@ -809,7 +835,7 @@ function sketch_process(p)
         //   }
         // }
         //console.log(lower_slice);
-      
+
       }
       // Color picker (aka dropper)
       else if(MPState.getColorMode()) {
@@ -881,6 +907,7 @@ function sketch_process(p)
                  strokeVec[DataIndices.endY]);
   }
 }
+
 
 // Because of the inclusion issue from mp.test.js, we have to unfortunately define these here
 function MockDOMObject(obj)
@@ -1625,7 +1652,7 @@ function color_picker()
   }
 }
 
-function updateFillToggle() 
+function updateFillToggle()
 {
   // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('fill-toggle-box');
