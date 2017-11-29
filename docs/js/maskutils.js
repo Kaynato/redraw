@@ -22,8 +22,8 @@ var MaskUtils = function(width, height, maxPadding) {
 	})(this);
 
 	// Special values for labelling algorithms
-	this.UNVISITED = -1;
-	this.EMPTY = 0;
+	const UNVISITED = -1;
+	const EMPTY = 0;
 
 	this.maxPadding = maxPadding;
 	this.padHeight = 2 * this.maxPadding + this.height;
@@ -171,7 +171,7 @@ var MaskUtils = function(width, height, maxPadding) {
 	*/
 	this.pushIfValidMut = function(labelArr, arr, ix, iy, stack) {
 		let nonzero = arr.get(ix, iy) != 0;
-		let unvisited = labelArr.get(ix, iy) == this.UNVISITED;
+		let unvisited = labelArr.get(ix, iy) == UNVISITED;
 		if (nonzero && unvisited) {
 			stack.push([ix, iy]);
 		};
@@ -269,7 +269,7 @@ var MaskUtils = function(width, height, maxPadding) {
 
 		// Fill with labels
 		let outputArr = new Int16Array(this.width * this.height);
-		outputArr.fill(this.UNVISITED);
+		outputArr.fill(UNVISITED);
 		let output = ndarray(outputArr, [this.width, this.height]);
 
 		let val;
@@ -280,12 +280,12 @@ var MaskUtils = function(width, height, maxPadding) {
 				val = output.get(x, y);
 				// If pix is 0 then we don't care
 				if (pix == 0) {
-					output.set(x, y, this.EMPTY);
+					output.set(x, y, EMPTY);
 					scores[0]++;
 					continue;
 				}
 				// Otherwise, if pix was 1, check if new
-				if (val == this.UNVISITED) {
+				if (val == UNVISITED) {
 					// New label
 					scores[labels] = 0;
 					this.labelComponentMut(output, arr, x, y, labels, scores);
@@ -506,6 +506,10 @@ var MaskUtils = function(width, height, maxPadding) {
 			0,    // Original
 		],
 
+		isSame: function(coordA, coordB) {
+			return coordA[0] == coordB[0] && coordA[1] == coordB[1];
+		},
+
 		// Returns 8-adjacency of two (x, y) coords.
 		isAdjacent: function(coordA, coordB) {
 			let dx = coordA[0] - coordB[0];
@@ -558,9 +562,17 @@ var MaskUtils = function(width, height, maxPadding) {
 		// Only does path separation.
 		updatePath: function(next) {
 
+			// Ignore if same
+			if (this.isSame(next, this.prevCoord)) {
+				return;
+			}
+
 			// If NEXT is not adjacent to PREV
 			// break off segment with previous and start new segment (TODO)
 			if (!this.isAdjacent(next, this.prevCoord)) {
+				// console.log(
+					// "Not adjacent", next[0], next[1],
+					// this.prevCoord[0], this.prevCoord[1]);
 				this.endPath(next);
 				return;
 			}
@@ -584,8 +596,10 @@ var MaskUtils = function(width, height, maxPadding) {
 			let pix = arr.get(x, y);
 			let lbl = labels.get(x, y);
 			let nonzero = pix != 0;
-			let unvisited = lbl == this.UNVISITED;
-			return nonzero && unvisited;
+			let unvisited = lbl == UNVISITED;
+			let valid = nonzero && unvisited;
+
+			return valid;
 		},
 
 		/*
@@ -599,6 +613,8 @@ var MaskUtils = function(width, height, maxPadding) {
 			// Direction taken to reach pushed pixel
 			let nextDir;
 			// Coords of pushed pixel
+			let x = coord[0];
+			let y = coord[1];
 			let ix;
 			let iy;
 			// Offset to next pixel
@@ -608,8 +624,8 @@ var MaskUtils = function(width, height, maxPadding) {
 			for (off = 0; off < this.traversalOrder.length; off++) {
 				nextDir = (dir + off) % this.traversalIdx.length;
 				offsetCoords = this.traversalIdx[nextDir];
-				ix = offsetCoords[0];
-				iy = offsetCoords[1];
+				ix = x + offsetCoords[0];
+				iy = y + offsetCoords[1];
 				// Push the pixel at this offset if valid
 				if (this.isValid(labels, arr, ix, iy)) {
 					this.stack.push([[ix, iy], nextDir]);
@@ -633,7 +649,7 @@ var MaskUtils = function(width, height, maxPadding) {
 
 		// Use the temp array for labels, since we won't output it.
 		let temp = this.tempInt8;
-		ndops.assigns(temp, this.UNVISITED);
+		ndops.assigns(temp, UNVISITED);
 		
 		// We use a weird traversal rule so we can't use labelComponentMut.
 		let paths = [];
@@ -650,7 +666,7 @@ var MaskUtils = function(width, height, maxPadding) {
 				lbl = temp.get(x, y);
 
 				// Newly encountered loop
-				if (val == 1 && lbl == this.UNVISITED) {
+				if (val == 1 && lbl == UNVISITED) {
 					loopLabel++;
 					_Tracer.init([x, y]);
 

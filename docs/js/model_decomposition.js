@@ -20,7 +20,7 @@ const DecomposeModel = {
 
 	// Tolerance for color error when looking for binary masks
 	// Try higher values...? Might make a painterly feel.
-	TOLERANCE: 0.05,
+	TOLERANCE: 0.03,
 
 	// Score cutoff for ignoring components
 	SCORE_CUTOFF_PERCENT: 0.02,
@@ -32,7 +32,7 @@ const DecomposeModel = {
 	MAX_W: 21,
 
 	// Percentage loss which is unacceptable (lower = more accurate)
-	W_SENS: 0.05,
+	W_SENS: 0.10,
 
 	// MUST BE INITIALIZED PER IMAGE.
 	maskUtils: undefined,
@@ -46,7 +46,7 @@ const DecomposeModel = {
 	IGNORED_COLOR: [255, 255, 255],
 
 	// When (image error %) < this, stop decomposition
-	GOOD_ENOUGH_ERROR: 0.03,
+	GOOD_ENOUGH_ERROR: 0.01,
 
 	// Maximum iterations for decomposition
 	MAX_ITERS: 50,
@@ -221,6 +221,46 @@ const DecomposeModel = {
 		return components;
 	},
 
+	simplifyPath(path) {
+		let i;
+		let prevX = path[0][0];
+		let prevY = path[0][1];
+		let x;
+		let y;
+		let removeIndices = [];
+		let removeCounts = [];
+		let removeCount = 0;
+		let removeFrom = 1;
+		for (i = 1; i < path.length; i++) {
+			x = path[i][0];
+			y = path[i][1];
+			// The same, so remove
+			if (x == prevX && y == prevY) {
+				removeCount++;
+			}
+			// Different, so don't remove
+			else {
+				if (removeCount > 0) {
+					removeCounts.push(removeCount);
+					removeIndices.push(i);
+
+					prevX = x;
+					prevY = y;
+
+					removeCount = 0;
+					removeFrom = i + 1;
+				}
+			}
+		}
+
+		let j;
+		for (j = 0; j < removeIndices.length; j++) {
+			path.splice(removeIndices[j], removeCounts[j]);
+		}
+
+		return path;
+	},
+
 	/*
 		RENDER THE PATH IN THE P5 CANVAS
 		AND ADD IT TO THE MPSTATE.
@@ -253,6 +293,8 @@ const DecomposeModel = {
 		for (i = 1; i < pathLength; i++) {
 			endX = path[i][1] * scale + offX;
 			endY = path[i][0] * scale + offY;
+
+
 			MPState.addStroke(startX, startY,
 							  endX  , endY,
 							  width * scale,
@@ -298,17 +340,15 @@ const DecomposeModel = {
 		const scale = Math.min(ratioX, ratioY);
 		// If scaled by X
 		if (ratioX <= ratioY) {
-			offsetX = CanvasWidth - (width * scale);
-			offsetX /= 2.0;
-			offsetY = 0;
-		}
-		else {
 			offsetX = 0;	
 			offsetY = CanvasHeight - (height * scale);
 			offsetY /= 2.0;
 		}
-		console.log(ratioX, ratioY);
-		console.log(width, height, scale, offsetX, offsetY);
+		else {
+			offsetX = CanvasWidth - (width * scale);
+			offsetX /= 2.0;
+			offsetY = 0;
+		}
 
 		const componentSortingFunction = function(a, b) {
 			return a.score - b.score;
@@ -332,6 +372,8 @@ const DecomposeModel = {
 
 		// Component tolerance - increase per iteration
 		let compoTol = DecomposeModel.TOLERANCE;
+
+		let firstRun = true;
 
 		while (error > threshold &&
 			   candidatesThisTime > 1 &&
@@ -385,7 +427,12 @@ const DecomposeModel = {
 
 				let j;
 				const sens = DecomposeModel.W_SENS;
-				const compos = DecomposeModel.COMPONENTS_EACH_STEP;
+				let compos = DecomposeModel.COMPONENTS_EACH_STEP;
+
+				if (firstRun) {
+					compos = 1;
+				}
+
 				const numToPop = Math.min(compos, candidates.length);
 				for (i = 0; i < numToPop; i++) {
 					let candidate = candidates.pop();
@@ -412,7 +459,8 @@ const DecomposeModel = {
 					let outerPath = maskUtil.loopTrace(innerEdges);
 
 					for (j = 0; j < outerPath.length; j++) {
-						DecomposeModel.renderPath(outerPath[j],
+						let simplePath = DecomposeModel.simplifyPath(outerPath[j]);
+						DecomposeModel.renderPath(simplePath,
 												  candidate.color,
 												  widthObject.width,
 												  scale, offsetX, offsetY);
@@ -424,19 +472,28 @@ const DecomposeModel = {
 												widthObject.width);
 
 					for (j = 0; j < innerPath.length; j++) {
+						DecomposeModel.simplifyPath(innerPath[j]);
 						DecomposeModel.renderPath(innerPath[j],
 												  candidate.color,
 												  widthObject.width,
 												  scale, offsetX, offsetY);
 					}
 
+					// Push the dang index so the component goes entire.
+					MPState.strokeIndices.push(MPState.strokeIndex);
+
 					// Mock-draw component
 					ImageUtils.mockDrawMut(imagestate,
 										   DecomposeModel.IGNORED_COLOR,
 										   doneMask);
+
 				}
+				// END DRAW CANDIDATES
+
+				firstRun = false;
 
 			}
+			// END FILTER LOOP
 
 			// Decrease tolerance (desperation) per iteration
 			compoTol *= DecomposeModel.TOL_DECR;
