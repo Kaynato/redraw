@@ -441,19 +441,16 @@ function sketch_process(p)
 
   p.slideState = function()
   {
-    // stateSlider = p.createSlider(0, 1, 1, 0.001);
-    // stateSlider.parent("state-slider");
-    const strokes = MPState.getVisibleStrokes();
-    const sizes = MPState.getVisibleSizes();
+    const strokes = MPState.getState();
+    const sizes = MPState.getSizes();
 
     // Calculate percentage of state
-    
-    p5_inst.resetCanvas();
-    for (let i = 0; i < stateSlider.value; i++)
-    {
+    let cur_step = Math.floor(strokes.length * stateSlider.value());
+
+    p.resetCanvas();
+    for (let i = 0; i < cur_step; i++) {
       p.drawStroke(strokes[i], sizes[i]);
     }
-
   }
 
   p.setup = function()
