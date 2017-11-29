@@ -1089,7 +1089,6 @@ function togglePlay()
     {
   		img.src='./img/pause.png';
       console.log('Is in the "Play" state');
-
       // If its the generate mode, then simply seekForward
       if (MPState.isGenerating())
       {
@@ -1108,7 +1107,7 @@ function togglePlay()
         for (let i = visibleStrokes.length; i < state.length; i++)
         {
           // console.log("Current stroke: " + visibleStrokes[i-1]);
-          p5_inst.drawStroke(state[i-1], sizes[i-1]);
+          p5_inst.drawStroke(state[i], sizes[i]);
         }
       }
     }
