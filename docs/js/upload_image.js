@@ -37,7 +37,7 @@ imageLoader.addEventListener('change', uploadImage, false);
  * When uploading an image, actually click the button to import the image, 
  * otherwise the import will not work properly.
  * 
- * @param {*} e
+ * @param {*} e - the file object
  */
 function uploadImage(e){
   // A FileList

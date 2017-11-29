@@ -39,11 +39,34 @@
 
     <!-- Input controls (Drawing) -->
     <div id="draw-controls">
-
+      Line Size
       <div id="size-slider" style="display: inline">
         <!-- Inject size slider here through p5js -->
       </div>
-
+    </div>
+    <div id="red-control">
+      Red
+      <div id="red-slider" style="display: inline">
+        <!-- Inject size slider here through p5js -->
+      </div>
+    </div>
+    <div id="green-control">
+      Green
+      <div id="green-slider" style="display: inline">
+        <!-- Inject size slider here through p5js -->
+      </div>
+    </div>
+    <div id="blue-control">
+      Blue
+      <div id="blue-slider" style="display: inline">
+        <!-- Inject size slider here through p5js -->
+      </div>
+    </div>
+    <div id="state-slider">
+      State
+      <div id="state-slider" style="display: inline">
+        <!-- Inject size slider here through p5js -->
+      </div>
     </div>
 
     <!-- MP controls -->
@@ -62,9 +85,13 @@
         <img src="img/forward.png" width="50" height="50">
       </button>
 
-      <div class="mp-control inline" id="state-slider">
+      <button type="button" id="rotate" onclick="rotate()">
+        <img src="img/rotate.png" width="50" height="50">
+      </button>
+
+      <!-- <div class="mp-control inline" id="state-slider"> -->
         <!-- Inject state slider here through p5js -->
-      </div>
+      <!-- </div> -->
 
 
       <div class="image-upload mp-control inline">
@@ -89,16 +116,74 @@
       </div>
 
       <div class="inline">
+        Eraser Mode<br>
+        <label class="switch">
+          <input type="checkbox" id="eraser-toggle-box" onclick="updateEraserToggle()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="inline">
+        Fill Mode<br>
+        <label class="switch">
+          <input type="checkbox" id="fill-toggle-box" onclick="updateFillToggle()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="inline">
         <button type="button" onclick="jpMode()">
           <img src="img/jp.png" width="50" height="50">
         </button>
       </div>
 
-        <div class="inline">
+      <div class="inline">
+        <button type="button" onclick="warholMode()">
+          <img src="img/soupcan.jpg" width="50" height="50">
+        </button>
+      </div>
+
+      <div class="inline">
         <button type="button" onclick="clears()">
           <img src="img/del.png" width="50" height="50">
         </button>
       </div>
+
+      <div class="inline">
+        <button type="button" onclick="color_picker()">
+          <img src="img/dropper.png" width="50" height="50">
+        </button>
+      </div>
+
+       <div class="inline">
+          <select id="mode" onchange="mirrorMode()">
+            <option value="-1" disabled selected>None</option>
+            <option value="1">Vertical</option>
+            <option value="2">Horizontal</option>
+            <option value="3">Both</option>
+          </select>
+        </div>
+
+      <div class="inline">
+        <button class="btn btn-primary" type="button" value="Save Image" onclick="saveImage()">Save image</button>
+        <div>
+          <!-- Allows us to switch between image states. `None` option allows us to switch to other saved image states. -->
+          <select id="img-num" onchange="loadImage()">
+            <option value="-1" disabled selected>Saved images...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="inline">
+         <select id="shape" onchange="shapeTool()">
+           <option value="-1" selected>None</option>
+           <option value="0">Square</option>
+           <option value="1">Circle</option>
+           <option value="2">Triangle</option>
+           <option value="3">Rhombus</option>
+           <option value="4">Star</option>
+         </select>
+       </div>
 
   </div>
 

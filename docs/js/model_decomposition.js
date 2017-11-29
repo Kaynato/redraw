@@ -250,6 +250,8 @@ const DecomposeModel = {
 			console.log('Something went wrong. Path drawing did not initiate.');
 		}
 
+	imageToStrokes(tensor) {
+		throw new Error("Not implemented!");
 	},
 
 	/*
@@ -469,8 +471,8 @@ const DecomposeModel = {
 		let arr3 = DecomposeModel.binToColor(arr, multi);
 		let url = DecomposeModel.toDataURL(arr3);
 		p5_inst.createImg(url);
-	}
-}
+  },
+};
 
 if (isNode) {
 	module.exports = {

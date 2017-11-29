@@ -39,7 +39,7 @@ describe('Multipurpose Panel Unit Tests', function() {
     	var stroke = mp.MPState.getCurrentStroke();
     	assert.isNotNull(stroke);
     	assert.equal(mp.MPState.strokeIndex, 1);
-    	assert.deepEqual(stroke, [0, 0, 5, 5, 1, [0, 0, 0]]);
+    	assert.deepEqual(stroke, [0, 0, 5, 5, 1, [1, 1, 1]]);
     });
 
     it('should revert strokes through seekBackward()', function() {
