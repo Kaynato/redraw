@@ -485,7 +485,7 @@ function sketch_process(p)
     p.strokeWeight(1);
     p.rect(1, 0, 638, 478);
     p.strokeWeight(lineSize);
-    p.color(red, green, blue, 255)
+    p.color(red, green, blue, 255);
   }
 
   p.draw = function()
