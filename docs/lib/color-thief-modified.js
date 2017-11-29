@@ -77,8 +77,8 @@ ColorThief.prototype.getPalette = function(arr, colorCount, quality) {
     }
 
     // Calculate maximum
-    var width = pixels.shape[0];
-    var height = pixels.shape[1];
+    var width = arr.shape[0];
+    var height = arr.shape[1];
     var pixelCount = width * height;
 
     // Get pixel data

@@ -51,23 +51,19 @@ const DecomposeModel = {
 	MAX_ITERS: 50,
 
 	/*
-		Convert image into a tensor.
-		Uses a temporary canvas to store data.
+		Process image tensor into correct format.
+
+		For some reason, ndimagetoarr transposes the image.
 	*/
 	imageToTensor(img) {
-		let canvas = document.createElement('canvas');
-		let context = canvas.getContext('2d');
-		canvas.width = img.width || img.naturalWidth;
-		canvas.height = img.height || img.naturalHeight;
-		context.drawImage(img.elt, 0, 0);
-		let imgdata = context.getImageData(0, 0, img.width, img.height);
+		const width = img.shape[1];
+		const height = img.shape[0];
+		const channels = img.shape[2];
 
-		const width = imgdata.width;
-		const height = imgdata.height;
-		const data = imgdata.data;
-		let channels = data.length / (width * height);
+		let tensorArr = new Uint8ClampedArray(img.data.length);
+		let tensor = ndarray(tensorArr, [img.shape[1], img.shape[0], channels]);
 
-		let tensor = ndarray(data, [width, height, channels]);
+		ndops.assign(tensor, img.transpose(1, 0));
 
 		// Return immediately if no alpha channel
 		if (channels < 4) {
@@ -252,12 +248,12 @@ const DecomposeModel = {
 	*/
 	imageToStrokes(arr, imageData) {
 
-		// Strokes!
-		let strokes = [];
+		// Strokes are actually rendered by a function. Shhh.
 
 		// Stack of unscored candidate components
 		let candidatesUnscored = [];
 
+		let colorThief = new ColorThief();
 
 		// Initialize a mask util object
 		const width = arr.shape[0];
@@ -301,24 +297,21 @@ const DecomposeModel = {
 				let yco = ImageUtils.convertColorSpace(imagestate, 'YCoCg');
 				let filteredYco = ImageUtils.medianFilter(yco, k, 3);
 				let filtered = ImageUtils.convertColorSpace(filteredYco, 'RGB');
-				let dataURL = DecomposeModel.toDataURL(filtered);
-				imageData.src = dataURL;
+				imagestate = filtered;
 
 				// DEBUG
-				OUTER.filtered = filtered;
-				DecomposeModel.render(filtered);
-
-				imagestate = filtered;
+				OUTER.imagestate = imagestate;
+				DecomposeModel.render(imagestate);
 
 				// Grab dominant colors
 				// Evaluate components for dominant colors
+				let palette = colorThief.getPalette(imagestate);
+
 				let i;
-				let colorThief = new ColorThief();
-				let palette = colorThief.getPalette(imageData);
 				for (i = 0; i < palette.length; i++) {
 					let color = palette[i];
 
-					let scoredComponents = DecomposeModel.scoreComponents(filtered,
+					let scoredComponents = DecomposeModel.scoreComponents(imagestate,
 																		  color,
 																		  maskUtil);
 

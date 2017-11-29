@@ -5,7 +5,6 @@
  * Handles image upload.
  */
 
-
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
@@ -32,7 +31,6 @@ if (!isNode) {
 
 imageLoader.addEventListener('change', uploadImage, false);
 
-var imgtensor = null;
 /**
  * Uploads an image (PNG, GIF, JPEG, etc.) from the local drive.
  * 
@@ -51,20 +49,23 @@ function uploadImage(e){
   let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = function(e) {
-    // TODO - we'll need to not allocate for each new submission
-    let img = p5_inst.createImg(e.target.result);
-    img.hide();
-
     // Might want to take care of oversize images here: TODO?
 
-    // ProcessImage
-    let tensor = DecomposeModel.imageToTensor(img);
-    imgtensor = tensor;
+    // Turn to 
+    ndimgtoarr(e.target.result, function(err, img) {
+      if (err) {
+        if (isNode) {
+          alert("Bad image data!");
+        }
+        throw Error("Unrecognized image data!");
+      }
 
+      // Strokes are appended from within DecomposeModel
+      // This prevents long wait times during which nothing perceptible happens
+      let tensor = DecomposeModel.imageToTensor(img);
+      DecomposeModel.imageToStrokes(tensor, img.elt);
 
-
-    // LATER
-    let strokes = DecomposeModel.imageToStrokes(tensor, img.elt);
+    });
 
     // // TODO - edit later. Maybe use point to sample from image.
     // // Should probably even be inside the returned strokes.
