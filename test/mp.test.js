@@ -36,34 +36,24 @@ describe('Multipurpose Panel Unit Tests', function() {
     	// Simulate fake mouse movement - it's the best we can do
     	mp.p5_inst.setMouse(5, 5);
     	mp.p5_inst.mouseDragged();
-    	var stroke = mp.MPState.getCurrentStroke();
-    	assert.isNotNull(stroke);
-    	assert.equal(mp.MPState.strokeIndex, 1);
-    	assert.deepEqual(stroke, [0, 0, 5, 5, 1, [1, 1, 1]]);
+        mp.p5_inst.mouseReleased();
+        var stroke = mp.MPState.getCurrentStroke();
+        assert.isNotNull(stroke);
+        assert.equal(mp.MPState.strokeIndex, 1);
+        assert.deepEqual(stroke, [0, 0, 5, 5, 1, [1, 1, 1]]);
     });
 
     it('should revert strokes through seekBackward()', function() {
-    	mp.p5_inst.setMouse(5, 5);
-    	mp.p5_inst.mouseDragged();
-    	mp.seekBackward();
-    	assert.isTrue(mp.MPState.strokeIndex < mp.MPState.dataIndex);
+        mp.p5_inst.setMouse(5, 5);
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.mouseReleased();
+        mp.seekBackward();
+        assert.isTrue(mp.MPState.strokeIndex < mp.MPState.dataIndex);
     });
 
     it('should return future strokes with seekForward()', function() {
-    	mp.seekForward();
-    	assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
+        mp.seekForward();
+        assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
     });
 
-    it('should have a different number of vectors', function() {
-      mp.MPState.setGenerating(true);
-      const strokesI = mp.MPState.getVisibleStrokes();
-      mp.togglePlay();
-      mp.p5_inst.setMouse(5, 5);
-      mp.p5_inst.mouseDragged();
-      const strokesF = mp.MPState.getVisibleSizes();
-      assert.notEqual(strokesF.length, strokesI.length, 'not equal');
-    });
-    // There is no way to test further p5 interaction, especially the parts having
-    //    to do with file interaction, complex user behavior and interactivity.
-    // ...which means automating unit testing for that is not feasible.
 });

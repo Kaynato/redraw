@@ -29,6 +29,8 @@ let MPState =
   WIDTH: 640,
   HEIGHT: 480,
 
+  predictor: !isNode ? GenerateModel : undefined,
+
   // Despite ndarray being loaded, using the dynamically altered
   // linkedlist-like array is easier for us here.
   // We can simply use ndpack to convert to ndarray when calling
@@ -51,6 +53,11 @@ let MPState =
   rdrop: -1,
   gdrop: -1,
   bdrop: -1,
+
+  // User-set colors
+  sliderRed: 0,
+  sliderGreen: 0,
+  sliderBlue: 0,
 
   // Shapes
   shapeOption: null,
@@ -180,6 +187,11 @@ let MPState =
     {
       return null;
     }
+  },
+
+  /* Get a prediction with GenerateModel */
+  getPrediction() {
+    return this.predictor.nextStroke(this);
   },
 
   /** Get all visible strokes. */
@@ -403,20 +415,21 @@ let MPState =
   */
   forward(doSingle)
   {
+    let ret = [this.strokeIndex];
     // console.log('State Length: ' + this.state.length);
     if (this.isGenerating())
     {
       // predictVector / nextStroke - update SDD
-      let stroke = GenerateModel.nextStroke(this)
+      let stroke = this.getPrediction();
       this.addStroke(stroke.startX, stroke.startY,
                      stroke.endX, stroke.endY,
                      stroke.width,
                      stroke.color);
-      return true;
+      ret.push(this.strokeIndex);
+      return ret;
     }
     else
     {
-      let ret = [this.strokeIndex];
 
       if (doSingle) {
         // Step through single strokes at a time
@@ -529,6 +542,18 @@ function sketch_process(p)
     stateSlider.parent("state-slider");
 
     stateSlider.changed(p.slideState);
+
+    redSlider.changed(function () {
+      MPState.sliderRed = redSlider.value();
+    });
+
+    greenSlider.changed(function () {
+      MPState.sliderGreen = greenSlider.value();
+    });
+
+    blueSlider.changed(function () {
+      MPState.sliderBlue = blueSlider.value();
+    });
 
     p.predraw();
   }
@@ -985,121 +1010,6 @@ function sketch_process(p)
   }
 }
 
-
-// Because of the inclusion issue from mp.test.js, we have to unfortunately define these here
-function MockDOMObject(obj)
-{
-  // Compose over
-  for (let property in Object.keys(obj))
-  {
-    this[property] = obj[property];
-  }
-
-  this.parentDiv = "window";
-
-  this.parent = function(divId)
-  {
-    this.parentDiv = divId;
-  }
-
-  this.value = function()
-  {
-    return 1;
-  }
-
-}
-
-function MockP5(sketch_process)
-{
-  this.canvas = null;
-  this.slider = null;
-  this.strokes = [];
-  this.rectList = [];
-  this.strokeColorProperty = {"levels": [0, 0, 0, 0]};
-  this.strokeWidthProperty = 1;
-
-  this.createCanvas = function(width, height)
-  {
-    this.canvas = new MockDOMObject({"width": width, "height": height});
-    return this.canvas;
-  }
-
-  this.createSlider = function(min, max, step)
-  {
-    this.slider = new MockDOMObject({
-      "min": min,
-      "max": max,
-      "step": step,
-      value: function()
-      {
-        return 1;
-      }
-    });
-    return this.slider;
-  }
-
-  // p5 functionality - no testing required
-  this.color = function(r, g, b, a)
-  {
-    return {"levels": [r, g, b, a]};
-  }
-
-  this.clear = function()
-  {
-    // p5 - do not test
-    this.strokes = [];
-    this.rectList = [];
-  }
-
-  this.strokeWeight = function(weight)
-  {
-    // p5 - do not test
-    this.strokeWidthProperty = weight;
-  }
-
-  this.stroke = function()
-  {
-    const colorArgs = arguments;
-    switch (colorArgs.length) {
-      case 1:
-        this.strokeColorProperty = colorArgs[0];
-        break;
-      case 3:
-        this.strokeColorProperty = {"levels": [colorArgs[0], colorArgs[1], colorArgs[2], 1]};
-        break;
-      case 4:
-        this.strokeColorProperty = {"levels": [colorArgs[0], colorArgs[1], colorArgs[2], colorArgs[3]]};
-        break;
-    }
-  }
-
-  this.line = function(startX, startY, endX, endY)
-  {
-    this.strokes.push([startX, startY, endX, endY, this.strokeWidthProperty, this.strokeColorProperty]);
-  }
-
-  this.rect = function(left, top, right, bottom)
-  {
-    this.rectList.push([left, top, right, bottom]);
-  }
-
-  // Mouse parameters
-  this.mouseX = 0;
-  this.mouseY = 0;
-  this.pmouseX = 0;
-  this.pmouseY = 0;
-  this.setMouse = function(newX, newY)
-  {
-    this.pmouseX = this.mouseX;
-    this.pmouseY = this.mouseY;
-    this.mouseX = newX;
-    this.mouseY = newY;
-  }
-
-  sketch_process(this);
-}
-
-
 /////////////
 // Instantiate the p5js instance.
 
@@ -1111,6 +1021,124 @@ if (!isNode)
 }
 else
 {
+
+  // Because of the inclusion issue from mp.test.js,
+  //    we have to unfortunately define these here
+  function MockDOMObject(obj)
+  {
+    // Compose over
+    for (let property in Object.keys(obj))
+    {
+      this[property] = obj[property];
+    }
+
+    this.parentDiv = "window";
+
+    this.parent = function(divId)
+    {
+      this.parentDiv = divId;
+    }
+
+    this.value = function()
+    {
+      return 1;
+    }
+
+    this.changed = function(callback) {
+      this.callback = callback;
+    }
+
+  }
+
+  function MockP5(sketch_process)
+  {
+    this.canvas = null;
+    this.slider = null;
+    this.strokes = [];
+    this.rectList = [];
+    this.strokeColorProperty = {"levels": [0, 0, 0, 0]};
+    this.strokeWidthProperty = 1;
+
+    this.createCanvas = function(width, height)
+    {
+      this.canvas = new MockDOMObject({"width": width, "height": height});
+      return this.canvas;
+    }
+
+    this.createSlider = function(min, max, step)
+    {
+      this.slider = new MockDOMObject({
+        "min": min,
+        "max": max,
+        "step": step,
+        value: function()
+        {
+          return 1;
+        }
+      });
+      return this.slider;
+    }
+
+    // p5 functionality - no testing required
+    this.color = function(r, g, b, a)
+    {
+      return {"levels": [r, g, b, a]};
+    }
+
+    this.clear = function()
+    {
+      // p5 - do not test
+      this.strokes = [];
+      this.rectList = [];
+    }
+
+    this.strokeWeight = function(weight)
+    {
+      // p5 - do not test
+      this.strokeWidthProperty = weight;
+    }
+
+    this.stroke = function()
+    {
+      const colorArgs = arguments;
+      switch (colorArgs.length) {
+        case 1:
+          this.strokeColorProperty = colorArgs[0];
+          break;
+        case 3:
+          this.strokeColorProperty = {"levels": [colorArgs[0], colorArgs[1], colorArgs[2], 1]};
+          break;
+        case 4:
+          this.strokeColorProperty = {"levels": [colorArgs[0], colorArgs[1], colorArgs[2], colorArgs[3]]};
+          break;
+      }
+    }
+
+    this.line = function(startX, startY, endX, endY)
+    {
+      this.strokes.push([startX, startY, endX, endY, this.strokeWidthProperty, this.strokeColorProperty]);
+    }
+
+    this.rect = function(left, top, right, bottom)
+    {
+      this.rectList.push([left, top, right, bottom]);
+    }
+
+    // Mouse parameters
+    this.mouseX = 0;
+    this.mouseY = 0;
+    this.pmouseX = 0;
+    this.pmouseY = 0;
+    this.setMouse = function(newX, newY)
+    {
+      this.pmouseX = this.mouseX;
+      this.pmouseY = this.mouseY;
+      this.mouseX = newX;
+      this.mouseY = newY;
+    }
+
+    sketch_process(this);
+  }
   p5_inst = new MockP5(sketch_process);
 }
 

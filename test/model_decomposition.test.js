@@ -7,21 +7,28 @@ const chai = require('chai');
 // local
 const decomposition = require('../docs/js/model_decomposition.js');
 
+const ColorThief = require('colorthief');
+
+const getPixels = require('get-pixels');
 
 /* === Setup === */
 const expect = chai.expect;
 const assert = chai.assert;
 
 describe('decomposition', function() {
-    it('should indicate current implmentation status of loadModel()', function() {
-        assert.throws(decomposition.DecomposeModel.loadModel, /Not implemented!/)
-    });
 
-    it('should indicate current implmentation status of imageToTensor()', function() {
-        assert.throws(decomposition.DecomposeModel.imageToTensor, /Not implemented!/)
-    });
+	it('should correctly convert an image to strokes', function() {
+		
+		getPixels('./assets/square.png', function(err, img) {
+			if (err) {
+				alert("Bad image data!");
+				throw Error("Unrecognized image data!");
+			}
 
-    it('should indicate current implmentation status of imageToStrokes()', function() {
-        assert.throws(decomposition.DecomposeModel.imageToStrokes, /Not implemented!/)
-    });
+		let tensor = decomposition.DecomposeModel.imageToTensor(img);
+		decomposition.DecomposeModel.imageToStrokes(tensor, img.elt);
+
+		});
+
+	});
 })

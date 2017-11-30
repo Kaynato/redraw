@@ -33,7 +33,7 @@ const GenerateModel = {
 	 * Load model fron json dict files. 
 	 */
 	loadModel() {
-		throw Error("Not implemented!")
+		throw Error("No longer relevant!");
 	},
 
 	/**
@@ -46,18 +46,30 @@ const GenerateModel = {
 	 * @returns newStroke 	- a stroke object containing a startX, startY, endX, endY, width and color.
 	 */
 	nextStroke(mpState) {
-		// Interim model!
 
 		// Single stroke addition.
 		let cur_stroke = mpState.getCurrentStroke();
 		let est_radius = 50.0;
 		const radius_jitter = 5.0;
-		console.log(cur_stroke);
+
 		if (cur_stroke == null) {
-			// Use random start location
+			// Use random start location and curr color
+			let red;
+			let green;
+			let blue;
+			if(MPState.getRedDropperMode() != -1) {
+				red = MPState.getRedDropperMode();
+				green = MPState.getGreenDropperMode();
+				blue = MPState.getBlueDropperMode();
+	        }
+	        else {
+				red = MPState.sliderRed;
+				green = MPState.sliderGreen;
+				blue = MPState.sliderBlue;
+	        }
 			let rx = Math.random() * 640;
 			let ry = Math.random() * 480;
-			cur_stroke = [0, 0, rx, ry, 2.0];
+			cur_stroke = [0, 0, rx, ry, 2.0, [red, green, blue]];
 			est_radius = 50.0; // arbitrary
 		} else {
 			let dx = cur_stroke[2] - cur_stroke[0];
@@ -81,7 +93,9 @@ const GenerateModel = {
 			width: cur_stroke[4],
 			color: {
 				_array: [0,0,0,1],
-				levels: [cur_stroke[5][0], cur_stroke[5][1], cur_stroke[5][2], 255],
+				levels: [cur_stroke[5][0],
+						 cur_stroke[5][1],
+						 cur_stroke[5][2], 255],
 				maxes: {
 					hsb: [360, 100, 100, 1],
 					hsl: [360, 100, 100, 1],
@@ -93,7 +107,7 @@ const GenerateModel = {
 		};
 
 
-		return newStroke
+		return newStroke;
 		// Procedure:
 		// 	1. Unpack the current state
 		// 	2. Get the current stroke
