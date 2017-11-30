@@ -1,4 +1,4 @@
-## ReDRAW (Restricted Deep Recurrent Attentive Writer)
+## ReDRAW (Reverse Engineer Drawing Tool)
 
 [![Build Status](https://travis-ci.org/RedrawTeam/redraw.svg?branch=master)](https://travis-ci.org/RedrawTeam/redraw)
 [![Coverage Status](https://coveralls.io/repos/github/RedrawTeam/redraw/badge.svg?branch=master)](https://coveralls.io/github/RedrawTeam/redraw?branch=master)
