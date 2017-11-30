@@ -480,7 +480,7 @@ const DecomposeModel = {
 					}
 
 					// Push the dang index so the component goes entire.
-					MPState.strokeIndices.push(MPState.strokeIndex);
+					MPState.newCheckpoint();
 
 					// Mock-draw component
 					ImageUtils.mockDrawMut(imagestate,

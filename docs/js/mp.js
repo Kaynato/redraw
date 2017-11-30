@@ -104,6 +104,18 @@ let MPState =
         this.colorsR = this.colorsR.slice(0, this.strokeIndex)
         this.colorsG = this.colorsG.slice(0, this.strokeIndex)
         this.colorsB = this.colorsB.slice(0, this.strokeIndex)
+
+        // Also get rid of excess strokeindices now.
+        let i = this.strokeIndices.length - 1;
+        let deleteCount = 0;
+        // While we can delete the strokeIndices[i], go down
+        for (; i >= 0 && this.strokeIndices[i] >= this.strokeIndex; i--) {
+          deleteCount++;
+        }
+        if (deleteCount > 0) {
+          console.log('Overwrote strokeIndices from', i + 1, deleteCount)
+          this.strokeIndices.splice(i + 1, deleteCount);
+        }
       }
 
       this.strokeIndex++;
@@ -130,6 +142,11 @@ let MPState =
       return null;
     }
     return this.dataIndex = val;
+  },
+
+  newCheckpoint()
+  {
+    this.strokeIndices.push(this.strokeIndex);
   },
 
   /**
@@ -360,7 +377,6 @@ let MPState =
     // Snap strokeIndex to last checkpoint which remains
     // < the current strokeIndex
     let origStrokeIndex = this.strokeIndex;
-
     let prevChkp = 0;
     let i;
     for (i = 0; i < this.strokeIndices.length; i++) {
@@ -419,6 +435,7 @@ let MPState =
       let chkp = 0;
       let i;
       for (i = 0; i < this.strokeIndices.length; i++) {
+
         chkp = this.strokeIndices[i];
         // If strokeIndex > this chkp, set to this
         if (chkp > this.strokeIndex) {
@@ -462,6 +479,7 @@ function sketch_process(p)
   let lineSize = 1;
   let stateIndex = 0;
 
+  let duringStroke = false;
 
   p.slideState = function()
   {
@@ -530,11 +548,21 @@ function sketch_process(p)
 
   p.mouseReleased = function()
   {
-    MPState.strokeIndices.push(MPState.strokeIndex);
+    let clickInBounds = MPState.inBounds(p.mouseX, p.mouseY, p.mouseX, p.mouseY);
+    if (duringStroke || clickInBounds) {
+      MPState.newCheckpoint();
+      duringStroke = false;
+      return false;
+    }
   }
 
   p.mousePressed = function()
   {
+    if (MPState.inBounds(p.mouseX, p.mouseY, p.mouseX, p.mouseY)) {
+      duringStroke = true;
+    }
+    // QUESTION - Should rest be within here? Hmmmmm.
+
     // Square
     if (MPState.getShapeOption() == 0) {
       lineSize = sizeSlider.value();
@@ -766,6 +794,11 @@ function sketch_process(p)
 
   p.mouseDragged = function()
   {
+    // Ignore drag if it goes outside
+    if (!MPState.inBounds(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY)) {
+      return false;
+    }
+
     // Check if the 'draw strokes' state or the 'draw shape' mode. If in the
     // 'draw shape' state, then don't do anything when the mouse is dragged.
     if (MPState.getShapeOption() == null) {
@@ -912,6 +945,7 @@ function sketch_process(p)
           green = greenSlider.value();
           blue = blueSlider.value();
         }
+
         color = p.color(red, green, blue, 255);
         p.strokeWeight(lineSize);
         p.stroke(color);
