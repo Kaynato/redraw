@@ -14,16 +14,16 @@ var isNode = (typeof global !== "undefined");
 
 const PredictUtils = {
 	box_mueller_gaussian() {
-	    var x = 0;
-	    var y = 0;
-	    const pi = Math.PI;
-	    while(x === 0)
-	    	x = Math.random();
-	    while(y === 0)
-	    	y = Math.random();
-	    let a = Math.sqrt(-2.0 * Math.log(x));
-	    let ret = a * Math.cos(2.0 * pi * y);
-	    return ret;
+		var x = 0;
+		var y = 0;
+		const pi = Math.PI;
+		while(x === 0)
+			x = Math.random();
+		while(y === 0)
+			y = Math.random();
+		let a = Math.sqrt(-2.0 * Math.log(x));
+		let ret = a * Math.cos(2.0 * pi * y);
+		return ret;
 	}
 }
 
@@ -57,16 +57,16 @@ const GenerateModel = {
 			let red;
 			let green;
 			let blue;
-			if(MPState.getRedDropperMode() != -1) {
-				red = MPState.getRedDropperMode();
-				green = MPState.getGreenDropperMode();
-				blue = MPState.getBlueDropperMode();
-	        }
-	        else {
-				red = MPState.sliderRed;
-				green = MPState.sliderGreen;
-				blue = MPState.sliderBlue;
-	        }
+			if(mpState.getRedDropperMode() != -1) {
+				red = mpState.getRedDropperMode();
+				green = mpState.getGreenDropperMode();
+				blue = mpState.getBlueDropperMode();
+			}
+			else {
+				red = mpState.sliderRed;
+				green = mpState.sliderGreen;
+				blue = mpState.sliderBlue;
+			}
 			let rx = Math.random() * 640;
 			let ry = Math.random() * 480;
 			cur_stroke = [0, 0, rx, ry, 2.0, [red, green, blue]];
@@ -120,6 +120,6 @@ const GenerateModel = {
 
 if (isNode) {
   module.exports = {
-    GenerateModel,
+	GenerateModel,
   }
 }

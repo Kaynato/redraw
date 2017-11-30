@@ -56,4 +56,11 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
     });
 
+    it('should be able to clear the canvas with clears()', function () {
+        mp.clears();
+        assert.equal(mp.MPState.strokeIndex, 0);
+        assert.equal(mp.MPState.dataIndex, 0);
+        assert.isNull(mp.MPState.getCurrentStroke());
+    });
+
 });

@@ -23,6 +23,7 @@ describe('predict', function() {
     // TODO - there definitely exist more things we can test here
     it('Should return some stroke even for an empty MP state', function() {
         mp.p5_inst.setup();
+        assert.isNull(mp.MPState.getCurrentStroke());
         var nextStroke = predict.GenerateModel.nextStroke(mp.MPState);
         assert.isNotNull(nextStroke);
     });
