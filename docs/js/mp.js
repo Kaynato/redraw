@@ -108,6 +108,8 @@ let MPState =
 
       this.strokeIndex++;
       this.dataIndex = this.strokeIndex;
+
+      p5_inst.updateStateSlider();
     }
 
   },
@@ -350,40 +352,40 @@ let MPState =
 
   /**
     Step stroke index backward.
+    Doesn't do any rendering.
     Returns whether the operation was effective.
   */
   back()
   {
-    this.strokeIndices.splice(this.strokeIndices.length-1, 1);
-    for (let i = 0; i < this.strokeIndices.length;i++)
-    {
-      console.log(i);
-      if (this.strokeIndex <= this.strokeIndices[i])
-        {
-          console.log("HI");
-          this.strokeIndex = this.strokeIndices[i-1];
-          i = this.strokeIndices.length + 1;
+    // Snap strokeIndex to last checkpoint which remains
+    // < the current strokeIndex
+    let origStrokeIndex = this.strokeIndex;
 
-        }
+    let prevChkp = 0;
+    let i;
+    for (i = 0; i < this.strokeIndices.length; i++) {
+      // If strokeIndex > this chkp, set to previous chkp
+      if (this.strokeIndices[i] >= this.strokeIndex) {
+        // If we're behind, set to previous
+        this.strokeIndex = prevChkp;
+        break;
+      }
+      prevChkp = this.strokeIndices[i];
     }
-    // if (this.strokeIndex > 0)
-    // {
-    //   this.strokeIndex--;
-    //   return true;
-    // }
-    // else
-    // {
-    //   return false;
-    // }
+
+    p5_inst.updateStateSlider();
+
+    return origStrokeIndex != this.strokeIndex;
   },
 
   /**
     Step stroke index forward or call the generator network.
-    Returns whether the operation was effective.
+    
+    Returns source and dest indices to step through.
+
+    doSingle is optional.
   */
-
-
-  forward()
+  forward(doSingle)
   {
     // console.log('State Length: ' + this.state.length);
     if (this.isGenerating())
@@ -398,15 +400,37 @@ let MPState =
     }
     else
     {
-      if (this.strokeIndex < this.dataIndex)
-      {
-        this.strokeIndex++;
-        return true;
+      let ret = [this.strokeIndex];
+
+      if (doSingle) {
+        // Step through single strokes at a time
+        if (this.strokeIndex < this.dataIndex) {
+          this.strokeIndex++;
+          ret.push(this.strokeIndex);
+          return ret;
+        }
+        else {
+          ret.push(this.strokeIndex);
+          return ret;
+        }
       }
-      else
-      {
-        return false;
+  
+      // Find smallest strokeIndex geq than curr idx
+      let chkp = 0;
+      let i;
+      for (i = 0; i < this.strokeIndices.length; i++) {
+        chkp = this.strokeIndices[i];
+        // If strokeIndex > this chkp, set to this
+        if (chkp > this.strokeIndex) {
+          // If we're behind, set to previous
+          this.strokeIndex = chkp;
+          break;
+        }
       }
+
+      p5_inst.updateStateSlider();
+      ret.push(this.strokeIndex);
+      return ret;
     }
   },
 
@@ -450,6 +474,18 @@ function sketch_process(p)
     p.resetCanvas();
     for (let i = 0; i < cur_step; i++) {
       p.drawStroke(strokes[i], sizes[i]);
+    }
+  }
+
+  /*
+    Update the position of the state slider.
+    For when MP State is changed.
+  */
+  p.updateStateSlider = function()
+  {
+    if (MPState.dataIndex > 0) {
+      const percent = MPState.strokeIndex / MPState.dataIndex;
+      stateSlider.value(percent);
     }
   }
 
@@ -695,6 +731,37 @@ function sketch_process(p)
                         color);
     }
 
+    // Color picker (aka dropper)
+    else if(MPState.getColorMode()) {
+      const strokes = MPState.getVisibleStrokes();
+
+      let current_closestx = 10000;
+      let current_closesty = 10000;
+      let line_of_interest = 0;
+      for (let i=0; i<strokes.length; i++) {
+        if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty))) {
+          current_closestx = strokes[i][0];
+          current_closesty = strokes[i][1];
+          line_of_interest = i;
+        }
+      }
+
+      let pickedStroke = strokes[line_of_interest];
+      let strokeRed = pickedStroke[5][0];
+      let strokeGreen = pickedStroke[5][1];
+      let strokeBlue = pickedStroke[5][2];
+
+      MPState.setRedDropperMode(strokeRed);
+      MPState.setGreenDropperMode(strokeGreen);
+      MPState.setBlueDropperMode(strokeBlue);
+
+      redSlider.value(strokeRed);
+      greenSlider.value(strokeGreen);
+      blueSlider.value(strokeBlue);
+
+      MPState.setColorMode(false);
+    }
+
   }
 
   p.mouseDragged = function()
@@ -831,25 +898,6 @@ function sketch_process(p)
         // }
         //console.log(lower_slice);
 
-      }
-      // Color picker (aka dropper)
-      else if(MPState.getColorMode()) {
-        const strokes = MPState.getVisibleStrokes();
-
-        let current_closestx = 10000;
-        let current_closesty = 10000;
-        let line_of_interest = 0;
-        for (let i=0; i<strokes.length; i++) {
-          if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty))) {
-            current_closestx = strokes[i][0];
-            current_closesty = strokes[i][1];
-            line_of_interest = i;
-          }
-        }
-        MPState.setRedDropperMode(strokes[line_of_interest][5][0]);
-        MPState.setGreenDropperMode(strokes[line_of_interest][5][1]);
-        MPState.setBlueDropperMode(strokes[line_of_interest][5][2]);
-        MPState.setColorMode(false);
       }
       // Regular draw lines mode
       else {
@@ -1061,10 +1109,17 @@ function clears()
 
 function seekForward()
 {
-  if (MPState.forward())
+  // Grab src and dest indices.
+  let sizes = MPState.getSizes();
+  let state = MPState.getState();
+  let srcDest = MPState.forward();
+  let lineSize;
+  let stroke;
+  let i;
+  for (i = srcDest[0]; i < srcDest[1]; i++)
   {
-    const lineSize = MPState.getCurrentSize();
-    const stroke = MPState.getCurrentStroke();
+    lineSize = sizes[i];
+    stroke = state[i];
     p5_inst.drawStroke(stroke, lineSize);
   }
 }
