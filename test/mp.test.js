@@ -17,7 +17,7 @@ describe('Multipurpose Panel Unit Tests', function() {
 
     it('should show current stroke is null', function() {
         mp.clears();
-        assert.isNull(mp.MPState.getCurrentStroke(), 'Current Stroke is null')；
+        assert.isNull(mp.MPState.getCurrentStroke(), 'Current Stroke is null');
     });
 
     it('should contain canvas and slider after setup', function() {
