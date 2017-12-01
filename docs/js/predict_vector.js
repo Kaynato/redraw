@@ -47,19 +47,9 @@ const GenerateModel = {
 
 		if (cur_stroke == null) {
 			// Use random start location and curr color
-			let red;
-			let green;
-			let blue;
-			if(mpState.getRedDropperMode() != -1) {
-				red = mpState.getRedDropperMode();
-				green = mpState.getGreenDropperMode();
-				blue = mpState.getBlueDropperMode();
-			}
-			else {
-				red = mpState.sliderRed;
-				green = mpState.sliderGreen;
-				blue = mpState.sliderBlue;
-			}
+			let red = mpState.sliderRed;
+			let green = mpState.sliderGreen;
+			let blue = mpState.sliderBlue;
 			let rx = Math.random() * 640;
 			let ry = Math.random() * 480;
 			cur_stroke = [0, 0, rx, ry, 2.0, [red, green, blue]];
@@ -73,8 +63,10 @@ const GenerateModel = {
 
 		let dx = PredictUtils.box_mueller_gaussian()*est_radius;
 		let dy = PredictUtils.box_mueller_gaussian()*est_radius;
+		/* istanbul ignore next */
 		if (dx + cur_stroke[2] > 640 || dx + cur_stroke[2] < 0)
 			dx *= -1;
+		/* istanbul ignore next */
 		if (dy + cur_stroke[3] > 640 || dy + cur_stroke[3] < 0)
 			dy *= -1;
 		
