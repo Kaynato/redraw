@@ -29,10 +29,12 @@ describe('predict', function() {
     });
 
     it('Should return some stroke for a nonempty MP state', function() {
-        // mp.p5_inst.setMouse(5, 5);
-        // mp.p5_inst.mouseDragged();
-        // var nextStroke = predict.GenerateModel.nextStroke(mp.MPState);
-        // assert.isNotNull(nextStroke);
+        mp.p5_inst.mousePressed();
+        mp.p5_inst.setMouse(5, 5);
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.mouseReleased();
+        var nextStroke = predict.GenerateModel.nextStroke(mp.MPState);
+        assert.isNotNull(nextStroke);
     });
 
     it('Should change the amount of strokes in the MP after generation', function() {

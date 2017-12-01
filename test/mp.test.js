@@ -45,6 +45,62 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.deepEqual(stroke, [0, 0, 5, 5, 1, [1, 1, 1]]);
     });
 
+    it('should mirror strokes vertically through mirrorModeWithValue(1)', function() {
+        // Vertical
+        mp.mirrorModeWithValue(1);
+        var stroke = mp.MPState.getCurrentStroke();
+        assert.deepEqual(stroke, [640, 0, 637.5, 5, 1, [1, 1, 1]]);
+    });
+
+    it('should mirror strokes horizontally through mirrorModeWithValue(2)', function() {
+        // Vertical
+        mp.mirrorModeWithValue(1);
+        var stroke = mp.MPState.getCurrentStroke();
+        assert.deepEqual(stroke, [320, 0, 321.25, 5, 1, [1, 1, 1]]);
+    });
+
+    it('should mirror strokes through the origin with mirrorModeWithValue(3)', function() {
+        // Vertical
+        mp.mirrorModeWithValue(1);
+        var stroke = mp.MPState.getCurrentStroke();
+        assert.deepEqual(stroke, [480, 0, 479.375, 5, 1, [1, 1, 1]]);
+    });
+
+    it('should save the canvas state with saveImage()', function() {
+        mp.saveImage();
+        let savedImage = mp.MPState.savedImages[0];
+        assert.deepEqual(savedImage, {
+            strokes: [ [480, 0, 479.375, 5, 1, [1, 1, 1]] ],
+            sizes: [1],
+            strokeIndices: [0, 1]
+        })
+    })
+
+    it('should clear state but preserve saved state if loading invalid saved image with loadImageWithValue(val)', function() {
+        mp.loadImageWithValue(-1);
+        let savedImage = mp.MPState.savedImages[0];
+        assert.deepEqual(savedImage, {
+            strokes: [ [480, 0, 479.375, 5, 1, [1, 1, 1]] ],
+            sizes: [1],
+            strokeIndices: [0, 1]
+        });
+        assert.equal(mp.MPState.strokeIndex, 0);
+        assert.equal(mp.MPState.dataIndex, 0);
+        assert.isNull(mp.MPState.getCurrentStroke());
+    });
+
+    it('should load saved images with loadImageWithValue(val)', function() {
+        mp.loadImageWithValue(0);
+        var stroke = mp.MPState.getCurrentStroke();
+        assert.deepEqual(stroke, [480, 0, 479.375, 5, 1, [1, 1, 1]]);
+    });
+
+    it('should rotate strokes with rotate()', function() {
+        mp.rotate();
+        var stroke = mp.MPState.getCurrentStroke();
+        assert.deepEqual(stroke, [80, 80, 85, 80.625, 1, [1, 1, 1]]);
+    });
+
     it('should revert strokes through seekBackward()', function() {
         mp.p5_inst.setMouse(5, 5);
         mp.p5_inst.mouseDragged();
@@ -58,11 +114,37 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
     });
 
+    it('should duplicate lines with warholMode()', function() {
+        let origCount = mp.MPState.state.length;
+        assert.equal(origCount, 2); // 2
+        mp.warholMode();
+        assert.equal(mp.MPState.state.length, origCount * 17);
+    });
+
+    it('should render many segments and artifacts with jpMode()', function() {
+        let origCount = mp.MPState.state.length;
+        mp.jpMode();
+        assert.isTrue(mp.MPState.state.length > 500);
+    });
+
+    // it('should save a nonempty canvas ()', function() {
+    // Can we even figure out a way to do this?        
+    // });
+
     it('should be able to clear the canvas with clears()', function () {
         mp.clears();
         assert.equal(mp.MPState.strokeIndex, 0);
         assert.equal(mp.MPState.dataIndex, 0);
         assert.isNull(mp.MPState.getCurrentStroke());
+    });
+
+    it('should set color mode with colorPicker()', function() {
+        mp.MPState.setColorMode(true);
+        mp.colorPicker();
+        assert.equal(mp.MPState.getRedDropperMode(), -1);
+        assert.equal(mp.MPState.getGreenDropperMode(), -1);
+        assert.equal(mp.MPState.getBlueDropperMode(), -1);
+        assert.isFalse(mp.MPState.getColorMode());
     });
 
 });

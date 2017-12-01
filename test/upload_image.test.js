@@ -18,13 +18,10 @@ describe('uploadImage', function() {
 	// 	uploadImage.uploadImage(mockImage, done);
 	// });
 
-	it('should reject invalid data input', function() {
+	it('should silently reject invalid data input', function() {
 		// var mockImage = {target: { files: ["./assets/not_image.png"] }}
 		var mockImage = {target: undefined}
-		let runTest = function() {
-			uploadImage.uploadImage(mockImage);
-		}
-		assert.throws(runTest, /.*Cannot read property/);
+		uploadImage.uploadImage(mockImage);
 	});
 
 	it('should silently refuse empty input', function() {

@@ -30,13 +30,6 @@ const PredictUtils = {
 const GenerateModel = {
 
 	/**
-	 * Load model fron json dict files. 
-	 */
-	loadModel() {
-		throw Error("No longer relevant!");
-	},
-
-	/**
 	 * Predicts the next stroke based off previous strokes. 
 	 * Update sonce we get TensorFire working. 
 	 * 
@@ -118,8 +111,6 @@ const GenerateModel = {
 	}
 }
 
-if (isNode) {
-  module.exports = {
-	GenerateModel,
-  }
+module.exports = {
+GenerateModel,
 }

@@ -1208,6 +1208,7 @@ function seekForward()
 function togglePlay()
 {
   // Unit testing
+  /* istanbul ignore else */
   if (isNode)
   {
     seekForward();
@@ -1255,9 +1256,10 @@ function togglePlay()
   // throw new Error("Not implemented!");
 }
 
+// Cannot be auto-tested due to document interaction.
+/* istanbul toggle next */
 function updateGenerateToggle()
 {
-  // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('generate-toggle-box');
   MPState.setGenerating(checkbox.checked);
 }
@@ -1297,14 +1299,18 @@ function rotate()
 
 /**
  * Downloads the current state of the canvas.
+ *
+ * Due to use of document.getElementById, we can't unit test this.
+ * TODO - can we figure out how to get rid of the getElementById?
  */
+/* istanbul ignore next */
 function exportData() {
   const strokes = MPState.getVisibleStrokes();
   const sizes = MPState.getVisibleSizes();
   const savedImgs = MPState.getSavedImages();
   const imageIdx = document.getElementById('img-num').value;
-  console.log(strokes.length);
-  console.log(savedImgs);
+  // console.log(strokes.length);
+  // console.log(savedImgs);
 
   // Check if anything is drawn on the canvas
   if (strokes.length == 0) {
@@ -1491,6 +1497,11 @@ function warholMode()
        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       initalstrokes[i][5] = p5_inst.color(red, green, blue, 255);
+
+      // MPState.addStroke here
+      let thisColor = {levels: [red, green, blue]};
+      MPState.addStroke(strokes[i][0], strokes[i][1], strokes[i][2], strokes[i][3],
+                        sizes[i], thisColor);
       p5_inst.drawStroke(initalstrokes[i], sizes[i]);
 
       //i'm amazed i can't think of a better way to do this that works.
@@ -1533,7 +1544,10 @@ function warholMode()
  * starts at 0.
  *
  * @param {int} idx - The array location of the saved image state
+ *
+ * Can't be tested due to document interaction
  */
+ /* istanbul ignore next */
 function addOption(idx) {
   // Define new option's text (which starts at idx=1 for human readability)
   // and value (which starts at idx=0 to retrieve the correct saved image)
@@ -1557,43 +1571,59 @@ function saveImage()
     alert('Cannot save empty canvas. Please draw something first!')
   } else {
     // Create new image object to be saved
-    const new_img =
-    {
+    const new_img = {
       strokes: MPState.getVisibleStrokes(),
       sizes: MPState.getVisibleSizes(),
+      strokeIndices: MPState.strokeIndices
     }
     // Save the state and add the option to the dropdown
     MPState.savedImages.push(new_img);
-    addOption(MPState.savedImages.length - 1); // length - 1 because we save the idx based on its location in array
+
+    // Requires client side run due to addOption using document
+    /* istanbul ignore next */
+    if (!isNode) {
+      addOption(MPState.savedImages.length - 1); // length - 1 because we save the idx based on its location in array
+    }
+  }
+}
+
+function loadImageWithValue(imageIdx) {
+  clears();
+  if (imageIdx >= 0) {
+    const img = MPState.getSavedImages()[imageIdx];
+
+    // Draw image onto the canvas
+    // And update state
+    p5_inst.resetCanvas();
+
+    MPState.strokeIndices = img.strokeIndices;
+
+    let stroke;
+    for (let i = 0; i < img.strokes.length; i++)
+    {
+      stroke = img.strokes[i];
+      MPState.addStroke(stroke[0], stroke[1],
+                        stroke[2], stroke[3],
+                        img.sizes[i],  {levels: [stroke[5][0], stroke[5][1], stroke[5][2]]})
+      p5_inst.drawStroke(img.strokes[i], img.sizes[i]);
+    }
   }
 }
 
 /**
  * Loads the image (using the image index) from the list of saved images.
  * Gets the image index based on the html dropdown menu options.
+ * Cannot be unit tested (directly) due to document interaction
  */
+/* istanbul ignore next */
 function loadImage()
 {
   const imageIdx = document.getElementById('img-num').value;
   // If the imageIndex is negative (aka 'none' is selected), simply clear the canvas.
-  if (imageIdx < 0) {
-    clears();
-  } else {
-    const img = MPState.getSavedImages()[imageIdx];
-
-    // Draw image onto the canvas
-    p5_inst.resetCanvas();
-    for (let i = 0; i < img.strokes.length; i++)
-    {
-      p5_inst.drawStroke(img.strokes[i], img.sizes[i]);
-    }
-  }
+  loadImageWithValue(imageIdx);
 }
 
-function mirrorMode()
-{
-  const modeID = document.getElementById('mode').value;
-
+function mirrorModeWithValue(modeID) {
   if(modeID == 1)
   {
     //vertical
@@ -1711,24 +1741,31 @@ function mirrorMode()
 
     }
   }
-
 }
 
+/* istanbul ignore next */
+function mirrorMode()
+{
+  const modeID = document.getElementById('mode').value;
+  mirrorModeWithValue(modeID);
+}
+
+// Cannot be auto-tested due to document interaction.
+/* istanbul ignore next */
 function updateEraserToggle()
 {
-  // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('eraser-toggle-box');
   MPState.setEraserMode(checkbox.checked);
 }
 
-function color_picker()
+function colorPicker()
 {
-  // Cannot be auto-tested due to document interaction.
   if(MPState.getColorMode())
   {
     MPState.setRedDropperMode(-1);
+    MPState.setGreenDropperMode(-1);
+    MPState.setBlueDropperMode(-1);
     MPState.setColorMode(false);
-
   }
   else
   {
@@ -1736,13 +1773,16 @@ function color_picker()
   }
 }
 
+// Requires document interatction. Cannot unit test.
+/* istanbul ignore next */
 function updateFillToggle()
 {
-  // Cannot be auto-tested due to document interaction.
   let checkbox = document.getElementById('fill-toggle-box');
   MPState.setFillMode(checkbox.checked);
 }
 
+// Requires document interatction. Cannot unit test.
+/* istanbul ignore next */
 function shapeTool() {
   const shape = document.getElementById('shape').value;
   MPState.setShapeOption(shape);
@@ -1760,5 +1800,11 @@ module.exports =
   seekForward,
   togglePlay,
   jpMode,
-  clears
+  clears,
+  colorPicker,
+  saveImage,
+  loadImageWithValue,
+  mirrorModeWithValue,
+  warholMode,
+  rotate
 }
