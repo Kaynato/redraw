@@ -18,6 +18,7 @@ describe('Multipurpose Panel Unit Tests', function() {
     it('should show current stroke is null', function() {
         mp.clears();
         assert.isNull(mp.MPState.getCurrentStroke(), 'Current Stroke is null');
+        assert.isNull(mp.MPState.getCurrentSize(), 'Current length of state is null');
     });
 
     it('should contain canvas and slider after setup', function() {
@@ -127,6 +128,16 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.isTrue(mp.MPState.state.length > 500);
     });
 
+    it('should overwrite if adding new strokes from earlier in history', function() {
+        mp.seekBackward();
+        mp.seekBackward();
+        assert.isTrue(mp.MPState.strokeIndex < mp.MPState.dataIndex);
+        mp.p5_inst.setMouse(10, 10);
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.mouseReleased();
+        assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
+    });
+
     // it('should save a nonempty canvas ()', function() {
     // Can we even figure out a way to do this?        
     // });
@@ -138,7 +149,37 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.isNull(mp.MPState.getCurrentStroke());
     });
 
+    it('should draw a square with setShapeOption(0) and mousePressed()', function() {
+        mp.MPState.setShapeOption(0);
+        mp.p5_inst.setMouse(300, 300);
+        let oldCount = mp.MPState.state.length;
+        mp.p5_inst.mousePressed();
+        assert.equal(mp.MPState.state.length, oldCount + 4);
+    })
+
+    it('should draw a triangle with setShapeOption(2) and mousePressed()', function() {
+        mp.MPState.setShapeOption(2);
+        let oldCount = mp.MPState.state.length;
+        mp.p5_inst.mousePressed();
+        assert.equal(mp.MPState.state.length, oldCount + 3);
+    })
+
+    it('should draw a rhombus with setShapeOption(3) and mousePressed()', function() {
+        mp.MPState.setShapeOption(3);
+        let oldCount = mp.MPState.state.length;
+        mp.p5_inst.mousePressed();
+        assert.equal(mp.MPState.state.length, oldCount + 4);
+    })
+
+    it('should draw a star with setShapeOption(4) and mousePressed()', function() {
+        mp.MPState.setShapeOption(4);
+        let oldCount = mp.MPState.state.length;
+        mp.p5_inst.mousePressed();
+        assert.equal(mp.MPState.state.length, oldCount + 5);
+    })
+
     it('should set color mode with colorPicker()', function() {
+        mp.clears();
         mp.MPState.setColorMode(true);
         mp.colorPicker();
         assert.equal(mp.MPState.getRedDropperMode(), -1);

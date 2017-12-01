@@ -131,27 +131,27 @@ let MPState =
       // Overwrite
       if (this.dataIndex > this.strokeIndex)
       {
-        this.state = this.state.slice(0, this.strokeIndex)
-        this.sizes = this.sizes.slice(0, this.strokeIndex)
-        this.colorsR = this.colorsR.slice(0, this.strokeIndex)
-        this.colorsG = this.colorsG.slice(0, this.strokeIndex)
-        this.colorsB = this.colorsB.slice(0, this.strokeIndex)
+        this.setVisibleStrokes(this.getVisibleStrokes());
+        this.setVisibleSizes(this.getVisibleSizes());
+        this.setVisibleReds(this.getVisibleReds());
+        this.setVisibleGreens(this.getVisibleGreens());
+        this.setVisibleBlues(this.getVisibleBlues());
 
         // Also get rid of excess strokeindices now.
         let i = this.strokeIndices.length - 1;
         let deleteCount = 0;
         // While we can delete the strokeIndices[i], go down
-        for (; i >= 0 && this.strokeIndices[i] >= this.strokeIndex; i--) {
+        for (; i >= 0 && this.strokeIndices[i] > this.strokeIndex; i--) {
           deleteCount++;
         }
         if (deleteCount > 0) {
-          console.log('Overwrote strokeIndices from', i + 1, deleteCount)
+          // console.log('Overwrote strokeIndices from', i + 1, deleteCount);
           this.strokeIndices.splice(i + 1, deleteCount);
         }
       }
 
-      this.strokeIndex++;
-      this.dataIndex = this.strokeIndex;
+      this.setStrokeIndex(this.sizes.length);
+      this.setDataIndex(this.sizes.length);
 
       p5_inst.updateStateSlider();
     }
@@ -349,6 +349,9 @@ let MPState =
     return this.eraser;
   },
 
+  // What's the point of testing this function, anyway?
+  // It's just a delegation from the DOM object, which we can't access either.
+  /* istanbul ignore next */
   setEraserMode(val) {
     this.eraser = val;
   },
@@ -420,7 +423,7 @@ let MPState =
       // If strokeIndex > this chkp, set to previous chkp
       if (this.strokeIndices[i] >= this.strokeIndex) {
         // If we're behind, set to previous
-        this.strokeIndex = prevChkp;
+        this.setStrokeIndex(prevChkp);
         break;
       }
       prevChkp = this.strokeIndices[i];
@@ -456,6 +459,8 @@ let MPState =
     else
     {
 
+      /* Currently on hold */
+      /* istanbul ignore next */
       if (doSingle) {
         // Step through single strokes at a time
         if (this.strokeIndex < this.dataIndex) {
@@ -478,22 +483,17 @@ let MPState =
         // If strokeIndex > this chkp, set to this
         if (chkp > this.strokeIndex) {
           // If we're behind, set to previous
-          this.strokeIndex = chkp;
+          this.setStrokeIndex(chkp);
           break;
         }
       }
 
       p5_inst.updateStateSlider();
       ret.push(this.strokeIndex);
+
       return ret;
     }
   },
-
-  clear() {
-    this.strokeIndex = 0;
-    this.dataIndex = 0;
-    this.state = [];
-  }
 
 }
 
@@ -669,6 +669,11 @@ function sketch_process(p)
       p.strokeWeight(lineSize);
       p.stroke(color);
       // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
+
+      // HMM HMMM WHAT ABOUT MPSTATE.ADDSTROKE????
+      // WHY NOT USE POLAR COORDINATES AND A STEPSIZE.
+      // TODO
+
       p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
     }
     // Triangle
@@ -1194,9 +1199,11 @@ function seekForward()
   let sizes = MPState.getSizes();
   let state = MPState.getState();
   let srcDest = MPState.forward();
+
   let lineSize;
   let stroke;
   let i;
+  // Maybe also consider "the end" as a potential seekForward checkpoint?
   for (i = srcDest[0]; i < srcDest[1]; i++)
   {
     lineSize = sizes[i];
@@ -1444,6 +1451,8 @@ function jpMode()
     const lineSize = MPState.getCurrentSize();
 
     p5_inst.drawStroke(new_stroke, lineSize);
+
+    MPState.newCheckpoint();
     }
   }
 
