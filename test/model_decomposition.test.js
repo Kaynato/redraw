@@ -108,7 +108,6 @@ describe('ImageUtils Unit Tests', function() {
 		let correct = ndarray(correctArr, tensor.shape);
 
 		// See that the point in the middle has been smoothed out
-		console.log(correct, target);
 		assert.isTrue(ndops.equals(target, correct));
 	});
 

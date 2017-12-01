@@ -55,23 +55,23 @@ describe('Multipurpose Panel Unit Tests', function() {
 
     it('should mirror strokes horizontally through mirrorModeWithValue(2)', function() {
         // Vertical
-        mp.mirrorModeWithValue(1);
+        mp.mirrorModeWithValue(2);
         var stroke = mp.MPState.getCurrentStroke();
-        assert.deepEqual(stroke, [320, 0, 321.25, 5, 1, [1, 1, 1]]);
+        assert.deepEqual(stroke, [640, 480, 637.5, 477.5, 1, [1, 1, 1]]);
     });
 
     it('should mirror strokes through the origin with mirrorModeWithValue(3)', function() {
         // Vertical
-        mp.mirrorModeWithValue(1);
+        mp.mirrorModeWithValue(3);
         var stroke = mp.MPState.getCurrentStroke();
-        assert.deepEqual(stroke, [480, 0, 479.375, 5, 1, [1, 1, 1]]);
+        assert.deepEqual(stroke, [320, 240, 318.75, 238.75, 1, [1, 1, 1]]);
     });
 
     it('should save the canvas state with saveImage()', function() {
         mp.saveImage();
         let savedImage = mp.MPState.savedImages[0];
         assert.deepEqual(savedImage, {
-            strokes: [ [480, 0, 479.375, 5, 1, [1, 1, 1]] ],
+            strokes: [ [320, 240, 318.75, 238.75, 1, [1, 1, 1]] ],
             sizes: [1],
             strokeIndices: [0, 1]
         })
@@ -81,7 +81,7 @@ describe('Multipurpose Panel Unit Tests', function() {
         mp.loadImageWithValue(-1);
         let savedImage = mp.MPState.savedImages[0];
         assert.deepEqual(savedImage, {
-            strokes: [ [480, 0, 479.375, 5, 1, [1, 1, 1]] ],
+            strokes: [ [320, 240, 318.75, 238.75, 1, [1, 1, 1]] ],
             sizes: [1],
             strokeIndices: [0, 1]
         });
@@ -93,13 +93,13 @@ describe('Multipurpose Panel Unit Tests', function() {
     it('should load saved images with loadImageWithValue(val)', function() {
         mp.loadImageWithValue(0);
         var stroke = mp.MPState.getCurrentStroke();
-        assert.deepEqual(stroke, [480, 0, 479.375, 5, 1, [1, 1, 1]]);
+        assert.deepEqual(stroke, [320, 240, 318.75, 238.75, 1, [1, 1, 1]]);
     });
 
     it('should rotate strokes with rotate()', function() {
         mp.rotate();
         var stroke = mp.MPState.getCurrentStroke();
-        assert.deepEqual(stroke, [80, 80, 85, 80.625, 1, [1, 1, 1]]);
+        assert.deepEqual(stroke, [320, 240, 318.75, 241.25, 1, [1, 1, 1]]);
     });
 
     it('should revert strokes through seekBackward()', function() {
