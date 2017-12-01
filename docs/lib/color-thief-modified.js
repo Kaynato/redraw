@@ -622,3 +622,7 @@ var MMCQ = (function() {
         quantize: quantize
     };
 })();
+
+module.exports = {
+    ColorThief
+}

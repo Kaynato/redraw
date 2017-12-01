@@ -5,9 +5,11 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai');
 
 // local
+const mp = require('../docs/js/mp.js');
 const decomposition = require('../docs/js/model_decomposition.js');
 
-const ColorThief = require('colorthief');
+// Bind for test
+decomposition.DecomposeModel.mp = mp;
 
 const getPixels = require('get-pixels');
 
@@ -15,20 +17,23 @@ const getPixels = require('get-pixels');
 const expect = chai.expect;
 const assert = chai.assert;
 
-describe('decomposition', function() {
+describe('Decomposition Model Unit Tests', function() {
 
-	it('should correctly convert an image to strokes', function() {
+	// First, prepare the mp
+	mp.p5_inst.setup();
+	mp.clears();
+	
+	it('should correctly convert an image to strokes', function(done) {
 		
-		getPixels('./assets/square.png', function(err, img) {
-			if (err) {
-				alert("Bad image data!");
-				throw Error("Unrecognized image data!");
-			}
+		getPixels('./test/assets/square.png', function(err, img) {
+			assert.isNull(err);
 
-		let tensor = decomposition.DecomposeModel.imageToTensor(img);
-		decomposition.DecomposeModel.imageToStrokes(tensor, img.elt);
+			let tensor = decomposition.DecomposeModel.imageToTensor(img);
+			decomposition.DecomposeModel.imageToStrokes(tensor);
+			done();
 
 		});
 
 	});
-})
+
+});

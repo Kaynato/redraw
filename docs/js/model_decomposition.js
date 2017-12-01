@@ -8,6 +8,14 @@
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
+if (isNode) {
+	var ndarray = require('ndarray');
+	var ndops = require('ndarray-ops');
+	var MaskUtils = require('./maskutils.js').MaskUtils;
+	var ImageUtils = require('./imageutils.js').ImageUtils;
+	var ColorThief = require('../lib/color-thief-modified.js').ColorThief;
+}
+
 const CanvasWidth = 640;
 const CanvasHeight = 480;
 
@@ -53,6 +61,12 @@ const DecomposeModel = {
 
 	// Multiple to decrease tolerance per iteration
 	TOL_DECR: 0.9,
+
+	/* Fix library access bug */
+	colorThief: new ColorThief(),
+
+	/**/
+	mp: {MPState: undefined, p5_inst: undefined},
 
 	/*
 		Process image tensor into correct format.
@@ -266,9 +280,7 @@ const DecomposeModel = {
 		AND ADD IT TO THE MPSTATE.
 
 		This allows us continuous play. I guess.
-		It makes the wait more interesting. I guess.
-
-		TODO: Get to work with entire mousedrawn components.
+		It makes the wait more interesting. ...I guess.
 	*/
 	renderPath(path, color, width, scale, offX, offY) {
 
@@ -290,18 +302,16 @@ const DecomposeModel = {
 		let endX;
 		let endY;
 		let coord;
+		let newStroke;
 		for (i = 1; i < pathLength; i++) {
 			endX = path[i][1] * scale + offX;
 			endY = path[i][0] * scale + offY;
 
-
-			MPState.addStroke(startX, startY,
-							  endX  , endY,
-							  width * scale,
-							  colorObj);
-			let newStroke = [startX, startY, endX, endY, width * scale,
+			newStroke = [startX, startY, endX, endY, width * scale,
 						 color[0], color[1], color[2]];
-			p5_inst.drawStroke(newStroke, width * scale);
+			this.mp.MPState.addStroke(startX, startY, endX, endY, width * scale, colorObj);
+			this.mp.p5_inst.drawStroke(newStroke, width * scale);
+
 			startX = endX;
 			startY = endY;
 		}
@@ -315,17 +325,14 @@ const DecomposeModel = {
 		Convert image array to descriptive strokes.
 
 		arr (ndarray) contains channeled image information
-		imageData (HTMLImageElement) contains hidden <img> for image
 	*/
-	imageToStrokes(arr, imageData) {
+	imageToStrokes(arr) {
 
 		// Strokes are actually rendered by a function. Shhh.
 
 
 		// Stack of unscored candidate components
 		let candidatesUnscored = [];
-
-		let colorThief = new ColorThief();
 
 		// Initialize a mask util object
 		const width = arr.shape[0];
@@ -400,7 +407,7 @@ const DecomposeModel = {
 
 				// Grab dominant colors
 				// Evaluate components for dominant colors
-				let palette = colorThief.getPalette(imagestate);
+				let palette = this.colorThief.getPalette(imagestate);
 
 				let i;
 				for (i = 0; i < palette.length; i++) {
@@ -441,7 +448,7 @@ const DecomposeModel = {
 					let filled = maskUtil.fillHolesMut(candidate.arr);
 
 					// Width, erosion (for polytrace), dilation (for subtraction)
-					let widthObject = maskUtil.estimateWidth(filled, sens);
+					let widthObject = maskUtil.estimateWidth(filled, sens, DecomposeModel.MAX_W);
 
 					// DEBUG
 					// p5_inst.createDiv(widthObject.width);
@@ -480,7 +487,7 @@ const DecomposeModel = {
 					}
 
 					// Push the dang index so the component goes entire.
-					MPState.newCheckpoint();
+					this.mp.MPState.newCheckpoint();
 
 					// Mock-draw component
 					ImageUtils.mockDrawMut(imagestate,
@@ -511,19 +518,19 @@ const DecomposeModel = {
 			// p5_inst.createDiv("Imagestate, finishedMask at step " + iters);
 			// DecomposeModel.render(imagestate);
 			// DecomposeModel.renderBin(doneMask);
-			console.log('Completed iteration', iters, 'of decomposition.');
+			// console.log('Completed iteration', iters, 'of decomposition.');
 		}
 
-		console.log('Finished!');
-		if (error <= threshold) {
-			console.log('Error went beneath threshold:', error, "<=", threshold);
-		}
-		if (candidatesThisTime <= 1) {
-			console.log('Ran out of candidates');
-		}
-		if (iters > DecomposeModel.MAX_ITERS) {
-			console.log('Exceeded maximum iterations');
-		}
+		// console.log('Finished!');
+		// if (error <= threshold) {
+		// 	console.log('Error went beneath threshold:', error, "<=", threshold);
+		// }
+		// if (candidatesThisTime <= 1) {
+		// 	console.log('Ran out of candidates');
+		// }
+		// if (iters > DecomposeModel.MAX_ITERS) {
+		// 	console.log('Exceeded maximum iterations');
+		// }
 
 	},
 
@@ -569,8 +576,7 @@ const DecomposeModel = {
 	}
 }
 
-if (isNode) {
-	module.exports = {
-		DecomposeModel,
-	}
+module.exports = {
+	DecomposeModel,
 }
+

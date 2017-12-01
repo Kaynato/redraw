@@ -10,6 +10,14 @@
 		array are postfixed with mut.
 */
 
+var isNode = (typeof global !== "undefined");
+
+if (isNode) {
+	var ndarray = require('ndarray');
+	var ndops = require('ndarray-ops');
+	var Morphology = require('./morphology.js');
+};
+
 var MaskUtils = function(width, height, maxPadding) {
 
 	this.width = width;
@@ -101,8 +109,7 @@ var MaskUtils = function(width, height, maxPadding) {
 
 	this.withinDiff = function(arr, color, tolerance) {
 		// Tolerance image (binary mask)
-		let maskArr = new Float32Array(width * height);
-		let mask = ndarray(maskArr, [width, height]);
+		let mask = this.getArr(Float32Array);
 		let val;
 		let tmp;
 		let pix;
@@ -268,9 +275,8 @@ var MaskUtils = function(width, height, maxPadding) {
 		let scores = {0: 0};
 
 		// Fill with labels
-		let outputArr = new Int16Array(this.width * this.height);
-		outputArr.fill(UNVISITED);
-		let output = ndarray(outputArr, [this.width, this.height]);
+		let output = this.getArr(Int16Array);
+		ndops.assigns(output, UNVISITED);
 
 		let val;
 		let pix;
@@ -295,7 +301,7 @@ var MaskUtils = function(width, height, maxPadding) {
 			}
 		}
 
-		console.log("Finished component labelling.");
+		// console.log("Finished component labelling.");
 
 		return {
 			"arr": output,
@@ -317,7 +323,7 @@ var MaskUtils = function(width, height, maxPadding) {
 		temp (ndarray, opt): temporary array for calculation.
 			is allocated if none is passed in.
 	*/
-	this.estimateWidth = function(arr, sens) {
+	this.estimateWidth = function(arr, sens, maxW) {
 		// TODO: More sensible magic number?
 		// Detects sudden dropoff of fidelity after opening
 		const threshold = ndops.sum(arr) * sens;
@@ -356,7 +362,7 @@ var MaskUtils = function(width, height, maxPadding) {
 
 		let error = 0;
 		let w;
-		for (w = 2; w < DecomposeModel.MAX_W; w++) {
+		for (w = 2; w < maxW; w++) {
 			// Erode padded with radius w 
 			ndops.assign(temp, padded);
 			Morphology.erosion(erode, temp, w);
@@ -827,3 +833,6 @@ var MaskUtils = function(width, height, maxPadding) {
 
 }
 
+module.exports = {
+	MaskUtils
+}

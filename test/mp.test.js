@@ -14,8 +14,10 @@ const expect = chai.expect;
 const assert = chai.assert;
 
 describe('Multipurpose Panel Unit Tests', function() {
+
     it('should show current stroke is null', function() {
-        assert.isNull(mp.MPState.getCurrentStroke(), 'Current Stroke is null')
+        mp.clears();
+        assert.isNull(mp.MPState.getCurrentStroke(), 'Current Stroke is null')；
     });
 
     it('should contain canvas and slider after setup', function() {

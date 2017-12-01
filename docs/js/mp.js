@@ -72,7 +72,32 @@ let MPState =
   dataIndex: 0,
 
   // All saved images in this session.
+  // PERSISTENT THROUGH RESETS!
   savedImages: [],
+
+  // Reset everything except for savedImages
+  reset()
+  {
+    this.sizes = [];
+    this.state = [];
+    this.colorsR = [];
+    this.colorsG = [];
+    this.colorsB = [];
+    this.strokeIndices = [0];
+    this.generating = false;
+    this.play = false;
+    this.eraser = false;
+    this.color = false;
+    this.sliderRed = 0;
+    this.sliderGreen = 0;
+    this.sliderBlue = 0;
+    this.shapeOption = null;
+    this.strokeIndex = 0;
+    this.dataIndex = 0;
+    this.rdrop = -1;
+    this.gdrop = -1;
+    this.bdrop = -1;
+  },
 
   inBounds(startX, startY, endX, endY)
   {
@@ -1158,14 +1183,8 @@ function seekBackward()
 
 function clears()
 {
-  // Reset all visible strokes, sizes, colors, and indicies to 0
-  MPState.setVisibleStrokes([]);
-  MPState.setVisibleSizes([]);
-  MPState.setVisibleReds([]);
-  MPState.setVisibleGreens([]);
-  MPState.setVisibleReds([]);
-  MPState.setDataIndex(0);
-  MPState.setStrokeIndex(0);
+  // Clear MPState, preserving saved data
+  MPState.reset();
   p5_inst.resetCanvas();
 }
 

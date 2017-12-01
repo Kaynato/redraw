@@ -12,7 +12,14 @@
 	Zicheng Gao
 */
 
-const Morphology = {
+var isNode = (typeof global !== "undefined");
+
+if (isNode) {
+	var ndops = require('ndarray-ops');
+	var dt = require('distance-transform');
+};
+
+var Morphology = {
 	// Mutating operation
 	dilate(target, arr, radius) {
 		dt(arr, 2);
@@ -26,3 +33,5 @@ const Morphology = {
 		ndops.noteq(target);
 	}
 }
+
+module.exports = Morphology;

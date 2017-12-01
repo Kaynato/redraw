@@ -6,7 +6,13 @@
 	Zicheng Gao
 */
 
-const ImageUtils = {
+var isNode = (typeof global !== "undefined");
+
+if (isNode) {
+	var ndarray = require('ndarray');
+};
+
+var ImageUtils = {
 
 	/*
 		Convert from RGB color space into YCoCg color space or vice versa.
@@ -314,4 +320,8 @@ const ImageUtils = {
 		return tgt;
 	},
 
+}
+
+module.exports = {
+	ImageUtils
 }

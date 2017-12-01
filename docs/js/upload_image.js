@@ -1,3 +1,4 @@
+
 "use strict";
 /**
  * @module upload_image.js
@@ -63,7 +64,7 @@ function uploadImage(e){
       // Strokes are appended from within DecomposeModel
       // This prevents long wait times during which nothing perceptible happens
       let tensor = DecomposeModel.imageToTensor(img);
-      DecomposeModel.imageToStrokes(tensor, img.elt);
+      DecomposeModel.imageToStrokes(tensor);
 
     });
 
