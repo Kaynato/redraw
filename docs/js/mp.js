@@ -586,6 +586,7 @@ function sketch_process(p)
   // Additional function for non-interfering setup
   p.predraw = function()
   {
+    p.color(0, 0, 0, 255);
     p.strokeWeight(1);
     p.rect(1, 0, 638, 478);
     p.strokeWeight(lineSize);
@@ -1030,9 +1031,9 @@ function sketch_process(p)
   p.drawStroke = function(strokeVec, lineSize)
   {
     p5_inst.strokeWeight(lineSize);
-    p5_inst.stroke(strokeVec[DataIndices.colorR],
-                   strokeVec[DataIndices.colorG],
-                   strokeVec[DataIndices.colorB]);
+    p5_inst.stroke(strokeVec[5][0],
+                   strokeVec[5][1],
+                   strokeVec[5][2]);
     p5_inst.line(strokeVec[DataIndices.startX],
                  strokeVec[DataIndices.startY],
                  strokeVec[DataIndices.endX],
@@ -1460,88 +1461,101 @@ function warholMode()
 {
   const strokes = MPState.getVisibleStrokes();
   const sizes = MPState.getVisibleSizes();
+  const colors = new Float32Array(strokes.length * 3);
   p5_inst.resetCanvas();
-  const initalstrokes = strokes.slice();
+  const initialStrokes = strokes.slice();
+
   for (let i = 0; i < strokes.length; i++)
   {
     strokes[i][0] = strokes[i][0]/4;
     strokes[i][1] = strokes[i][1]/4;
     strokes[i][2] = strokes[i][2]/4;
     strokes[i][3] = strokes[i][3]/4;
+    sizes[i] = sizes[i] / 2;
+    colors[3 * i + 0] = strokes[i][5][0];
+    colors[3 * i + 1] = strokes[i][5][1];
+    colors[3 * i + 2] = strokes[i][5][2];
   }
 
   for(let x = 0; x < 16; x++)
   {
-    let red = Math.random()*255;
-    let green = Math.random()*255;
-    let blue = Math.random()*255;
+    let redScale = Math.random();
+    let greenScale = Math.random();
+    let blueScale = Math.random();
     for (let i = 0; i < strokes.length; i++)
     {
+      // Scale color by luma value?
+
       if((x % 4) == 0) // 0 to 160 width
       {
-        initalstrokes[i][0] = strokes[i][0];
-        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
-        initalstrokes[i][2] = strokes[i][2];
-        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
+        initialStrokes[i][0] = strokes[i][0];
+        initialStrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+        initialStrokes[i][2] = strokes[i][2];
+        initialStrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       else if((x % 4) == 1) // 161 to 320 width
       {
-        initalstrokes[i][0] = 160 + strokes[i][0];
-        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
-        initalstrokes[i][2] = 160 +strokes[i][2];
-        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
+        initialStrokes[i][0] = 160 + strokes[i][0];
+        initialStrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+        initialStrokes[i][2] = 160 +strokes[i][2];
+        initialStrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       else if((x % 4) == 2) // 321 to 480 width
       {
-        initalstrokes[i][0] = 320 + strokes[i][0];
-        initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
-        initalstrokes[i][2] = 320 + strokes[i][2];
-        initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
+        initialStrokes[i][0] = 320 + strokes[i][0];
+        initialStrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+        initialStrokes[i][2] = 320 + strokes[i][2];
+        initialStrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
       else if((x % 4) == 3) // 481 to 640 width
       {
-       initalstrokes[i][0] = 480 + strokes[i][0];
-       initalstrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
-       initalstrokes[i][2] = 480 + strokes[i][2];
-       initalstrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
+       initialStrokes[i][0] = 480 + strokes[i][0];
+       initialStrokes[i][1] = Math.floor(x/4)*120 + strokes[i][1];
+       initialStrokes[i][2] = 480 + strokes[i][2];
+       initialStrokes[i][3] = Math.floor(x/4)*120 + strokes[i][3];
       }
-      initalstrokes[i][5] = p5_inst.color(red, green, blue, 255);
 
       // MPState.addStroke here
-      let thisColor = {levels: [red, green, blue]};
+      let thisSize = sizes[i] / 2;
+      let thisRed = redScale * (255 - colors[3 * i + 0]);
+      let thisGreen = greenScale * (255 - colors[3 * i + 1]);
+      let thisBlue = blueScale * (255 - colors[3 * i + 2]);
+      let thisColor = {levels: [thisRed, thisGreen, thisBlue]};
+
+      initialStrokes[i][5] = [thisRed, thisGreen, thisBlue];
       MPState.addStroke(strokes[i][0], strokes[i][1], strokes[i][2], strokes[i][3],
-                        sizes[i], thisColor);
-      p5_inst.drawStroke(initalstrokes[i], sizes[i]);
+                        thisSize, thisColor);
+      p5_inst.drawStroke(initialStrokes[i], thisSize);
 
       //i'm amazed i can't think of a better way to do this that works.
       if((x % 4) == 0) // 0 to 160 width
       {
-        initalstrokes[i][0] = strokes[i][0];
-        initalstrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120;
-        initalstrokes[i][2] = strokes[i][2];
-        initalstrokes[i][3] = strokes[i][3] -Math.floor(x/4)*120;
+        initialStrokes[i][0] = strokes[i][0];
+        initialStrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120;
+        initialStrokes[i][2] = strokes[i][2];
+        initialStrokes[i][3] = strokes[i][3] -Math.floor(x/4)*120;
       }
       else if((x % 4) == 1) // 161 to 320 width
       {
-        initalstrokes[i][0] = strokes[i][0] - 160;
-        initalstrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
-        initalstrokes[i][2] = strokes[i][2] - 160;
-        initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120;
+        initialStrokes[i][0] = strokes[i][0] - 160;
+        initialStrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
+        initialStrokes[i][2] = strokes[i][2] - 160;
+        initialStrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120;
 
       }
       else if((x % 4) == 2) // 321 to 480 width
       {
-        initalstrokes[i][0] = strokes[i][0] -320;
-        initalstrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
-        initalstrokes[i][2] = strokes[i][2] - 320;
-        initalstrokes[i][3] = strokes[i][3]- Math.floor(x/4)*120;
+        initialStrokes[i][0] = strokes[i][0] -320;
+        initialStrokes[i][1] = strokes[i][1] -Math.floor(x/4)*120;
+        initialStrokes[i][2] = strokes[i][2] - 320;
+        initialStrokes[i][3] = strokes[i][3]- Math.floor(x/4)*120;
       }
       else if((x % 4) == 3) // 481 to 640 width
       {
-       initalstrokes[i][0] = strokes[i][0] - 480;
-       initalstrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120 ;
-       initalstrokes[i][2] = strokes[i][2] - 480;
-       initalstrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120 ;
+       initialStrokes[i][0] = strokes[i][0] - 480;
+       initialStrokes[i][1] = strokes[i][1] - Math.floor(x/4)*120 ;
+       initialStrokes[i][2] = strokes[i][2] - 480;
+       initialStrokes[i][3] = strokes[i][3] - Math.floor(x/4)*120 ;
       }
     }
   }

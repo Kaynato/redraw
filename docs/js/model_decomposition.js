@@ -52,7 +52,7 @@ const DecomposeModel = {
 
 	// max / min for median filter. greater maxfilt is the greater descent
 	// in order of increasing detail from large inpainting
-	MAX_FILT: 3,
+	MAX_FILT: 1,
 	MIN_FILT: 1,
 
 	// A color that either color thief ignores or we prohibit from the palette
