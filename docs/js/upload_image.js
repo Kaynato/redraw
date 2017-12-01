@@ -9,11 +9,13 @@
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
+/* istanbul ignore if*/
 if (!isNode && typeof p5_inst === "undefined") {
   throw Error();
 }
 
 // Set height and width of canvas
+/* istanbul ignore if*/
 if (!isNode) {
   // Must declare using var to work around mocha
   var canvas = document.getElementById('canvas-holder');
@@ -39,61 +41,50 @@ imageLoader.addEventListener('change', uploadImage, false);
  * otherwise the import will not work properly.
  * 
  * @param {*} e - the file object
+ * @param {*} callWhenLoaded - callback for when file loaded. Use for testing.
+ *
+ * Not unit-testable.
  */
-function uploadImage(e){
-  // A FileList
-  if (typeof e.target === "undefined") {
-    return;
-  }
-
+function uploadImage(e, callWhenLoaded){
+  
   let file = e.target.files[0];
   if (!file) {
     // If file is undefined (e.g. if you don't upload image despite opening window)
+    // Fail gracefully and silently
     return;
   }
 
+  /* istanbul ignore next */
+  if (typeof(FileReader) !== undefined) {
+    let reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function(e) {
+      // Might want to take care of oversize images here: TODO?
 
-  let reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = function(e) {
-    // Might want to take care of oversize images here: TODO?
+      // Turn to 
 
-    // Turn to 
-    ndimgtoarr(e.target.result, function(err, img) {
-      if (err) {
-        if (isNode) {
-          alert("Bad image data!");
+      ndimgtoarr(e.target.result, function(err, img) {
+        if (err) {
+          if (!isNode) {
+            alert("Unrecognized image data!");
+          }
+          throw Error("Invalid image data!");
         }
-        throw Error("Unrecognized image data!");
+
+        // Strokes are appended from within DecomposeModel
+        // This prevents long wait times during which nothing perceptible happens
+        let tensor = DecomposeModel.imageToTensor(img);
+        DecomposeModel.imageToStrokes(tensor);
+
+      });
+
+      if (callWhenLoaded !== undefined) {
+        callWhenLoaded();
       }
-
-      // Strokes are appended from within DecomposeModel
-      // This prevents long wait times during which nothing perceptible happens
-      let tensor = DecomposeModel.imageToTensor(img);
-      DecomposeModel.imageToStrokes(tensor);
-
-    });
-
-    // // TODO - edit later. Maybe use point to sample from image.
-    // // Should probably even be inside the returned strokes.
-    // let temp_color = {levels: [0, 0, 0]};
-
-    // for (var i = 0; i < strokes.length; i++) {
-    //   let stroke = strokes[i];
-    //   console.log(stroke);
-    //   MPState.addStroke(stroke[0], stroke[1], stroke[2], stroke[3], 5.0, temp_color);
-
-    //   // Very, very buggy
-    //   // Esp. stroke outside of MP...
-    //   p5_inst.line(stroke[0], stroke[1], stroke[2], stroke[3]);
-    // }
-
-    // DecomposeModel.render2(DecomposeModel.interimModel(tensor));
+    }
   }
 };
 
-if (isNode) {
-  module.exports = {
-    uploadImage,
-  };
-}
+module.exports = {
+  uploadImage,
+};

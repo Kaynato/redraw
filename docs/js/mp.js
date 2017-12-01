@@ -1755,16 +1755,14 @@ function shapeTool() {
 //begin new
 
 //begin end
-if (isNode) {
-  module.exports =
-  {
-    p5_inst,
-    MPState,
-    sketch_process,
-    seekBackward,
-    seekForward,
-    togglePlay,
-    jpMode,
-    clears
-  }
+module.exports =
+{
+  p5_inst,
+  MPState,
+  sketch_process,
+  seekBackward,
+  seekForward,
+  togglePlay,
+  jpMode,
+  clears
 }

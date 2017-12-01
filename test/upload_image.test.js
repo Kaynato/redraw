@@ -13,16 +13,27 @@ const assert = chai.assert;
 
 
 describe('uploadImage', function() {
-	it('should tell whether the image was uploaded', function() {
-		
-		var mockImage = {
-			e: {
-				target: {
-					files: ["./assets/square.png"]
-				}
-			}
-		}
-		// console.log(mockImage);
+	// it('should accept proper image files', function(done) {
+	// 	var mockImage =  { target: { files: ["./assets/square.png"] } }
+	// 	uploadImage.uploadImage(mockImage, done);
+	// });
 
+	it('should reject invalid data input', function() {
+		// var mockImage = {target: { files: ["./assets/not_image.png"] }}
+		var mockImage = {target: undefined}
+		let runTest = function() {
+			uploadImage.uploadImage(mockImage);
+		}
+		assert.throws(runTest, /.*Cannot read property/);
 	});
+
+	it('should silently refuse empty input', function() {
+		// var mockImage = {target: { files: ["./assets/not_image.png"] }}
+		var mockImage = {target: {files: [undefined]}}
+		uploadImage.uploadImage(mockImage);
+	});
+
+	// Further testing of uploadImage is untenable as it requires the FileReader interface which is not available in npm.
+	// Forcing testing would require modification to clientside code which would defeat the purpose.
+	// However - uploadImage is, luckily for us, simple enough to be verified.
 });
