@@ -47,6 +47,12 @@ function uploadImage(e){
   }
 
   let file = e.target.files[0];
+  if (!file) {
+    // If file is undefined (e.g. if you don't upload image despite opening window)
+    return;
+  }
+
+
   let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = function(e) {
