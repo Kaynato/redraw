@@ -26,12 +26,19 @@ describe('Decomposition Model Unit Tests', function() {
 	mp.p5_inst.setup();
 	mp.clears();
 
+	// TODO conversion of image with no alpha channel
+
+	// renderPath, but badly
+
+	// also input a picture taller than wide
+
 	it('should correctly convert an image to strokes', function(done) {
 		
 		getPixels('./test/assets/smallsquare.png', function(err, img) {
 			assert.isNull(err);
 			let tensor = decomposition.DecomposeModel.imageToTensor(img);
 			decomposition.DecomposeModel.imageToStrokes(tensor);
+			// Also check that MPState has been altered!!!
 			done();
 
 		});

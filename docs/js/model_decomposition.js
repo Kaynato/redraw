@@ -8,6 +8,8 @@
 // Is this being run by client or by npm?
 var isNode = (typeof global !== "undefined");
 
+// Else literally can't happen in testing
+/* istanbul ignore else */
 if (isNode) {
 	var ndarray = require('ndarray');
 	var ndops = require('ndarray-ops');
@@ -212,7 +214,11 @@ const DecomposeModel = {
 					break;
 				}
 			}
-			// Not better than any
+
+			// Not better than top 5.
+			// Hard to test. Stochastic behavior and likely would require
+			// Image too large to work under 2 sec.
+			/* istanbul ignore next */
 			if (w == best5.length) {
 				continue;
 			}
@@ -318,9 +324,6 @@ const DecomposeModel = {
 
 			startX = endX;
 			startY = endY;
-		}
-		if (i == 1) {
-			console.log('Something went wrong. Path drawing did not initiate.');
 		}
 
 	},
