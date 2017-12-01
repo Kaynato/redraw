@@ -15,7 +15,6 @@ decomposition.DecomposeModel.mp = mp;
 const ndarray = require('ndarray');
 const ndops = require('ndarray-ops');
 const getPixels = require('get-pixels');
-const savePixels = require('save-pixels');
 
 /* === Setup === */
 const expect = chai.expect;
@@ -29,13 +28,12 @@ describe('Decomposition Model Unit Tests', function() {
 
 	it('should correctly convert an image to strokes', function(done) {
 		
-		getPixels('./test/assets/square.png', function(err, img) {
+		getPixels('./test/assets/smallhap.png', function(err, img) {
 			assert.isNull(err);
-
 			let tensor = decomposition.DecomposeModel.imageToTensor(img);
 			decomposition.DecomposeModel.imageToStrokes(tensor);
 			done();
-
+			
 		});
 
 	});
