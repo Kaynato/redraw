@@ -105,7 +105,7 @@ var MedianIntBin = function(range) {
 
 	this.getMedian = function() {
 		if (this.indexed) {
-			return this.median - 1;
+			return this.median;
 		}
 		else {
 			console.log("Attempted to retrieve median from non-indexed" +
@@ -133,17 +133,23 @@ var MedianIntBin = function(range) {
 		// Indexing variable
 		this.median = 0;
 
+		// console.log('tgt', target);
 		// Find bin which, if added, takes us over target
 		let binVal = this.bin[this.median];
-		while (acc + binVal < target) {
+		while (acc + binVal <= target) {
+			// console.log('acc', acc, 'idx', this.median);
 			acc += this.bin[this.median];
 			this.median++;
 		}
+		// console.log('acc', acc, 'idx', this.median, 'tgt', target);
+
+		// Went over, so go back
+		this.median--;
 
 		// Offset is remainder "inside" the bin
 		// Mathematical correctness from loop invariant ensures
 		// That we will never "exceed" the bin in question.
-		this.offset = target - acc;
+		this.offset = target - (acc - this.bin[this.median]);
 
 		// This is now indexed.
 		this.indexed = true;

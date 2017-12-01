@@ -71,7 +71,45 @@ describe('ImageUtils Unit Tests', function() {
 
 		// See that the point in the middle has been smoothed out
 		assert.isTrue(ndops.equals(target, correct));
+	});
 
+	it('should correctly median filter an image ndarray of arbitrary channels if unforced from 3', function() {
+
+		let arr = new Uint8ClampedArray(9 * 9 * 5);
+		arr.fill(127);
+		let tensor = ndarray(arr, [9, 9, 5]);
+		tensor.set(1, 1, 0, 50);
+		tensor.set(1, 1, 1, 50);
+		tensor.set(1, 1, 2, 50);
+
+		/*
+			let x = new MedianIntBin(256);
+			x.addValue(50);
+			x.addValue(60);
+			x.addValue(60);
+			x.addValue(60);
+			x.addValue(61);
+			x.index();
+			console.log(x.getMedian());
+			console.log(x.offset);
+			x.decrMedian();
+			console.log(x.getMedian());
+		*/
+
+		let targetArr = new Uint8ClampedArray(tensor.data.length);
+		targetArr.fill(255);
+		let target = ndarray(targetArr, tensor.shape);
+
+		ImageUtils.medianFilter(target, tensor, 5);
+
+		// Prepare the array
+		let correctArr = new Uint8ClampedArray(tensor.data.length);
+		correctArr.fill(127);
+		let correct = ndarray(correctArr, tensor.shape);
+
+		// See that the point in the middle has been smoothed out
+		console.log(correct, target);
+		assert.isTrue(ndops.equals(target, correct));
 	});
 
 	it('should reject median filters of even dimension', function() {
@@ -93,4 +131,19 @@ describe('ImageUtils Unit Tests', function() {
 		assert.throws(runTest, /odd dimensions/);
 
 	});
+
+	it('should reject conversion to invalid color space', function() {
+		let arr = new Uint8ClampedArray(5 * 5 * 4);
+		arr.fill(127);
+		let tensor = ndarray(arr, [5, 5, 4]);
+		tensor.set(1, 1, 0, 50);
+		tensor.set(1, 1, 1, 50);
+		tensor.set(1, 1, 2, 50);
+
+		let runTest = function() {
+			ImageUtils.convertColorSpace(tensor, tensor, 'notcolor');
+		}
+		assert.throws(runTest, /notcolor/);
+	});
+
 });

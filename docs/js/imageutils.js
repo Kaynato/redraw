@@ -8,6 +8,8 @@
 
 var isNode = (typeof global !== "undefined");
 
+// Else literally can't happen in testing
+/* istanbul ignore else */
 if (isNode) {
 	var ndarray = require('ndarray');
 	var ndops = require('ndarray-ops');
@@ -74,6 +76,9 @@ var ImageUtils = {
 					output.set(x, y, 3, 255);
 				}
 			}
+		}
+		else {
+			throw Error('Unrecognized color space' + destColorSpace);
 		}
 
 		return output;

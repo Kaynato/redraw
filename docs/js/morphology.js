@@ -14,6 +14,8 @@
 
 var isNode = (typeof global !== "undefined");
 
+// Else literally can't happen in testing
+/* istanbul ignore else */
 if (isNode) {
 	var ndops = require('ndarray-ops');
 	var dt = require('distance-transform');

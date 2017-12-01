@@ -50,7 +50,7 @@ const DecomposeModel = {
 
 	// max / min for median filter. greater maxfilt is the greater descent
 	// in order of increasing detail from large inpainting
-	MAX_FILT: 1,
+	MAX_FILT: 3,
 	MIN_FILT: 1,
 
 	// A color that either color thief ignores or we prohibit from the palette
@@ -117,7 +117,9 @@ const DecomposeModel = {
 		Convert [W * H * C] image array into data url.
 
 		arr (ndarray)
+		Document interaction -> Can't unit test 
 	*/
+	/* istanbul ignore next */
 	toDataURL(arr) {
 		let canvas = document.createElement('canvas');
 		let context = canvas.getContext('2d');
@@ -403,123 +405,116 @@ const DecomposeModel = {
 
 		let firstRun = true;
 
+		let k = DecomposeModel.MAX_FILT;
+
 		while (error > threshold &&
 			   candidatesThisTime > 1 &&
 			   iters < DecomposeModel.MAX_ITERS) {
 
-			// Sequentially decreasing median filter size to
-			// Mimic monotonically decreasing attention to detail
-			// TODO - k should start at 9 but median filter is broken for nontrivial case
-			// (IGNORE TODO?) - Median filter takes too long anyway
-			// 					and we might not need it
-			let k = DecomposeModel.MAX_FILT;
-			for (; k >= DecomposeModel.MIN_FILT; k -= 2) {
 
-				candidates = [];
+			candidates = [];
 
-				// Run through median filter in YCoCg
-				// ndops.assigns(imgTemp, 0);
-				ImageUtils.convertColorSpace(imagestate, imagestate, 'YCoCg');
-				ImageUtils.medianFilter(imgTemp, imagestate, k, 3);
-				ImageUtils.convertColorSpace(imagestate, imgTemp, 'RGB');
+			// Run through median filter in YCoCg
+			// ndops.assigns(imgTemp, 0);
+			ImageUtils.convertColorSpace(imagestate, imagestate, 'YCoCg');
+			ImageUtils.medianFilter(imgTemp, imagestate, k, 3);
+			ImageUtils.convertColorSpace(imagestate, imgTemp, 'RGB');
+			// DecomposeModel.render(imagestate);
 
-				// Grab dominant colors
-				// Evaluate components for dominant colors
-				let palette = this.colorThief.getPalette(imagestate, 5, 8);
+			// Grab dominant colors
+			// Evaluate components for dominant colors
+			let palette = this.colorThief.getPalette(imagestate, 5, 8);
 
-				let i;
-				for (i = 0; i < palette.length; i++) {
-					let color = palette[i];
+			let i;
+			for (i = 0; i < palette.length; i++) {
+				let color = palette[i];
 
-					let scored = DecomposeModel.scoreComponents(imagestate,
-																color,
-																maskUtil,
-																compoTol,
-																error,
-																doneMask);
+				let scored = DecomposeModel.scoreComponents(imagestate,
+															color,
+															maskUtil,
+															compoTol,
+															error,
+															doneMask);
 
-					// Color score
-					let j;
-					for (j = 0; j < scored.length; j++) {
-						candidates.push(scored[j]);
-					}
-
-				}
-
-				candidates.sort(componentSortingFunction);
-				candidatesThisTime = Math.min(candidates.length,
-								DecomposeModel.COMPONENTS_EACH_STEP);
-
+				// Color score
 				let j;
-				
-				let compos = DecomposeModel.COMPONENTS_EACH_STEP;
-
-				if (firstRun) {
-					compos = 1;
+				for (j = 0; j < scored.length; j++) {
+					candidates.push(scored[j]);
 				}
-				
-				// DEBUG
-				// this.mp.p5_inst.createDiv("Next candidate step");
-
-				const numToPop = Math.min(compos, candidates.length);
-				for (i = 0; i < numToPop; i++) {
-					let candidate = candidates.pop();
-					
-					// TODO - Check if this is even necessary
-					let filled = maskUtil.fillHolesMut(candidate.arr);
-
-					// Width, erosion (for polytrace), dilation (for subtraction)
-					let widthObject = maskUtil.estimateWidth(filled, sens, DecomposeModel.MAX_W);
-
-					// Cannibalize candidate.arr / orig for inner edges
-					let innerEdges = candidate.arr;
-					maskUtil.innerEdges(innerEdges, widthObject.erode);
-
-					// Outer loop
-					let outerPath = maskUtil.loopTrace(innerEdges);
-
-					for (j = 0; j < outerPath.length; j++) {
-						let simplePath = DecomposeModel.simplifyPath(outerPath[j]);
-						DecomposeModel.renderPath(simplePath,
-												  candidate.color,
-												  widthObject.width,
-												  scale, offsetX, offsetY);
-					}
-
-					// Mock-draw outer loop and grab thing or whatever
-					let innerPath = maskUtil.fillInMut(widthObject.erode,
-												innerEdges,
-												widthObject.width);
-
-					for (j = 0; j < innerPath.length; j++) {
-						DecomposeModel.simplifyPath(innerPath[j]);
-						DecomposeModel.renderPath(innerPath[j],
-												  candidate.color,
-												  widthObject.width,
-												  scale, offsetX, offsetY);
-					}
-
-					// Push the dang index so the component goes entire.
-					this.mp.MPState.newCheckpoint();
-
-					// Mock-draw component
-					// ImageUtils.mockDrawMut(imagestate,
-										   // DecomposeModel.WHITE,
-										   // widthObject.opened);
-					ImageUtils.mockDrawMut(mockImg,
-										   candidate.color,
-										   widthObject.opened);
-
-					// DEBUG
-					// DecomposeModel.renderBinColor(widthObject.orig, candidate.color);
-
-				}
-				// END DRAW CANDIDATES
-
-				firstRun = false;
 
 			}
-			// END FILTER LOOP
+
+			candidates.sort(componentSortingFunction);
+			candidatesThisTime = Math.min(candidates.length,
+							DecomposeModel.COMPONENTS_EACH_STEP);
+
+			let j;
+			
+			let compos = DecomposeModel.COMPONENTS_EACH_STEP;
+
+			if (firstRun) {
+				compos = 1;
+			}
+			
+			// DEBUG
+			// this.mp.p5_inst.createDiv("Next candidate step");
+
+			const numToPop = Math.min(compos, candidates.length);
+			for (i = 0; i < numToPop; i++) {
+				let candidate = candidates.pop();
+				
+				// TODO - Check if this is even necessary
+				let filled = maskUtil.fillHolesMut(candidate.arr);
+
+				// Width, erosion (for polytrace), dilation (for subtraction)
+				let widthObject = maskUtil.estimateWidth(filled, sens, DecomposeModel.MAX_W);
+
+				// Cannibalize candidate.arr / orig for inner edges
+				let innerEdges = candidate.arr;
+				maskUtil.innerEdges(innerEdges, widthObject.erode);
+
+				// Outer loop
+				let outerPath = maskUtil.loopTrace(innerEdges);
+
+				for (j = 0; j < outerPath.length; j++) {
+					let simplePath = DecomposeModel.simplifyPath(outerPath[j]);
+					DecomposeModel.renderPath(simplePath,
+											  candidate.color,
+											  widthObject.width,
+											  scale, offsetX, offsetY);
+				}
+
+				// Mock-draw outer loop and grab thing or whatever
+				let innerPath = maskUtil.fillInMut(widthObject.erode,
+											innerEdges,
+											widthObject.width);
+
+				for (j = 0; j < innerPath.length; j++) {
+					DecomposeModel.simplifyPath(innerPath[j]);
+					DecomposeModel.renderPath(innerPath[j],
+											  candidate.color,
+											  widthObject.width,
+											  scale, offsetX, offsetY);
+				}
+
+				// Push the dang index so the component goes entire.
+				this.mp.MPState.newCheckpoint();
+
+				// Mock-draw component
+				// ImageUtils.mockDrawMut(imagestate,
+									   // DecomposeModel.WHITE,
+									   // widthObject.opened);
+				ImageUtils.mockDrawMut(mockImg,
+									   candidate.color,
+									   widthObject.opened);
+
+				// DEBUG
+				// DecomposeModel.renderBinColor(widthObject.orig, candidate.color);
+
+			}
+			// END DRAW CANDIDATES
+
+			firstRun = false;
 
 			// Decrease tolerance (desperation) per iteration
 			compoTol *= DecomposeModel.TOL_MUL;
@@ -530,6 +525,10 @@ const DecomposeModel = {
 			ImageUtils.convertColorSpace(mockImgYco, mockImg, 'YCoCg');
 			ImageUtils.sumSquaredExMask(errMask, targetYco, mockImgYco, DecomposeModel.FIDELITY);
 			ndops.not(doneMask, errMask);
+
+			if (k > 1) {
+				k -= 2;
+			}
 
 			// Write target to 
 			ImageUtils.condAssign(imagestate, target, errMask, DecomposeModel.WHITE);
@@ -623,7 +622,7 @@ const DecomposeModel = {
 	// 	return output;
 	// },
 
-	// // Debug only - render ndarray
+	// Debug only - render ndarray
 	// render(arr) {
 	// 	let url = DecomposeModel.toDataURL(arr);
 	// 	p5_inst.createImg(url);
