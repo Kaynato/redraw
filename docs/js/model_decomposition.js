@@ -28,10 +28,13 @@ const DecomposeModel = {
 
 	// Tolerance for color error when looking for binary masks
 	// Try higher values...? Might make a painterly feel.
-	TOLERANCE: 0.03,
+	TOLERANCE: 0.05,
+
+	// SSE for color fidelity ("correctness")
+	FIDELITY: 0.04,
 
 	// Score cutoff for ignoring components
-	SCORE_CUTOFF_PERCENT: 0.02,
+	SCORE_CUTOFF_PERCENT: 0.005,
 
 	// How many components to draw each step
 	COMPONENTS_EACH_STEP: 5,
@@ -39,8 +42,8 @@ const DecomposeModel = {
 	// Max width allowable for estimation
 	MAX_W: 21,
 
-	// Percentage loss which is unacceptable (lower = more accurate)
-	W_SENS: 0.10,
+	// Percentage loss which is unacceptable for width (lower = more accurate)
+	W_SENS: 0.20,
 
 	// MUST BE INITIALIZED PER IMAGE.
 	maskUtils: undefined,
@@ -57,10 +60,10 @@ const DecomposeModel = {
 	GOOD_ENOUGH_ERROR: 0.01,
 
 	// Maximum iterations for decomposition
-	MAX_ITERS: 50,
+	MAX_ITERS: 20,
 
 	// Multiple to decrease tolerance per iteration
-	TOL_DECR: 0.9,
+	TOL_MUL: 0.95,
 
 	/* Fix library access bug */
 	colorThief: new ColorThief(),
@@ -156,8 +159,7 @@ const DecomposeModel = {
 		color (array(3)) RGB color to obtain components of
 		maskUtil - maskutil object, which is needed for algorithms
 		tol - tolerance for color mse
-		leftover - count of pixels that should be addressed
-		addressed - pixels already addressed
+		addressed - mask of pixels already addressed
 	*/
 	scoreComponents(arr, color, maskUtil, tol, err, addressed) {
 		let width = arr.shape[0];
@@ -187,7 +189,7 @@ const DecomposeModel = {
 		let blobs = maskUtil.labelComponents(mask);
 
 
-		const threshold = DecomposeModel.SCORE_CUTOFF_PERCENT * err;
+		// const threshold = DecomposeModel.SCORE_CUTOFF_PERCENT * err;
 		let components = [];
 		let best5 = [0, 0, 0, 0, 0];
 		let label;
@@ -195,10 +197,11 @@ const DecomposeModel = {
 			let score = blobs.scores[label];
 
 			// Don't even bother if it's not big enough
-			if (score < threshold) {
-				continue;
-			}
+			// if (score < threshold) {
+			// 	continue;
+			// }
 
+			// Quick top-five selection
 			let w;
 			for (w = 0; w < best5.length; w++) {
 				// If we are better
@@ -223,7 +226,6 @@ const DecomposeModel = {
 					component.data[i] = 1;
 				}
 			}
-			// DecomposeModel.renderBin(component);
 
 			components.push({
 				'score': score,
@@ -365,8 +367,24 @@ const DecomposeModel = {
 		let candidates;
 		let imagestate = arr;
 
+		// Construct temp array for image
+		let imgTemp = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+		let mockImg = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+		ndops.assigns(mockImg, 255);
+
+		// Preserve target image
+		let target = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+		ndops.assign(target, arr);
+
+		// To fill with YCO
+		let targetYco = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+		let mockImgYco = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
+
 		// Use to indicate finished components in image
 		let doneMask = maskUtil.getArr(Uint8Array);
+
+		// Use to indicate parts of image drawn correctly
+		let errMask = maskUtil.getArr(Uint8Array);
 
 		// Error threshold
 		const totalPixels = width * height;
@@ -374,11 +392,14 @@ const DecomposeModel = {
 		let candidatesThisTime = 1000;
 		let error = maskUtil.withoutDiffCount(imagestate,
 										     DecomposeModel.WHITE,
-										     DecomposeModel.TOLERANCE);
+										     DecomposeModel.FIDELITY);
 		let iters = 0;
 
 		// Component tolerance - increase per iteration
 		let compoTol = DecomposeModel.TOLERANCE;
+
+		// Width-loss sensitivity - sharpen per iteration
+		let sens = DecomposeModel.W_SENS;
 
 		let firstRun = true;
 
@@ -397,17 +418,14 @@ const DecomposeModel = {
 				candidates = [];
 
 				// Run through median filter in YCoCg
-				let yco = ImageUtils.convertColorSpace(imagestate, 'YCoCg');
-				let filteredYco = ImageUtils.medianFilter(yco, k, 3);
-				let filtered = ImageUtils.convertColorSpace(filteredYco, 'RGB');
-				imagestate = filtered;
-
-				// DEBUG
-				// DecomposeModel.render(imagestate);
+				// ndops.assigns(imgTemp, 0);
+				ImageUtils.convertColorSpace(imagestate, imagestate, 'YCoCg');
+				ImageUtils.medianFilter(imgTemp, imagestate, k, 3);
+				ImageUtils.convertColorSpace(imagestate, imgTemp, 'RGB');
 
 				// Grab dominant colors
 				// Evaluate components for dominant colors
-				let palette = this.colorThief.getPalette(imagestate);
+				let palette = this.colorThief.getPalette(imagestate, 5, 8);
 
 				let i;
 				for (i = 0; i < palette.length; i++) {
@@ -433,12 +451,15 @@ const DecomposeModel = {
 								DecomposeModel.COMPONENTS_EACH_STEP);
 
 				let j;
-				const sens = DecomposeModel.W_SENS;
+				
 				let compos = DecomposeModel.COMPONENTS_EACH_STEP;
 
 				if (firstRun) {
 					compos = 1;
 				}
+				
+				// DEBUG
+				// this.mp.p5_inst.createDiv("Next candidate step");
 
 				const numToPop = Math.min(compos, candidates.length);
 				for (i = 0; i < numToPop; i++) {
@@ -449,14 +470,6 @@ const DecomposeModel = {
 
 					// Width, erosion (for polytrace), dilation (for subtraction)
 					let widthObject = maskUtil.estimateWidth(filled, sens, DecomposeModel.MAX_W);
-
-					// DEBUG
-					// p5_inst.createDiv(widthObject.width);
-					// DecomposeModel.renderBin(widthObject.orig);
-					// DecomposeModel.renderBin(widthObject.erode);
-					// DecomposeModel.renderBin(widthObject.opened);
-
-					ndops.oreq(doneMask, widthObject.opened);
 
 					// Cannibalize candidate.arr / orig for inner edges
 					let innerEdges = candidate.arr;
@@ -490,9 +503,15 @@ const DecomposeModel = {
 					this.mp.MPState.newCheckpoint();
 
 					// Mock-draw component
-					ImageUtils.mockDrawMut(imagestate,
-										   DecomposeModel.WHITE,
-										   doneMask);
+					// ImageUtils.mockDrawMut(imagestate,
+										   // DecomposeModel.WHITE,
+										   // widthObject.opened);
+					ImageUtils.mockDrawMut(mockImg,
+										   candidate.color,
+										   widthObject.opened);
+
+					// DEBUG
+					// DecomposeModel.renderBinColor(widthObject.orig, candidate.color);
 
 				}
 				// END DRAW CANDIDATES
@@ -503,22 +522,28 @@ const DecomposeModel = {
 			// END FILTER LOOP
 
 			// Decrease tolerance (desperation) per iteration
-			compoTol *= DecomposeModel.TOL_DECR;
+			compoTol *= DecomposeModel.TOL_MUL;
+			sens *= 0.95;
 
-			error = maskUtil.withoutDiffCount(imagestate,
-											  DecomposeModel.WHITE,
-											  DecomposeModel.TOLERANCE);
+			// Find out pixels we need to deal with
+			ImageUtils.convertColorSpace(targetYco, target, 'YCoCg');
+			ImageUtils.convertColorSpace(mockImgYco, mockImg, 'YCoCg');
+			ImageUtils.sumSquaredExMask(errMask, targetYco, mockImgYco, DecomposeModel.FIDELITY);
+			ndops.not(doneMask, errMask);
 
-			iters++;
+			// Write target to 
+			ImageUtils.condAssign(imagestate, target, errMask, DecomposeModel.WHITE);
+
+			error = ndops.sum(errMask);
 
 			// DEBUG
-			// doneMask = maskUtil.withinDiff(imagestate,
-									// DecomposeModel.WHITE,
-									// DecomposeModel.TOLERANCE);
-			// p5_inst.createDiv("Imagestate, finishedMask at step " + iters);
+			// p5_inst.createDiv('Error, Upcoming, Rendered');
+			// DecomposeModel.renderBin(errMask);
 			// DecomposeModel.render(imagestate);
-			// DecomposeModel.renderBin(doneMask);
-			// console.log('Completed iteration', iters, 'of decomposition.');
+			// DecomposeModel.render(mockImg);
+			// console.log('Completed iteration', iters, 'of decomposition. Error:', error);
+
+			iters++;
 		}
 
 		// console.log('Finished!');
@@ -528,52 +553,95 @@ const DecomposeModel = {
 		// if (candidatesThisTime <= 1) {
 		// 	console.log('Ran out of candidates');
 		// }
-		// if (iters > DecomposeModel.MAX_ITERS) {
+		// if (iters >= DecomposeModel.MAX_ITERS) {
 		// 	console.log('Exceeded maximum iterations');
 		// }
 
 	},
 
-	// debug only - convert 1-channel binary array to b/w color array
-	binToColor(arr, multi) {
-		let width = arr.shape[0];
-		let height = arr.shape[1];
-		let outputArr = new Uint8ClampedArray(width * height * 4);
-		let output = ndarray(outputArr, [width, height, 4]);
+	// // debug only - convert 1-channel binary array to b/w color array
+	// // multi: multiple to multiply instead of 255 (white) for greyscale
+	// binToColor(arr, multi) {
+	// 	let width = arr.shape[0];
+	// 	let height = arr.shape[1];
+	// 	let outputArr = new Uint8ClampedArray(width * height * 4);
+	// 	let output = ndarray(outputArr, [width, height, 4]);
 
-		if (multi === undefined) {
-			multi = 255;
-		}
+	// 	if (multi === undefined) {
+	// 		multi = 255;
+	// 	}
 
-		let x;
-		let y;
-		let ch;
-		let val;
-		for (x = 0; x < width; x++) {
-			for (y = 0; y < height; y++) {
-				val = arr.get(x, y) * multi;
-				for (ch = 0; ch < 3; ch++) {
-					output.set(x, y, ch, val);
-				}
-				output.set(x, y, 3, 255);
-			}
-		}
+	// 	let x;
+	// 	let y;
+	// 	let ch;
+	// 	let val;
+	// 	for (x = 0; x < width; x++) {
+	// 		for (y = 0; y < height; y++) {
+	// 			val = arr.get(x, y) * multi;
+	// 			for (ch = 0; ch < 3; ch++) {
+	// 				output.set(x, y, ch, val);
+	// 			}
+	// 			output.set(x, y, 3, 255);
+	// 		}
+	// 	}
 
-		return output;
-	},
+	// 	return output;
+	// },
 
-	// Debug only - render ndarray
-	render(arr) {
-		let url = DecomposeModel.toDataURL(arr);
-		p5_inst.createImg(url);
-	},
+	// // debug only - convert 1-channel binary array to b/w color array
+	// binToColorTransparent(arr, color) {
+	// 	let width = arr.shape[0];
+	// 	let height = arr.shape[1];
+	// 	let outputArr = new Uint8ClampedArray(width * height * 4);
+	// 	let output = ndarray(outputArr, [width, height, 4]);
 
-	// Debug only - render binary ndarray
-	renderBin(arr, multi) {
-		let arr3 = DecomposeModel.binToColor(arr, multi);
-		let url = DecomposeModel.toDataURL(arr3);
-		p5_inst.createImg(url);
-	}
+	// 	let x;
+	// 	let y;
+	// 	let ch;
+	// 	let val;
+	// 	let pix;
+	// 	for (x = 0; x < width; x++) {
+	// 		for (y = 0; y < height; y++) {
+	// 			val = arr.get(x, y);
+	// 			if (val > 0) {
+	// 				for (ch = 0; ch < 3; ch++) {
+	// 					pix = color[ch];
+	// 					output.set(x, y, ch, pix);
+	// 				}
+	// 				output.set(x, y, 3, 255);
+	// 			}
+	// 			else {
+	// 				for (ch = 0; ch < 4; ch++) {
+	// 					pix = color[ch];
+	// 					output.set(x, y, ch, val);
+	// 				}
+	// 				output.set(x, y, 3, 0);
+	// 			}
+	// 		}
+	// 	}
+
+	// 	return output;
+	// },
+
+	// // Debug only - render ndarray
+	// render(arr) {
+	// 	let url = DecomposeModel.toDataURL(arr);
+	// 	p5_inst.createImg(url);
+	// },
+
+	// // Debug only - render binary ndarray
+	// renderBin(arr, multi) {
+	// 	let arr3 = DecomposeModel.binToColor(arr, multi);
+	// 	let url = DecomposeModel.toDataURL(arr3);
+	// 	p5_inst.createImg(url);
+	// },
+
+	// // Debug only - render binary ndarray with color
+	// renderBinColor(arr, color) {
+	// 	let arr3 = DecomposeModel.binToColorTransparent(arr, color);
+	// 	let url = DecomposeModel.toDataURL(arr3);
+	// 	p5_inst.createImg(url);
+	// }
 }
 
 module.exports = {

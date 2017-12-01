@@ -28,26 +28,6 @@
 var ColorThief = function () {};
 
 /*
- * getColor(sourceImage[, quality])
- * returns {r: num, g: num, b: num}
- *
- * Use the median cut algorithm provided by quantize.js to cluster similar
- * colors and return the base color from the largest cluster.
- *
- * Quality is an optional argument. It needs to be an integer. 1 is the highest quality settings.
- * 10 is the default. There is a trade-off between quality and speed. The bigger the number, the
- * faster a color will be returned but the greater the likelihood that it will not be the visually
- * most dominant color.
- *
- * */
-ColorThief.prototype.getColor = function(sourceArr, quality) {
-    var palette       = this.getPalette(sourceArr, 5, quality);
-    var dominantColor = palette[0];
-    return dominantColor;
-};
-
-
-/*
  * getPalette(sourceImage[, colorCount, quality])
  * returns array[ {r: num, g: num, b: num}, {r: num, g: num, b: num}, ...]
  *
@@ -65,16 +45,6 @@ ColorThief.prototype.getColor = function(sourceArr, quality) {
  *
  */
 ColorThief.prototype.getPalette = function(arr, colorCount, quality) {
-
-    if (typeof colorCount === 'undefined' || colorCount < 2 || colorCount > 256) {
-        colorCount = 10;
-    }
-    if (typeof quality === 'undefined' || quality < 1) {
-        quality = 10;
-    }
-    if (arr.shape.length < 3 || arr.shape[2] < 3) {
-    	throw Error("Image lacks sufficient 3-channel RGB information!");
-    }
 
     // Calculate maximum
     var width = arr.shape[0];
@@ -108,53 +78,6 @@ ColorThief.prototype.getPalette = function(arr, colorCount, quality) {
     return palette;
 };
 
-ColorThief.prototype.getColorFromUrl = function(imageUrl, callback, quality) {
-    sourceImage = document.createElement("img");
-    var thief = this;
-    sourceImage.addEventListener('load' , function(){
-        var palette = thief.getPalette(sourceImage, 5, quality);
-        var dominantColor = palette[0];
-        callback(dominantColor, imageUrl);
-    });
-    sourceImage.src = imageUrl
-};
-
-
-ColorThief.prototype.getImageData = function(imageUrl, callback) {
-    xhr = new XMLHttpRequest();
-    xhr.open('GET', imageUrl, true);
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = function(e) {
-        if (this.status == 200) {
-            uInt8Array = new Uint8Array(this.response)
-            i = uInt8Array.length
-            binaryString = new Array(i);
-            for (var i = 0; i < uInt8Array.length; i++){
-                binaryString[i] = String.fromCharCode(uInt8Array[i])
-            }
-            data = binaryString.join('')
-            base64 = window.btoa(data)
-            callback ("data:image/png;base64,"+base64)
-        }
-    }
-    xhr.send();
-};
-
-ColorThief.prototype.getColorAsync = function(imageUrl, callback, quality) {
-    var thief = this;
-    this.getImageData(imageUrl, function(imageData){
-        sourceImage = document.createElement("img");
-        sourceImage.addEventListener('load' , function(){
-            var palette = thief.getPalette(sourceImage, 5, quality);
-            var dominantColor = palette[0];
-            callback(dominantColor, this);
-        });
-        sourceImage.src = imageData;      
-    });
-};
-
-
-
 /*!
  * quantize.js Copyright 2008 Nick Rabinowitz.
  * Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
@@ -186,8 +109,6 @@ if (!pv) {
         }
     };
 }
-
-
 
 /**
  * Basic Javascript port of the MMCQ (modified median cut quantization)

@@ -10,6 +10,7 @@ var isNode = (typeof global !== "undefined");
 
 if (isNode) {
 	var ndarray = require('ndarray');
+	var ndops = require('ndarray-ops');
 };
 
 var ImageUtils = {
@@ -23,17 +24,7 @@ var ImageUtils = {
 		destColorSpace(string): 'RGB' or 'YCoCg' describing destination color space.
 		outputArr (ndarray, optional): If present, write to this array
 	*/
-	convertColorSpace(arr, destColorSpace, outputArr) {
-		var output;
-		// Allocate output array
-		if (outputArr === undefined) {
-			output = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
-			output.data.fill(255);
-		}
-		else {
-			output = outputArr;
-		}
-
+	convertColorSpace(output, arr, destColorSpace) {
 		const width = arr.shape[0];
 		const height = arr.shape[1];
 		let x = 0;
@@ -63,6 +54,7 @@ var ImageUtils = {
 					output.set(x, y, 0, luma);
 					output.set(x, y, 1, co);
 					output.set(x, y, 2, cg);
+					output.set(x, y, 3, 255);
 				}
 			}
 		}
@@ -78,11 +70,9 @@ var ImageUtils = {
 					output.set(x, y, 0, r);
 					output.set(x, y, 1, g);
 					output.set(x, y, 2, b);
+					output.set(x, y, 3, 255);
 				}
 			}
-		}
-		else {
-			throw Error(destColorSpace.join(" is not a valid destination color space!"))
 		}
 
 		return output;
@@ -93,14 +83,15 @@ var ImageUtils = {
 
 		Uses moving histogram binning to avoid k*k checks per instance.
 
+		outputArr (ndarray, optional): If present, write to this array
 		arr (ndarray): Contains image info
 		k (int): Dimension of filter
 		forceChannels (int, optional): If present, force channels to this value
-		outputArr (ndarray, optional): If present, write to this array
 	*/
-	medianFilter(arr, k, forceChannels, outputArr) {
+	medianFilter(output, arr, k, forceChannels) {
 		if (k == 1) {
-			return arr;
+			ndops.assign(output, arr);
+			return;
 		}
 
 		if (k % 2 == 0 || k < 1) {
@@ -117,16 +108,6 @@ var ImageUtils = {
 		}
 		else {
 			channels = arr.shape[2];
-		}
-
-		var output;
-		// Allocate output array
-		if (outputArr === undefined) {
-			output = ndarray(new Uint8ClampedArray(arr.data.length), arr.shape);
-			output.data.fill(255);
-		}
-		else {
-			output = outputArr;
 		}
 
 		// Center of median filter window
@@ -259,8 +240,6 @@ var ImageUtils = {
 		}
 
 		console.log('Finished applying median filter of dimension', k);
-
-		return output;
 	},
 
 	/*
@@ -294,21 +273,26 @@ var ImageUtils = {
 	},
 
 	// Reduce RGB channels by sum square
-	sumSquaredChMask: function(tgt, src, tol) {
+	// a and b should be equivalently-sized arrays.
+	sumSquaredExMask: function(tgt, a, b, tol) {
+		const width = a.shape[0];
+		const height = a.shape[1];
 		let val;
 		let tmp;
 		let x;
 		let y;
 		let ch;
-		for (x = 0; x < this.width; x++) {
+		for (x = 0; x < width; x++) {
 			for (y = 0; y < height; y++) {
 				val = 0;
 				for (ch = 0; ch < 3; ch++) {
-					tmp = src.get(x, y, ch);
+					tmp = a.get(x, y, ch);
+					tmp -= b.get(x, y, ch);
+					tmp /= 255.0;
 					tmp *= tmp;
 					val += tmp;
 				}
-				if (val < tolerance) {
+				if (val > tol) {
 					tgt.set(x, y, 1);
 				}
 				else {
@@ -316,8 +300,41 @@ var ImageUtils = {
 				}
 			}
 		}
+	},
 
-		return tgt;
+	/* 
+		Write src to tgt where mask is 1.
+		tgt, src: image-like ndarray
+		mask: mask-like ndarray
+		All xy dims must be equal.
+
+		Where mask is 0, assign neg (array)
+	*/
+	condAssign: function(tgt, src, mask, neg) {
+		const width = tgt.shape[0];
+		const height = tgt.shape[1];
+		let val;
+		let pix;
+		let x;
+		let y;
+		let ch;
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				val = mask.get(x, y);
+				if (val > 0) {
+					for (ch = 0; ch < 3; ch++) {
+						pix = src.get(x, y, ch);
+						tgt.set(x, y, ch, pix);
+					}
+				}
+				else {
+					for (ch = 0; ch < 3; ch++) {
+						pix = neg[ch];
+						tgt.set(x, y, ch, pix);
+					}
+				}
+			}
+		}
 	},
 
 }
