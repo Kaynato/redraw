@@ -155,10 +155,6 @@ let MPState =
 
       p5_inst.updateStateSlider();
     }
-    else
-    {
-      console.log('Rejected', startX, startY, endX, endY);
-    }
 
   },
 

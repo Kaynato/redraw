@@ -105,7 +105,7 @@ var MedianIntBin = function(range) {
 
 	this.getMedian = function() {
 		if (this.indexed) {
-			return this.median;
+			return this.median - 1;
 		}
 		else {
 			console.log("Attempted to retrieve median from non-indexed" +
@@ -151,3 +151,5 @@ var MedianIntBin = function(range) {
 
 	return this;
 }
+
+module.exports = MedianIntBin;

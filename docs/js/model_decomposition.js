@@ -12,7 +12,7 @@ if (isNode) {
 	var ndarray = require('ndarray');
 	var ndops = require('ndarray-ops');
 	var MaskUtils = require('./maskutils.js').MaskUtils;
-	var ImageUtils = require('./imageutils.js').ImageUtils;
+	var ImageUtils = require('./imageutils.js');
 	var ColorThief = require('../lib/color-thief-modified.js').ColorThief;
 }
 

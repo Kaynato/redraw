@@ -31,6 +31,7 @@
   "dependencies": {
     "colorthief": "^2.0.2",
     "distance-transform": "^1.0.2",
-    "get-pixels": "^3.3.0"
+    "get-pixels": "^3.3.0",
+    "save-pixels": "^2.3.4"
   }
 }

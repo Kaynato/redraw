@@ -11,6 +11,7 @@ var isNode = (typeof global !== "undefined");
 if (isNode) {
 	var ndarray = require('ndarray');
 	var ndops = require('ndarray-ops');
+	var MedianIntBin = require('./medianbin.js')
 };
 
 var ImageUtils = {
@@ -339,6 +340,4 @@ var ImageUtils = {
 
 }
 
-module.exports = {
-	ImageUtils
-}
+module.exports = ImageUtils;
