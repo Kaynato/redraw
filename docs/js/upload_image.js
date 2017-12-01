@@ -47,6 +47,10 @@ imageLoader.addEventListener('change', uploadImage, false);
  */
 function uploadImage(e, callWhenLoaded){
   
+  if (typeof(e.target) === 'undefined') {
+    return;
+  }
+
   let file = e.target.files[0];
   if (!file) {
     // If file is undefined (e.g. if you don't upload image despite opening window)
