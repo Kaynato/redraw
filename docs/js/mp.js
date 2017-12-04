@@ -1031,9 +1031,7 @@ function sketch_process(p)
   p.drawStroke = function(strokeVec, lineSize)
   {
     p5_inst.strokeWeight(lineSize);
-    p5_inst.stroke(strokeVec[5][0],
-                   strokeVec[5][1],
-                   strokeVec[5][2]);
+    p5_inst.stroke(strokeVec[5][0], strokeVec[5][1], strokeVec[5][2]);
     p5_inst.line(strokeVec[DataIndices.startX],
                  strokeVec[DataIndices.startY],
                  strokeVec[DataIndices.endX],

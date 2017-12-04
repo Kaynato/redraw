@@ -318,7 +318,7 @@ const DecomposeModel = {
 			endY = path[i][0] * scale + offY;
 
 			newStroke = [startX, startY, endX, endY, width * scale,
-						 color[0], color[1], color[2]];
+						 [color[0], color[1], color[2]]];
 			this.mp.MPState.addStroke(startX, startY, endX, endY, width * scale, colorObj);
 			this.mp.p5_inst.drawStroke(newStroke, width * scale);
 
