@@ -436,7 +436,7 @@ let MPState =
 
   /**
     Step stroke index forward or call the generator network.
-    
+
     Returns source and dest indices to step through.
 
     doSingle is optional.
@@ -473,7 +473,7 @@ let MPState =
           return ret;
         }
       }
-  
+
       // Find smallest strokeIndex geq than curr idx
       let chkp = 0;
       let i;
@@ -669,13 +669,211 @@ function sketch_process(p)
       color = p.color(red, green, blue, 255);
       p.strokeWeight(lineSize);
       p.stroke(color);
-      // p.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY);
 
-      // HMM HMMM WHAT ABOUT MPSTATE.ADDSTROKE????
-      // WHY NOT USE POLAR COORDINATES AND A STEPSIZE.
-      // TODO
+      p.line(p.mouseX, p.mouseY,  p.mouseX , p.mouseY + 6);
+      p.line(p.mouseX, p.mouseY + 6,  p.mouseX + 3, p.mouseY + 9);
+      p.line(p.mouseX + 3, p.mouseY + 9,  p.mouseX + 3, p.mouseY + 12);
+      p.line(p.mouseX + 3, p.mouseY + 12,  p.mouseX + 6, p.mouseY + 15);
+      p.line(p.mouseX + 6, p.mouseY + 15,  p.mouseX + 9, p.mouseY + 18);
+      p.line(p.mouseX + 9, p.mouseY + 18,  p.mouseX + 12, p.mouseY + 18);
+      p.line(p.mouseX + 12, p.mouseY + 18,  p.mouseX + 15, p.mouseY + 21);
+      p.line(p.mouseX + 15, p.mouseY + 21,  p.mouseX + 27, p.mouseY + 21);
+      p.line(p.mouseX + 27, p.mouseY + 21,  p.mouseX + 30, p.mouseY + 18);
+      p.line(p.mouseX + 30, p.mouseY + 18,  p.mouseX + 33, p.mouseY + 18);
+      p.line(p.mouseX + 33, p.mouseY + 18,  p.mouseX + 36, p.mouseY + 15);
+      p.line(p.mouseX + 36, p.mouseY + 15,  p.mouseX + 39, p.mouseY + 12);
+      p.line(p.mouseX + 39, p.mouseY + 12,  p.mouseX + 39, p.mouseY + 9);
+      p.line(p.mouseX + 39, p.mouseY + 9,  p.mouseX + 42, p.mouseY + 6);
+      p.line(p.mouseX + 42, p.mouseY + 6,  p.mouseX + 42, p.mouseY - 6);
+      p.line(p.mouseX + 42, p.mouseY - 6,  p.mouseX + 39, p.mouseY - 9);
+      p.line(p.mouseX + 39, p.mouseY - 9,  p.mouseX + 39, p.mouseY - 12);
+      p.line(p.mouseX + 39, p.mouseY - 12,  p.mouseX + 36, p.mouseY - 15);
+      p.line(p.mouseX + 36, p.mouseY - 15,  p.mouseX + 33, p.mouseY - 18);
+      p.line(p.mouseX + 33, p.mouseY - 18,  p.mouseX + 30, p.mouseY - 18);
+      p.line(p.mouseX + 30, p.mouseY - 18,  p.mouseX + 27, p.mouseY - 21);
+      p.line(p.mouseX + 27, p.mouseY - 21,  p.mouseX + 15, p.mouseY - 21);
+      p.line(p.mouseX + 15, p.mouseY - 21,  p.mouseX + 12, p.mouseY - 18);
+      p.line(p.mouseX + 12, p.mouseY - 18,  p.mouseX + 9, p.mouseY - 18);
+      p.line(p.mouseX + 9, p.mouseY - 18,  p.mouseX + 6, p.mouseY - 15);
+      p.line(p.mouseX + 6, p.mouseY - 15,  p.mouseX + 3, p.mouseY - 12);
+      p.line(p.mouseX + 3, p.mouseY - 12,  p.mouseX + 3, p.mouseY - 9);
+      p.line(p.mouseX + 3, p.mouseY - 9,  p.mouseX , p.mouseY - 6);
+      p.line(p.mouseX , p.mouseY - 6,  p.mouseX , p.mouseY );
 
-      p.arc(p.mouseX, p.mouseY, 50, 50, 0, 2*Math.PI);
+      MPState.addStroke(p.mouseX,
+                        p.mouseY,
+                        p.mouseX,
+                        p.mouseY + 6,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX,
+                        p.mouseY + 6,
+                        p.mouseX + 3,
+                        p.mouseY + 9,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 3 ,
+                        p.mouseY + 9,
+                        p.mouseX + 3,
+                        p.mouseY + 12,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 3,
+                        p.mouseY + 12,
+                        p.mouseX + 6,
+                        p.mouseY + 15,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 6,
+                        p.mouseY + 15,
+                        p.mouseX + 9,
+                        p.mouseY + 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 9,
+                        p.mouseY + 18,
+                        p.mouseX + 12,
+                        p.mouseY + 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 12,
+                        p.mouseY + 18,
+                        p.mouseX + 15,
+                        p.mouseY + 21,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 15 ,
+                        p.mouseY + 21,
+                        p.mouseX + 27,
+                        p.mouseY + 21,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 27,
+                        p.mouseY + 21,
+                        p.mouseX + 30,
+                        p.mouseY + 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 30,
+                        p.mouseY + 18,
+                        p.mouseX + 33,
+                        p.mouseY + 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 33,
+                        p.mouseY + 18,
+                        p.mouseX + 36,
+                        p.mouseY + 15,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 36,
+                        p.mouseY + 15,
+                        p.mouseX + 39,
+                        p.mouseY + 12,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 39 ,
+                        p.mouseY + 12,
+                        p.mouseX + 39,
+                        p.mouseY + 9,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 39,
+                        p.mouseY + 9,
+                        p.mouseX + 42,
+                        p.mouseY + 6,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 42,
+                        p.mouseY + 6,
+                        p.mouseX + 42,
+                        p.mouseY - 6,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 42,
+                        p.mouseY - 6,
+                        p.mouseX + 39,
+                        p.mouseY - 9,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 39,
+                        p.mouseY - 9,
+                        p.mouseX + 39,
+                        p.mouseY - 12,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 39 ,
+                        p.mouseY - 12,
+                        p.mouseX + 36,
+                        p.mouseY - 15,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 36,
+                        p.mouseY - 15,
+                        p.mouseX + 33,
+                        p.mouseY - 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 33,
+                        p.mouseY - 18,
+                        p.mouseX + 30,
+                        p.mouseY - 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 30,
+                        p.mouseY - 18,
+                        p.mouseX + 27,
+                        p.mouseY - 21,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 27,
+                        p.mouseY - 21,
+                        p.mouseX + 15,
+                        p.mouseY - 21,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 15 ,
+                        p.mouseY - 21,
+                        p.mouseX + 12,
+                        p.mouseY - 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 12,
+                        p.mouseY - 18,
+                        p.mouseX + 9,
+                        p.mouseY - 18,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 9,
+                        p.mouseY - 18,
+                        p.mouseX + 6,
+                        p.mouseY - 15,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 6,
+                        p.mouseY - 15,
+                        p.mouseX + 3,
+                        p.mouseY - 12,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 3,
+                        p.mouseY - 12,
+                        p.mouseX + 3,
+                        p.mouseY - 9,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX + 3 ,
+                        p.mouseY - 9,
+                        p.mouseX,
+                        p.mouseY - 6,
+                        lineSize,
+                        color);
+      MPState.addStroke(p.mouseX,
+                        p.mouseY - 6,
+                        p.mouseX,
+                        p.mouseY,
+                        lineSize,
+                        color);
     }
     // Triangle
     else if (MPState.getShapeOption() == 2)
@@ -814,7 +1012,6 @@ function sketch_process(p)
                         lineSize,
                         color);
     }
-
     // Color picker (aka dropper)
     else if(MPState.getColorMode()) {
       const strokes = MPState.getVisibleStrokes();
