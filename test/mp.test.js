@@ -8,6 +8,7 @@ const chai = require('chai');
 
 // p5 unfortunately does not play kindly with npm testing.
 const mp = require('../docs/js/mp.js');
+const fs = require('fs');
 
 const SVGBuilder = require('../docs/js/svgbuilder.js');
 
@@ -187,6 +188,27 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.equal(mp.MPState.state.length, oldCount + 5);
     });
 
+    // Mimic svg builder option here
+    it('should export correct SVG files with exportSVG()', function(done) {
+        mp.MPState.setShapeOption(null);
+        // Also make a dot to cover circle case for svg builder
+        mp.p5_inst.mousePressed();
+        mp.p5_inst.setMouse(300, 300);
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.setMouse(300, 300);
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.mouseReleased();
+        let svg = mp.exportSVG();
+
+        fs.readFile("./test/assets/confirm.svg", function(err, data) {
+            if(err) {
+                return console.log(err);
+            }
+            assert.equal(svg, data);
+            done();
+        }); 
+    });
+
     it('should set color mode with colorPicker()', function() {
         mp.clears();
         mp.MPState.setColorMode(true);
@@ -196,7 +218,6 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.equal(mp.MPState.getBlueDropperMode(), -1);
         assert.isFalse(mp.MPState.getColorMode());
     });
-
 
 
 });

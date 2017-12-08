@@ -1566,6 +1566,55 @@ function exportData() {
   }
 }
 
+/* We decided to not use a dropdown. */
+function exportSVG() {
+  const strokes = MPState.getVisibleStrokes();
+  const sizes = MPState.getVisibleSizes();
+
+  // Can't use alert in npm
+  /* istanbul ignore next */
+  if (strokes.length == 0) {
+    alert('Cannot download empty canvas image!');
+    return;
+  }
+
+  let builder;
+  if (!isNode) { // Never runs via npm
+    builder = new SVGBuilder(MPState.WIDTH, MPState.HEIGHT);
+  }
+  else {
+    let SVGBuilder = require('./svgbuilder.js');
+    builder = new SVGBuilder(MPState.WIDTH, MPState.HEIGHT);
+  }
+
+  let i;
+  for (i = 0; i < strokes.length; i++) {
+    builder.addStroke(strokes[i], sizes[i]);
+  }
+  let svg = builder.finish();
+
+  /* istanbul ignore if */
+  if (!isNode) {
+    // Cheap trick to do download
+    let blob = new Blob([svg], {type: "image/svg+xml"});
+    let downloadLink = document.createElement("a");
+    downloadLink.style.display = "none";
+    downloadLink.download = 'my_svg';
+    downloadLink.href = window.URL.createObjectURL(blob);
+    downloadLink.onclick = function(event) {
+      document.body.removeChild(event.target);
+    };
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    return;
+  }
+  else {
+    // Only happens in unit test
+    return svg;
+  }
+
+}
+
 /**
  * Mimics the artistic style of Jackson Pollack.
  */
@@ -2030,5 +2079,6 @@ module.exports =
   loadImageWithValue,
   mirrorModeWithValue,
   warholMode,
-  rotate
+  rotate,
+  exportSVG
 }
