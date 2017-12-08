@@ -9,8 +9,6 @@ const chai = require('chai');
 // p5 unfortunately does not play kindly with npm testing.
 const mp = require('../docs/js/mp.js');
 
-const SVGBuilder = require('../docs/js/svgbuilder.js');
-
 /* === Setup === */
 const expect = chai.expect;
 const assert = chai.assert;
