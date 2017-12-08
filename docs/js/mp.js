@@ -158,6 +158,12 @@ let MPState =
 
   },
 
+  // MPState is at end.
+  atEnd()
+  {
+    return this.dataIndex == this.strokeIndex;
+  },
+
   setStrokeIndex(val)
   {
     if (val < 0)
@@ -521,15 +527,18 @@ function sketch_process(p)
 
   p.slideState = function()
   {
-    const strokes = MPState.getState();
-    const sizes = MPState.getSizes();
+    const dataIndex = MPState.dataIndex;
 
     // Calculate percentage of state
-    let cur_step = Math.floor(strokes.length * stateSlider.value());
+    let newStrokeIndex = Math.floor(dataIndex * stateSlider.value());
+    MPState.setStrokeIndex(newStrokeIndex);
 
-    p.resetCanvas();
-    for (let i = 0; i < cur_step; i++) {
-      p.drawStroke(strokes[i], sizes[i]);
+    const strokes = MPState.getVisibleStrokes();
+    const sizes = MPState.getVisibleSizes();
+    p5_inst.resetCanvas();
+    for (let i = 0; i < strokes.length; i++)
+    {
+      p5_inst.drawStroke(strokes[i], sizes[i]);
     }
   }
 
@@ -670,6 +679,7 @@ function sketch_process(p)
       p.strokeWeight(lineSize);
       p.stroke(color);
 
+      // please fix with radius - theta version
       p.line(p.mouseX, p.mouseY,  p.mouseX , p.mouseY + 6);
       p.line(p.mouseX, p.mouseY + 6,  p.mouseX + 3, p.mouseY + 9);
       p.line(p.mouseX + 3, p.mouseY + 9,  p.mouseX + 3, p.mouseY + 12);
@@ -1408,6 +1418,23 @@ function seekForward()
   }
 }
 
+// Cannot be tested due to document interaction
+/* istanbul ignore next */
+function autoPlay() {
+  if (MPState.isPlay()) {
+    seekForward();
+    if (MPState.atEnd()) {
+      // console.log("Stopped playing.");
+      MPState.setPlay(false);
+      let img = document.getElementById('play-pause-img');
+      img.src = './img/pause.png';
+    }
+    else {
+      setTimeout(autoPlay, 500);
+    }
+  }
+}
+
 function togglePlay()
 {
   // Unit testing
@@ -1423,44 +1450,23 @@ function togglePlay()
 		MPState.setPlay(img.src.includes('play'));
 
   	// If its in the play state, show the pause button, and vice versa
-  	if (MPState.play)
+  	if (MPState.isPlay())
     {
   		img.src='./img/pause.png';
       console.log('Is in the "Play" state');
-      // If its the generate mode, then simply seekForward
-      if (MPState.isGenerating())
-      {
-        setTimeout(seekForward, 500);
-      }
-      // otherwise draw all the previous strokes
-      else
-      {
-        const state = MPState.getState();
-        const sizes = MPState.getSizes();
-        const visibleStrokes = MPState.getVisibleStrokes();
-        // console.log(state);
-        // console.log(sizes);
-        // console.log('Visible Strokes Length: ' + visibleStrokes[2])
-
-        for (let i = visibleStrokes.length; i < state.length; i++)
-        {
-          // console.log("Current stroke: " + visibleStrokes[i-1]);
-          p5_inst.drawStroke(state[i], sizes[i]);
-        }
-      }
+      autoPlay();
     }
     else
     {
-  		img.src='./img/play.png';
-  		console.log('Is in the "Pause" state');
+      img.src='./img/play.png';
+      console.log('Is in the "Pause" state');
+      MPState.setPlay(false);
     }
   }
-  // Not slated for this release.
-  // throw new Error("Not implemented!");
 }
 
 // Cannot be auto-tested due to document interaction.
-/* istanbul toggle next */
+/* istanbul ignore next */
 function updateGenerateToggle()
 {
   let checkbox = document.getElementById('generate-toggle-box');

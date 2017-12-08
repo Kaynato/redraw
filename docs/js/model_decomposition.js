@@ -251,10 +251,15 @@ const DecomposeModel = {
 		let prevY = path[0][1];
 		let x;
 		let y;
+		let nextX;
+		let nextY;
+		let dX; // Diff from prev to curr
+		let dY;
 		let removeIndices = [];
 		let removeCounts = [];
 		let removeCount = 0;
 		let removeFrom = 1;
+		// Since we initialized at first coord, we go to next coord
 		for (i = 1; i < path.length; i++) {
 			x = path[i][0];
 			y = path[i][1];
@@ -262,7 +267,21 @@ const DecomposeModel = {
 			if (x == prevX && y == prevY) {
 				removeCount++;
 			}
-			// Different, so don't remove
+			// Continuing the line, so remove
+			else if (i + 1 < path.length) {
+				// If the next coord continues the line, remove this one
+				dX = x - prevX;
+				nextX = path[i + 1][0];
+				// Multiple if-branching for optimization (mimic early return)
+				if (x + dX == nextX) {
+					dY = y - prevY;
+					nextY = path[i + 1][1];
+					if (y + dY == nextY) {
+						removeCount++;
+					}
+				}
+			}
+			// Different, so don't remove, but track removals
 			else {
 				if (removeCount > 0) {
 					removeCounts.push(removeCount);
@@ -288,9 +307,6 @@ const DecomposeModel = {
 	/*
 		RENDER THE PATH IN THE P5 CANVAS
 		AND ADD IT TO THE MPSTATE.
-
-		This allows us continuous play. I guess.
-		It makes the wait more interesting. ...I guess.
 	*/
 	renderPath(path, color, width, scale, offX, offY) {
 
