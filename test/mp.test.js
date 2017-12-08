@@ -9,6 +9,8 @@ const chai = require('chai');
 // p5 unfortunately does not play kindly with npm testing.
 const mp = require('../docs/js/mp.js');
 
+const SVGBuilder = require('../docs/js/svgbuilder.js');
+
 /* === Setup === */
 const expect = chai.expect;
 const assert = chai.assert;
@@ -157,6 +159,13 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.equal(mp.MPState.state.length, oldCount + 4);
     })
 
+    it('should draw a circle with setShapeOption(1) and mousePressed()', function() {
+        mp.MPState.setShapeOption(1);
+        let oldCount = mp.MPState.state.length;
+        mp.p5_inst.mousePressed();
+        assert.equal(mp.MPState.state.length, oldCount + 29);
+    });
+
     it('should draw a triangle with setShapeOption(2) and mousePressed()', function() {
         mp.MPState.setShapeOption(2);
         let oldCount = mp.MPState.state.length;
@@ -169,14 +178,14 @@ describe('Multipurpose Panel Unit Tests', function() {
         let oldCount = mp.MPState.state.length;
         mp.p5_inst.mousePressed();
         assert.equal(mp.MPState.state.length, oldCount + 4);
-    })
+    });
 
     it('should draw a star with setShapeOption(4) and mousePressed()', function() {
         mp.MPState.setShapeOption(4);
         let oldCount = mp.MPState.state.length;
         mp.p5_inst.mousePressed();
         assert.equal(mp.MPState.state.length, oldCount + 5);
-    })
+    });
 
     it('should set color mode with colorPicker()', function() {
         mp.clears();
@@ -187,5 +196,7 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.equal(mp.MPState.getBlueDropperMode(), -1);
         assert.isFalse(mp.MPState.getColorMode());
     });
+
+
 
 });
