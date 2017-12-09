@@ -1423,11 +1423,11 @@ function seekForward()
 function autoPlay() {
   if (MPState.isPlay()) {
     seekForward();
-    if (MPState.atEnd()) {
-      // console.log("Stopped playing.");
+    if (MPState.atEnd() && !MPState.isGenerating()) {
+      console.log("Stopped playing.");
       MPState.setPlay(false);
       let img = document.getElementById('play-pause-img');
-      img.src = './img/pause.png';
+      img.src = './img/play.png';
     }
     else {
       setTimeout(autoPlay, 500);
@@ -1448,6 +1448,11 @@ function togglePlay()
   {
   	let img = document.getElementById('play-pause-img');
 		MPState.setPlay(img.src.includes('play'));
+
+    if (!MPState.isGenerating() && MPState.atEnd()) {
+      alert("Nothing to play!");
+      return;
+    }
 
   	// If its in the play state, show the pause button, and vice versa
   	if (MPState.isPlay())
