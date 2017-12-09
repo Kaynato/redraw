@@ -22,6 +22,15 @@ describe('Multipurpose Panel Unit Tests', function() {
         assert.isNull(mp.MPState.getCurrentSize(), 'Current length of state is null');
     });
 
+    it('should reject invalid set variables', function() {
+        let strokeIndex = mp.MPState.strokeIndex;
+        let dataIndex = mp.MPState.dataIndex;
+        assert.isNull(mp.MPState.setStrokeIndex(-5));
+        assert.isNull(mp.MPState.setDataIndex(-5));
+        assert.equal(mp.MPState.strokeIndex, strokeIndex);
+        assert.equal(mp.MPState.dataIndex, dataIndex);
+    });
+
     it('should contain canvas and slider after setup', function() {
     	mp.p5_inst.setup();
     	assert.isNotNull(mp.p5_inst.canvas);

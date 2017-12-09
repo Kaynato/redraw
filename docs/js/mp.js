@@ -78,11 +78,11 @@ let MPState =
   // Reset everything except for savedImages
   reset()
   {
-    this.sizes = [];
-    this.state = [];
-    this.colorsR = [];
-    this.colorsG = [];
-    this.colorsB = [];
+    this.setVisibleSizes([]);
+    this.setVisibleStrokes([]);
+    this.setVisibleReds([]);
+    this.setVisibleGreens([]);
+    this.setVisibleBlues([]);
     this.strokeIndices = [0];
     this.generating = false;
     this.play = false;
@@ -1079,7 +1079,7 @@ function sketch_process(p)
         // Compare coordinates to closest stroke
         const strokes = MPState.getVisibleStrokes();
         const sizes = MPState.getVisibleSizes();
-        
+
         let current_closestx = 10000;
         let current_closesty = 10000;
         let endof_closestx = 10000;
