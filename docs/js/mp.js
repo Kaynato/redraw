@@ -1423,11 +1423,11 @@ function seekForward()
 function autoPlay() {
   if (MPState.isPlay()) {
     seekForward();
-    if (MPState.atEnd()) {
-      // console.log("Stopped playing.");
+    if (MPState.atEnd() && !MPState.isGenerating()) {
+      console.log("Stopped playing.");
       MPState.setPlay(false);
       let img = document.getElementById('play-pause-img');
-      img.src = './img/pause.png';
+      img.src = './img/play.png';
     }
     else {
       setTimeout(autoPlay, 500);
@@ -1448,6 +1448,11 @@ function togglePlay()
   {
   	let img = document.getElementById('play-pause-img');
 		MPState.setPlay(img.src.includes('play'));
+
+    if (!MPState.isGenerating() && MPState.atEnd()) {
+      alert("Nothing to play!");
+      return;
+    }
 
   	// If its in the play state, show the pause button, and vice versa
   	if (MPState.isPlay())
@@ -1564,6 +1569,55 @@ function exportData() {
     }
     p5_inst.save('my_canvas.png');
   }
+}
+
+/* We decided to not use a dropdown. */
+function exportSVG() {
+  const strokes = MPState.getVisibleStrokes();
+  const sizes = MPState.getVisibleSizes();
+
+  // Can't use alert in npm
+  /* istanbul ignore next */
+  if (strokes.length == 0) {
+    alert('Cannot download empty canvas image!');
+    return;
+  }
+
+  let builder;
+  if (!isNode) { // Never runs via npm
+    builder = new SVGBuilder(MPState.WIDTH, MPState.HEIGHT);
+  }
+  else {
+    let SVGBuilder = require('./svgbuilder.js');
+    builder = new SVGBuilder(MPState.WIDTH, MPState.HEIGHT);
+  }
+
+  let i;
+  for (i = 0; i < strokes.length; i++) {
+    builder.addStroke(strokes[i], sizes[i]);
+  }
+  let svg = builder.finish();
+
+  /* istanbul ignore if */
+  if (!isNode) {
+    // Cheap trick to do download
+    let blob = new Blob([svg], {type: "image/svg+xml"});
+    let downloadLink = document.createElement("a");
+    downloadLink.style.display = "none";
+    downloadLink.download = 'my_svg';
+    downloadLink.href = window.URL.createObjectURL(blob);
+    downloadLink.onclick = function(event) {
+      document.body.removeChild(event.target);
+    };
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    return;
+  }
+  else {
+    // Only happens in unit test
+    return svg;
+  }
+
 }
 
 /**
@@ -2030,5 +2084,6 @@ module.exports =
   loadImageWithValue,
   mirrorModeWithValue,
   warholMode,
-  rotate
+  rotate,
+  exportSVG
 }
