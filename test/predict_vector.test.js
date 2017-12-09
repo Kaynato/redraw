@@ -35,6 +35,7 @@ describe('predict', function() {
         mp.p5_inst.setMouse(5, 5);
         mp.p5_inst.mouseDragged();
         mp.p5_inst.mouseReleased();
+        assert.isNotNull(mp.MPState.getCurrentStroke());
         var nextStroke = predict.GenerateModel.nextStroke(mp.MPState);
         assert.isNotNull(nextStroke);
     });

@@ -257,6 +257,9 @@ describe('Multipurpose Panel Unit Tests', function() {
         mp.MPState.setFillMode(true);
         let oldCount = mp.MPState.state.length;
         mp.p5_inst.mousePressed();
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.mouseReleased();
+        mp.MPState.setFillMode(false);
         // console.log(oldCount, mp.MPState.state.length);
     });
 

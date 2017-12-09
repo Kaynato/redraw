@@ -1079,7 +1079,7 @@ function sketch_process(p)
         // Compare coordinates to closest stroke
         const strokes = MPState.getVisibleStrokes();
         const sizes = MPState.getVisibleSizes();
-
+        
         let current_closestx = 10000;
         let current_closesty = 10000;
         let endof_closestx = 10000;

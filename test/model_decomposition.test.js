@@ -118,6 +118,27 @@ describe('ImageUtils Unit Tests', function() {
 		assert.isTrue(ndops.equals(target, correct));
 	});
 
+	it('should accept median filters for arbitrary integer inputs', function() {
+
+		let arr = new Uint8ClampedArray(9 * 9 * 2);
+		let i;
+		for (i = 0; i < arr.length; i++) {
+			arr[i] = Math.round(Math.random() * 255);
+		}
+		let tensor = ndarray(arr, [9, 9, 5]);
+		tensor.set(1, 1, 0, 50);
+		tensor.set(1, 1, 1, 50);
+		tensor.set(1, 1, 2, 50);
+
+		let targetArr = new Uint8ClampedArray(tensor.data.length);
+		targetArr.fill(255);
+		let target = ndarray(targetArr, tensor.shape);
+
+		ImageUtils.medianFilter(target, tensor, 5);
+
+		// Just make sure the randomly populated array goes through the filter
+	});
+
 	it('should reject median filters of even dimension', function() {
 		
 		let arr = new Uint8ClampedArray(5 * 5 * 4);
