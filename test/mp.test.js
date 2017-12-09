@@ -44,6 +44,7 @@ describe('Multipurpose Panel Unit Tests', function() {
         var stroke = mp.MPState.getCurrentStroke();
         assert.isNotNull(stroke);
         assert.equal(mp.MPState.strokeIndex, 1);
+        assert.equal(mp.p5_inst.getSize(), 1);
         assert.deepEqual(stroke, [0, 0, 5, 5, 1, [1, 1, 1]]);
     });
 
@@ -107,12 +108,24 @@ describe('Multipurpose Panel Unit Tests', function() {
         mp.p5_inst.setMouse(5, 5);
         mp.p5_inst.mouseDragged();
         mp.p5_inst.mouseReleased();
+        assert.isTrue(mp.MPState.atEnd());
         mp.seekBackward();
         assert.isTrue(mp.MPState.strokeIndex < mp.MPState.dataIndex);
+        assert.isFalse(mp.MPState.atEnd());
     });
+
+    it('should rotate all strokes, including invisible strokes, with rotate()', function() {
+        // but don't render them
+        mp.seekBackward();
+        mp.seekBackward();
+        mp.rotate();
+    })
 
     it('should return future strokes with seekForward()', function() {
         mp.seekForward();
+        mp.seekForward();
+        mp.seekForward();
+        assert.isTrue(mp.MPState.atEnd());
         assert.equal(mp.MPState.strokeIndex, mp.MPState.dataIndex);
     });
 
@@ -120,7 +133,7 @@ describe('Multipurpose Panel Unit Tests', function() {
         let origCount = mp.MPState.state.length;
         assert.equal(origCount, 2); // 2
         mp.warholMode();
-        assert.equal(mp.MPState.state.length, origCount * 17);
+        assert.equal(mp.MPState.state.length, origCount * 15);
     });
 
     it('should render many segments and artifacts with jpMode()', function() {
@@ -207,14 +220,44 @@ describe('Multipurpose Panel Unit Tests', function() {
         }); 
     });
 
+    it('should delete vectors in eraser mode', function() {
+        let oldCount = mp.MPState.state.length;
+        // Whiteout erase!
+        mp.MPState.setShapeOption(null);
+        mp.MPState.setEraserMode(true);
+        mp.p5_inst.mousePressed();
+        mp.p5_inst.mouseDragged();
+        mp.p5_inst.mouseReleased();
+        assert.equal(mp.MPState.state.length, oldCount + 1);
+        mp.MPState.setEraserMode(false);
+    });
+
     it('should set color mode with colorPicker()', function() {
-        mp.clears();
-        mp.MPState.setColorMode(true);
+        mp.MPState.setColorMode(false);
+        mp.colorPicker();
         mp.colorPicker();
         assert.equal(mp.MPState.getRedDropperMode(), -1);
         assert.equal(mp.MPState.getGreenDropperMode(), -1);
         assert.equal(mp.MPState.getBlueDropperMode(), -1);
         assert.isFalse(mp.MPState.getColorMode());
+        mp.MPState.setColorMode(false);
+    });
+
+    it('should set pick color with color picker', function() {
+        mp.MPState.setColorMode(true);
+        mp.p5_inst.mousePressed();
+        assert.equal(mp.MPState.getRedDropperMode(), 1);
+        assert.equal(mp.MPState.getGreenDropperMode(), 1);
+        assert.equal(mp.MPState.getBlueDropperMode(), 1);
+        mp.p5_inst.mouseDragged();
+        mp.MPState.setColorMode(false);
+    });
+
+    it('should fill a shape when fillMode is on', function() {
+        mp.MPState.setFillMode(true);
+        let oldCount = mp.MPState.state.length;
+        mp.p5_inst.mousePressed();
+        // console.log(oldCount, mp.MPState.state.length);
     });
 
 

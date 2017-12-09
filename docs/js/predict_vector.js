@@ -91,7 +91,6 @@ const GenerateModel = {
 			}
 		};
 
-
 		return newStroke;
 		// Procedure:
 		// 	1. Unpack the current state

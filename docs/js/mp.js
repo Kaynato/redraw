@@ -1026,9 +1026,15 @@ function sketch_process(p)
     else if(MPState.getColorMode()) {
       const strokes = MPState.getVisibleStrokes();
 
+      if (strokes.length == 0) {
+        // Early return since picker on empty is pointless
+        return;
+      }
+
       let current_closestx = 10000;
       let current_closesty = 10000;
       let line_of_interest = 0;
+
       for (let i=0; i<strokes.length; i++) {
         if ((Math.abs(p.mouseX - strokes[i][0]) + Math.abs(p.mouseY - strokes[i][1])) < (Math.abs(p.mouseX - current_closestx) + Math.abs(p.mouseY - current_closesty))) {
           current_closestx = strokes[i][0];
@@ -1088,8 +1094,8 @@ function sketch_process(p)
             lineSize = strokes[i][4];
           }
         }
-        console.log(current_closestx);
-        console.log(current_closesty);
+        // console.log(current_closestx);
+        // console.log(current_closesty);
         p.strokeWeight(lineSize+5);
         p.line(current_closestx,
               current_closesty,
@@ -1155,8 +1161,8 @@ function sketch_process(p)
         color = p.color(red, green, blue, 255);
 
         const size = strokes.length;
-        console.log(lower_limit);
-        console.log(upper_limit);
+        // console.log(lower_limit);
+        // console.log(upper_limit);
 
         for (let i=lower_limit; i<upper_limit; i++) {
             p.line(strokes[i][0], strokes[i][1], strokes[upper_limit - (i-lower_limit)][2], strokes[upper_limit - (i-lower_limit)][3]);
@@ -1251,6 +1257,8 @@ function sketch_process(p)
 
 // MUST be var - persists across scripts
 var p5_inst;
+// Literally cannot run in npm
+/* istanbul ignore next */
 if (!isNode)
 {
   p5_inst = new p5(sketch_process);
@@ -1307,6 +1315,7 @@ else
         "min": min,
         "max": max,
         "step": step,
+        /* istanbul ignore next */
         value: function()
         {
           return 1;
@@ -1584,6 +1593,7 @@ function exportSVG() {
   }
 
   let builder;
+  /* istanbul ignore if */
   if (!isNode) { // Never runs via npm
     builder = new SVGBuilder(MPState.WIDTH, MPState.HEIGHT);
   }
@@ -1845,6 +1855,8 @@ function addOption(idx) {
  */
 function saveImage()
 {
+  // Alert doesn't exist in npm
+  /* istanbul ignore if */
   if (MPState.getVisibleStrokes().length == 0 || MPState.getVisibleSizes().length == 0) {
     alert('Cannot save empty canvas. Please draw something first!')
   } else {
